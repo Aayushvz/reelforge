@@ -27,13 +27,32 @@ def _transcribe_words(model, audio: Path) -> list[tuple[str, float, float]]:
     return [(w.word, float(w.start), float(w.end)) for seg in segments for w in seg.words]
 
 
-def whisper_words(audio: Path, model_size: str = "small") -> list[tuple[str, float, float]]:
-    from faster_whisper import WhisperModel  # optional extra: pip install -e ".[align]"
+_MODELS: dict = {}
 
+
+def _load_model(model_size: str):
+    # Cache: loading a second WhisperModel in one process hung on this machine (CUDA reload).
+    if model_size not in _MODELS:
+        from faster_whisper import WhisperModel  # optional extra: pip install -e ".[align]"
+
+        try:
+            model = WhisperModel(model_size, device="auto", compute_type="auto")
+            _MODELS[model_size] = (model, False)
+        except RuntimeError:
+            _MODELS[model_size] = (WhisperModel(model_size, device="cpu", compute_type="int8"), True)
+    return _MODELS[model_size]
+
+
+def whisper_words(audio: Path, model_size: str = "small") -> list[tuple[str, float, float]]:
+    model, on_cpu = _load_model(model_size)
     try:
-        model = WhisperModel(model_size, device="auto", compute_type="auto")
         return _transcribe_words(model, audio)
     except RuntimeError:
+        if on_cpu:
+            raise
         # e.g. CUDA runtime DLLs missing (cublas64_12.dll): retry on CPU.
+        from faster_whisper import WhisperModel
+
         model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        _MODELS[model_size] = (model, True)
         return _transcribe_words(model, audio)
