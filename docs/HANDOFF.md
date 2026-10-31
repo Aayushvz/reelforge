@@ -84,6 +84,14 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"   # Blender 4.5.15 in t
 3. Re-run the Audio2Face vs viseme comparison on the new head (drop-in via `out/a2f/<id>.json`).
 4. Environment: cheat the wide-shot f-stop to about 0.4–0.5 for bokeh, and retune the rim light and haze.
 
+## 4b. Long-term look target (the user's end goal)
+The user's ultimate references are the **ink.industries "First kiss effect V2"** style reels. These are Pixar-like characters (strand hair, knit fabric, expressive faces with blush) in cinematic environments: a lantern-lit street, a San Francisco hill with a cable car, an aerial bridge shot, a stylized cracked-ground VFX shot.
+- **Honest assessment (shared with the user on 2026-10-31):** those reels are **AI-video generated** (labelled "AI content"). A Blender pipeline with free tools **cannot fully match them.** The realistic ceiling is high-quality stylized 3D animation, below those frames.
+- **The user chose to stay with Blender 3D anyway:** free, controllable, consistent characters. Treat these references as the **north star for every look decision**: hair cards with clump detail, fabric with fuzz and sheen, a cartoon-expressive face with blush, warm sunset or lantern lighting, atmospheric depth, a strong depth-of-field look.
+- Each sub-project's quality gate should compare stills against these references and state honestly how close they get.
+- AI video (Kling, Veo, Seedance, or the free Wan 2.2) was offered and declined. Don't re-propose it unless the user asks.
+- The user's reference screenshots aren't saved in the repo. Ask the user to drop them into `references/style/`.
+
 ## 5. Later milestones (from the spec)
 - **M2, automation:** a Claude "performance pass" that turns the script into `performance.json`; two characters with listener reactions; a mocap gesture library; music and foley; captions placed around faces; staleness and render caching (see the follow-ups).
 - **M3:** more sets and outfits; per-mood grade, flicker and bloom; Cycles for close-ups.

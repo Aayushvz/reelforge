@@ -38,6 +38,16 @@ You're continuing work on **reelforge**, a private project that turns a written 
 - The `reelforge/` core stays **standard library only**. Heavy machine-learning tools live in optional extras or in `tools/` scripts, imported lazily.
 - **Token-aware:** use cheaper subagent models for mechanical tasks and the most capable model for design and visual judgment.
 
+## Look target
+Read `docs/HANDOFF.md` §4b. The owner's end goal is the ink.industries "First kiss effect V2" Pixar-like look; the reference stills go in `references/style/`. Those reels are AI-video generated. The owner knowingly chose Blender anyway, so aim as close as free 3D allows:
+- hair cards with clumps and flyaways
+- fabric with fuzz and sheen
+- expressive cartoon faces with blush
+- sunset or lantern lighting with atmospheric haze
+- shallow depth of field
+
+At every quality gate, say honestly how close you got. Don't propose switching to AI video unless the owner asks.
+
 ## Working method (follow strictly)
 Use the **superpowers** skills, as the project did for Milestone 1:
 **brainstorming** (one question at a time, propose 2–3 approaches with a recommendation) → a written **spec** in `docs/superpowers/specs/` → **writing-plans** (bite-sized TDD tasks with complete code) in `docs/superpowers/plans/` → **subagent-driven-development** (one implementer per task, plus a spec and quality review after each, plus a final whole-branch review) → **finishing-a-development-branch**.
