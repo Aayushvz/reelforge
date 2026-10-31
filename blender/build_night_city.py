@@ -30,6 +30,7 @@ try:
     sc.view_settings.look = "AgX - Medium High Contrast"
 except TypeError:
     pass
+sc.view_settings.exposure = -0.6  # low-key night: pull practicals/key spill down
 
 # --- world: deep night + volumetric haze ------------------------------------
 w = bpy.data.worlds.new("NightWorld")
@@ -37,7 +38,7 @@ w.use_nodes = True
 nt = w.node_tree
 nt.nodes["Background"].inputs["Color"].default_value = (0.004, 0.006, 0.015, 1)
 vol = nt.nodes.new("ShaderNodeVolumeScatter")
-vol.inputs["Density"].default_value = 0.012
+vol.inputs["Density"].default_value = 0.004
 vol.inputs["Color"].default_value = (0.7, 0.8, 1.0, 1)
 nt.links.new(vol.outputs["Volume"], nt.nodes["World Output"].inputs["Volume"])
 sc.world = w
@@ -45,7 +46,7 @@ sc.world = w
 # --- room ---------------------------------------------------------------
 FLOOR = material("Floor", (0.03, 0.03, 0.035), rough=0.6)
 WALL = material("Wall", (0.025, 0.028, 0.04), rough=0.8)
-WOOD = material("Wood", (0.18, 0.10, 0.06), rough=0.45, coat=0.2)
+WOOD = material("Wood", (0.10, 0.055, 0.03), rough=0.55, coat=0.1)
 DARK = material("DarkPlastic", (0.02, 0.02, 0.022), rough=0.4)
 MUG = material("Mug", (0.95, 0.42, 0.12), rough=0.3, coat=0.5)
 NOTE_Y = material("NoteYellow", (1.0, 0.85, 0.2), rough=0.8)
@@ -64,7 +65,7 @@ box("Keyboard", (0, -0.36, 0.77), (0.42, 0.14, 0.02), COLL, DARK)
 box("NoteA", (-0.25, -0.5, 0.762), (0.08, 0.08, 0.002), COLL, NOTE_Y)
 box("NoteB", (0.18, -0.52, 0.762), (0.08, 0.06, 0.002), COLL, NOTE_O)
 mug = box("Mug", (-0.5, -0.32, 0.81), (0.08, 0.08, 0.1), COLL, MUG)
-screen_mat = code_screen_material("ScreenMat", (0.35, 0.6, 1.0), strength=3.0)
+screen_mat = code_screen_material("ScreenMat", (0.35, 0.6, 1.0), strength=1.4)
 monitor = box("Monitor", (0, 0, 0), (0.56, 0.03, 0.34), COLL, DARK)
 screen = box("Screen", (0, -0.017, 0), (0.53, 0.002, 0.31), COLL, screen_mat)
 screen.parent = monitor
@@ -73,17 +74,29 @@ monitor.rotation_euler = (0, 0, math.radians(-35))
 box("Stand", (0.55, -0.36, 0.82), (0.05, 0.05, 0.12), COLL, DARK)
 
 # --- holographic panels (story-reactive props) -------------------------------
-holo = code_screen_material("HoloMat", (0.35, 0.6, 1.0), strength=2.0)
+holo = code_screen_material("HoloMat", (0.35, 0.6, 1.0), strength=1.0)
 for i, (x, z, rz) in enumerate(((-0.95, 1.55, 20), (1.0, 1.75, -18), (-0.7, 2.1, 10))):
     p = box(f"Holo{i}", (0, 0, 0), (0.5, 0.003, 0.32), COLL, holo)
     p.location = (x, 0.95, z)
     p.rotation_euler = (0, 0, math.radians(rz))
 
+for _m in (screen_mat, holo):
+    _c = _m.node_tree.nodes["Code"]
+    _c.inputs["Scale"].default_value = 1.6
+    _c.inputs["Mortar Size"].default_value = 0.01
+    # Brick is 2D (XY) but screens face -Y, so Generated.y is constant (= a mortar line).
+    # Rotate the generated coords 90deg about X so the screen's height drives the rows.
+    _tc = _m.node_tree.nodes.new("ShaderNodeTexCoord")
+    _mp = _m.node_tree.nodes.new("ShaderNodeMapping")
+    _mp.inputs["Rotation"].default_value = (math.radians(90), 0, 0)
+    _m.node_tree.links.new(_tc.outputs["Generated"], _mp.inputs["Vector"])
+    _m.node_tree.links.new(_mp.outputs["Vector"], _c.inputs["Vector"])
+
 # --- city: dark buildings with lit windows (becomes bokeh) --------------------
 BUILD = material("Building", (0.008, 0.01, 0.018), rough=0.7)
-win_mats = [material("WinWarm", (1.0, 0.7, 0.35), emit=14.0),
-            material("WinCool", (0.4, 0.6, 1.0), emit=12.0),
-            material("WinWhite", (1.0, 0.95, 0.9), emit=10.0)]
+win_mats = [material("WinWarm", (1.0, 0.5, 0.15), emit=4.0),
+            material("WinCool", (0.2, 0.42, 1.0), emit=4.5),
+            material("WinWhite", (1.0, 0.85, 0.65), emit=2.5)]
 win_bms = [bmesh.new() for _ in win_mats]
 for _ in range(26):
     bx, by = rng.uniform(-22, 22), rng.uniform(9, 40)
@@ -93,9 +106,9 @@ for _ in range(26):
     cols, rows = int(bw / 0.9), int(bh / 1.1)
     for cxi in range(cols):
         for ryi in range(rows):
-            if rng.random() > 0.35:
+            if rng.random() > 0.45:
                 continue
-            k = rng.choices((0, 1, 2), weights=(70, 20, 10))[0]
+            k = rng.choices((0, 1, 2), weights=(55, 35, 10))[0]
             m = (Matrix.Translation((bx - bw / 2 + 0.45 + cxi * 0.9, face_y, 0.8 + ryi * 1.1))
                  @ Matrix.Diagonal((0.45, 0.05, 0.6, 1.0)))
             bmesh.ops.create_cube(win_bms[k], size=1.0, matrix=m)
@@ -121,9 +134,11 @@ def light(name, kind, loc, color, energy, size=0.5):
     return o
 
 light("Key", "AREA", (0.75, -0.75, 1.45), (1.0, 0.62, 0.35), 180, 0.6)
-light("Rim", "AREA", (-0.6, 0.95, 1.9), (0.25, 0.45, 1.0), 220, 1.0)
+light("Rim", "AREA", (-0.85, 0.75, 1.75), (0.25, 0.45, 1.0), 220, 1.0)
 light("Fill", "AREA", (-1.3, -1.5, 1.2), (0.5, 0.6, 1.0), 15, 2.0)
 light("Glow", "POINT", (0.45, -0.3, 0.9), (1.0, 0.55, 0.2), 60, 0.1)
+for _n in ("Key", "Rim"):  # keep the haze subtle: these lights sit close to camera axis
+    bpy.data.lights[_n].volume_factor = 0.5
 
 empty("Mark_A", (0, 0.15, 0), COLL)
 empty("Mark_B", (0.9, 0.15, 0), COLL)
