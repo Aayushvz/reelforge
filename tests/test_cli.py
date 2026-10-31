@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 
 import pytest
 
@@ -22,9 +23,12 @@ def test_imported_audio_used_without_api_key(monkeypatch, tmp_path):
     monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
     src = cli.REPO / "samples" / "look-test"
     shutil.copy(src / "performance.json", tmp_path / "performance.json")
-    (tmp_path / "out" / "audio").mkdir(parents=True)
-    for mp3 in (src / "out" / "audio").glob("*.mp3"):
-        shutil.copy(mp3, tmp_path / "out" / "audio" / mp3.name)
+    audio = tmp_path / "out" / "audio"
+    audio.mkdir(parents=True)
+    for lid in ("l01", "l02"):
+        subprocess.run(
+            ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+             "-t", "1", "-c:a", "libmp3lame", str(audio / f"{lid}.mp3")], check=True)
     used = []
     real_import = cli.import_line
 
