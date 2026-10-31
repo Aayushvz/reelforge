@@ -40,23 +40,29 @@ sc.collection.objects.link(focus)
 focus.location = face_pos + Vector((0, -0.19, 0))  # eye plane, not head centre
 
 
-def key_track(obj, path, values, eps=0.002, index=-1):
-    last = None
+def key_track(obj, prop, values, eps=0.002):
+    """Sparse keys on custom prop `prop`. Before a change that follows a skipped (flat) run,
+    a hold key repeats the last value on the previous frame, so the value stays flat
+    across the run and only moves where the track moves."""
+    path = f'["{prop}"]'
+
+    def put(f, v):
+        obj[prop] = v
+        obj.keyframe_insert(path, frame=f + 1)
+
+    last, last_f = None, -1
     for f, v in enumerate(values):
         if last is None or abs(v - last) > eps or f == len(values) - 1:
-            if index >= 0:
-                getattr(obj, path)[index] = v
-                obj.keyframe_insert(path, index=index, frame=f + 1)
-            else:
-                obj[path[2:-2]] = v
-                obj.keyframe_insert(path, frame=f + 1)
-            last = v
+            if last is not None and f - 1 > last_f:
+                put(f - 1, last)  # hold
+            put(f, v)
+            last, last_f = v, f
 
 
 for ch, values in char["face"].items():
     if ch == "headNod" or ch not in ctrl.keys() or max(values) == 0.0:
         continue
-    key_track(ctrl, f'["{ch}"]', values)
+    key_track(ctrl, ch, values)
 nod = char["face"].get("headNod", [0.0] * n)
 for f in range(0, n, 2):
     head.rotation_euler = (nod[f] + 0.02 * math.sin(f * 0.05), 0.015 * math.sin(f * 0.031), 0.0)
