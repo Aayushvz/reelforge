@@ -7,6 +7,7 @@ import os
 import shutil
 from pathlib import Path
 
+from .a2f import frames_to_tracks
 from .blender_run import run_blender
 from .captions import build_ass
 from .direct import mood_keys, plan_shots
@@ -58,7 +59,14 @@ def run(project: Path, stage: str, draft: bool) -> Path | None:
     n_frames = math.ceil(total * perf.fps)
     mix_dialogue(placed, total, out / "dialogue.wav")
 
-    faces = build_faces(perf, placed, perf.fps, n_frames)
+    overrides = {}
+    for p in placed:
+        f = out / "a2f" / f"{p.line.id}.json"
+        if f.exists():
+            data = json.loads(f.read_text(encoding="utf-8"))
+            overrides[p.line.id] = frames_to_tracks(data["frames"], perf.fps,
+                                                    math.ceil(p.duration * perf.fps) + 2)
+    faces = build_faces(perf, placed, perf.fps, n_frames, lipsync_override=overrides)
     shots = plan_shots(placed, perf.fps, n_frames)
     moods = mood_keys(placed, perf.fps)
     w, h = RATIOS[perf.ratio]
