@@ -6,3 +6,4 @@ samples/*/out/
 tools/blender*/
 *.blend1
 .superpowers/
+tools/
