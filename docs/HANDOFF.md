@@ -1,0 +1,98 @@
+# reelforge: project handoff (as of 2026-10-31)
+
+Read this first in any new session. It covers what exists, how to run it, the decisions already made, and what to do next.
+
+## 1. Goal
+A tool that turns a **script** into a **cinematic, lip-synced, emotional 3D animated short** for Instagram Reels and Shorts. The style references are the @canwebuildthis reels and the NMXWZ "Friday 4:59 PM" reel.
+- **Characters:** stylized-premium (Pixar-like), built from the user's reference images.
+- **Environments:** refined, moody and glowing, built from the user's reference images.
+- **Input:** the user only uploads a script (and references). Everything else is automated.
+- **Formats:** 9:16 by default; 16:9, 3:4 and 1:1 are optional.
+- **Constraint:** low token use. Claude makes one small call per video; everything else is deterministic and runs locally.
+
+Full design: `docs/superpowers/specs/2026-10-31-animated-reel-generator-design.md`
+
+## 2. User decisions (don't re-ask)
+| Topic | Decision |
+|---|---|
+| Engine | **Blender 4.5 LTS, headless** (not AI video, not Three.js) |
+| Character style | Stylized-premium, Pixar-like. The user rejected the procedural stand-in as "too naive". |
+| Character source | **Claude generates them from the user's references.** The user doesn't want to buy tools or model anything; **no paid tools** (Faceit rejected). |
+| Voice | ElevenLabs, generated **in the web app via the user's Chrome**, which is logged in. **No API key.** Currently Eleven v4, voice "Jessica - Playful, Bright, Warm". |
+| Lip sync | Grapheme visemes from local faster-whisper alignment (default). The Audio2Face ONNX adapter exists but isn't the default. |
+| Editor | A local web app, planned for a later milestone. |
+| Accounts | Claude can't create accounts or handle passwords or keys. The user signs in themselves. |
+
+## 3. What's built (Milestone 1, merged to `main`)
+A Python package `reelforge/` (standard library only), Blender scripts in `blender/`, and 49 passing tests.
+
+```
+script/performance.json → voice (ElevenLabs API or imported mp3 + faster-whisper align)
+ → timeline + dialogue.wav → face tracks (52 ARKit channels: emotion spring + visemes + blinks + nods)
+ → shots (wide/medium/closeup, ≤3 s) + mood keys → captions.ass → render_plan.json
+ → Blender (character + set, face keys, mood light crossfades, DOF cameras) → frames/
+ → ffmpeg finish (halation, grade, vignette, grain, captions, -14 LUFS) → final_9x16.mp4
+```
+
+| Module | Role |
+|---|---|
+| `reelforge/schema.py` | Validates `performance.json`: lines, speaker, emotion, intensity, mood, punchline |
+| `voice.py`, `alignment.py`, `align_local.py` | ElevenLabs API client with cache; `import_line()` for web-generated mp3s; Whisper alignment (CPU fallback) |
+| `timeline.py` | Places lines on the timeline and mixes `dialogue.wav` |
+| `visemes.py`, `face.py`, `a2f.py` | Face tracks; Audio2Face adapter |
+| `direct.py`, `moods.py`, `plan.py` | Shot director, mood light presets, `render_plan.json` |
+| `captions.py`, `finish.py` | Word-highlighted captions; ffmpeg finishing |
+| `cli.py` | `reelforge build-assets` and `reelforge run <project> [--stage stills\|full] [--draft]` |
+| `blender/build_character.py` | Procedural **stand-in** character, to be replaced. Its contract is `CHAR_root`, `Head` and `FaceCtrl` (52 ARKit custom properties that drive the face). |
+| `blender/build_night_city.py` | Night-city desk set: lights `Key`, `Rim`, `Fill`, `Glow`; materials `ScreenMat` and `HoloMat`; `Mark_A` |
+| `blender/render_plan.py` | Executes the render plan inside Blender |
+| `tools/a2f_fetch.py` | Audio2Face v2.3 ONNX on CPU (spike) |
+
+**How to run it:**
+```bash
+export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"   # Blender 4.5.15 in tools/blender-4.5/
+.venv/Scripts/reelforge build-assets
+.venv/Scripts/reelforge run samples/look-test --stage stills --draft   # quick check
+.venv/Scripts/reelforge run samples/look-test --stage full            # final video
+.venv/Scripts/python -m pytest -q
+```
+- Put voice mp3s at `samples/<project>/out/audio/<line_id>.mp3`.
+- Output goes to `samples/<project>/out/final_9x16.mp4`.
+
+**Look-test result** (`samples/look-test/REVIEW.md`): **pipeline PASS, look PARTIAL.**
+- Working: lip sync, emotion blending, the mood shift, close-up bokeh, captions, −14.9 LUFS.
+- Weak: flat face lighting, a weak rim light, the wide shot isn't bokeh, lip closures are a thin line, and the stand-in character.
+
+## 4. Next milestone: generate characters and environments from references
+**Status:** agreed in principle; not brainstormed or specced yet. Start with the brainstorming skill.
+
+**Inputs from the user:**
+- `references/characters/`: front-facing, full-body, plain background
+- `references/environments/`
+
+**Proposed approach.** Everything is free, local and account-free. Ask before downloading 5–10 GB of models into `tools/`.
+- **Character mesh:** Hunyuan3D-2 mini (open source, image to textured 3D; fits the RTX 4060's 8 GB).
+- **Face for animation:** add eyeballs, eyelids and a mouth cavity by script, then generate the face shapes. They must use ARKit-correct names and drive through the `FaceCtrl` contract.
+- **Body rig:** Blender Rigify or UniRig (open source).
+- **Environments:** Depth Anything V2 turns a reference image into a depth-displaced 3D backdrop, giving parallax and real depth of field. Real 3D props (desk, glowing screens, lights) sit in front of it so the mood shifts keep working.
+- **Free fallback** if quality disappoints: Blender Studio's CC-BY stylized rigs (Rain, Ellie).
+- **Honest expectation:** "very good stylized" first, then iterate. Hands and hair are the hard parts.
+
+**Requirements from the M1 final review** (`docs/superpowers/notes/m1-followups.md`):
+1. The new character must expose `FaceAnchor` and `EyeFocus` empties on the head bone, and shot distance should come from head size. `render_plan.py` currently hard-codes the stand-in's proportions.
+2. **ARKit-correct MBP viseme:** `jawOpen≈0` plus `mouthPress` plus `mouthRoll`, with a 2–3 frame hold. `mouthClose` is used only with a small `jawOpen`. Fix this in `visemes.py` when the new head lands.
+3. Re-run the Audio2Face vs viseme comparison on the new head (drop-in via `out/a2f/<id>.json`).
+4. Environment: cheat the wide-shot f-stop to about 0.4–0.5 for bokeh, and retune the rim light and haze.
+
+## 5. Later milestones (from the spec)
+- **M2, automation:** a Claude "performance pass" that turns the script into `performance.json`; two characters with listener reactions; a mocap gesture library; music and foley; captions placed around faces; staleness and render caching (see the follow-ups).
+- **M3:** more sets and outfits; per-mood grade, flicker and bloom; Cycles for close-ups.
+- **M4:** the local web editor.
+- **M5:** multi-ratio export (16:9, 3:4, 1:1).
+
+## 6. Environment notes
+- Windows 11, RTX 4060 laptop (8 GB). Python 3.14 in `.venv`. ffmpeg 9. Git repo with `main` only and no remote.
+- CUDA libraries aren't installed, so faster-whisper and ONNX run on CPU. That's fine for short lines.
+- `tools/` and `samples/*/out/` are git-ignored. `tools/blender_path.txt` holds the Blender path; never use `setx`.
+- Claude credits: the Pro plan's weekly limit was **92% used on 2026-10-31**, resetting on 2026-11-03. Keep sessions lean, start fresh sessions, and use cheaper models for mechanical tasks.
+- Workflow: superpowers brainstorming → spec → plan → subagent-driven development, with per-task reviews.
