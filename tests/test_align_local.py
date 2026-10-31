@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 
@@ -35,3 +36,29 @@ def test_import_line_aligns_and_caches(tmp_path):
 def test_import_line_missing_audio(tmp_path):
     with pytest.raises(VoiceError, match="l01.mp3"):
         import_line(LINE, tmp_path, transcribe=lambda p: [])
+
+
+def test_import_line_rejects_empty_alignment_and_writes_no_cache(tmp_path):
+    (tmp_path / "l01.mp3").write_bytes(b"ID3")
+    with pytest.raises(VoiceError, match="no speech found"):
+        import_line(LINE, tmp_path, transcribe=lambda p: [])
+    assert not (tmp_path / "l01.align.json").exists()
+
+
+def test_import_line_realigns_when_mp3_is_newer_than_cache(tmp_path):
+    mp3 = tmp_path / "l01.mp3"
+    mp3.write_bytes(b"ID3")
+    cache = tmp_path / "l01.align.json"
+    cache.write_text(json.dumps([[" Old", 0.0, 0.2]]), encoding="utf-8")
+    os.utime(cache, (1_000_000, 1_000_000))
+    os.utime(mp3, (2_000_000, 2_000_000))
+    calls = []
+
+    def fake(path):
+        calls.append(path)
+        return [(" New", 0.1, 0.4)]
+
+    v = import_line(LINE, tmp_path, transcribe=fake)
+    assert len(calls) == 1
+    assert "".join(c.ch for c in v.chars) == "New"
+    assert json.loads(cache.read_text(encoding="utf-8"))[0][0] == " New"

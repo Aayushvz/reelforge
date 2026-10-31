@@ -21,9 +21,19 @@ def chars_from_words(words: list[tuple[str, float, float]]) -> list[Char]:
     return out
 
 
+def _transcribe_words(model, audio: Path) -> list[tuple[str, float, float]]:
+    # Materialise inside the caller's try: CUDA errors surface only while the generator runs.
+    segments, _ = model.transcribe(str(audio), word_timestamps=True, language="en")
+    return [(w.word, float(w.start), float(w.end)) for seg in segments for w in seg.words]
+
+
 def whisper_words(audio: Path, model_size: str = "small") -> list[tuple[str, float, float]]:
     from faster_whisper import WhisperModel  # optional extra: pip install -e ".[align]"
 
-    model = WhisperModel(model_size, device="auto", compute_type="auto")
-    segments, _ = model.transcribe(str(audio), word_timestamps=True, language="en")
-    return [(w.word, float(w.start), float(w.end)) for seg in segments for w in seg.words]
+    try:
+        model = WhisperModel(model_size, device="auto", compute_type="auto")
+        return _transcribe_words(model, audio)
+    except RuntimeError:
+        # e.g. CUDA runtime DLLs missing (cublas64_12.dll): retry on CPU.
+        model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        return _transcribe_words(model, audio)

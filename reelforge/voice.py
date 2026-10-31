@@ -81,7 +81,9 @@ def import_line(line: Line, audio_dir: Path, transcribe=None) -> VoicedLine:
         raise VoiceError(f"missing imported audio {mp3}")
     meta = mp3.with_suffix(".align.json")
     if not meta.exists() or meta.stat().st_mtime < mp3.stat().st_mtime:
-        words = (transcribe or whisper_words)(mp3)
+        words = [tuple(w) for w in (transcribe or whisper_words)(mp3)]
+        if not words:
+            raise VoiceError(f"no speech found in {mp3}")
         meta.write_text(json.dumps([list(w) for w in words]), encoding="utf-8")
     words = [tuple(w) for w in json.loads(meta.read_text(encoding="utf-8"))]
     return VoicedLine(line.id, mp3, chars_from_words(words))
