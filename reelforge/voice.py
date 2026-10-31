@@ -9,6 +9,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
+from .align_local import chars_from_words, whisper_words
 from .alignment import Char, clean_chars
 from .schema import Line
 
@@ -71,3 +72,16 @@ def synthesize_line(line: Line, voice_id: str, out_dir: Path, api_key: str,
     chars = clean_chars(a["characters"], a["character_start_times_seconds"],
                         a["character_end_times_seconds"])
     return VoicedLine(line.id, mp3, chars)
+
+
+def import_line(line: Line, audio_dir: Path, transcribe=None) -> VoicedLine:
+    """Use a pre-generated <line.id>.mp3 (e.g. from the ElevenLabs web app); align locally."""
+    mp3 = Path(audio_dir) / f"{line.id}.mp3"
+    if not mp3.exists():
+        raise VoiceError(f"missing imported audio {mp3}")
+    meta = mp3.with_suffix(".align.json")
+    if not meta.exists() or meta.stat().st_mtime < mp3.stat().st_mtime:
+        words = (transcribe or whisper_words)(mp3)
+        meta.write_text(json.dumps([list(w) for w in words]), encoding="utf-8")
+    words = [tuple(w) for w in json.loads(meta.read_text(encoding="utf-8"))]
+    return VoicedLine(line.id, mp3, chars_from_words(words))
