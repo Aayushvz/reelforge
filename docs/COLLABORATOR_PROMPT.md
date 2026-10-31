@@ -38,6 +38,15 @@ You're continuing work on **reelforge**, a private project that turns a written 
 - The `reelforge/` core stays **standard library only**. Heavy machine-learning tools live in optional extras or in `tools/` scripts, imported lazily.
 - **Token-aware:** use cheaper subagent models for mechanical tasks and the most capable model for design and visual judgment.
 
+## Platform direction: multiple styles (read this first)
+reelforge is becoming a **multi-style platform** (5–6 animation styles; the owner will add more). Read `docs/superpowers/specs/2026-10-31-multi-style-engines.md`. Revised build order:
+0. **Engine refactor:** put the existing Blender pipeline behind the style-engine contract as `blender3d`, add the registry and `--style`, with no behaviour change.
+1. **Style 1:** Sub-projects A (characters) and B (environments) below.
+2. **Style 2 `cinematic-ai`:** the ink.industries look via AI keyframes, image-to-video and lip sync, behind a provider abstraction. Paid providers use the owner's own API key from an environment variable, never handled by Claude; there's a free Wan 2.2 fallback, and costs are shown before rendering.
+3. **Sub-project C, the editor:** includes a style picker, and its panels adapt to each engine's capabilities.
+
+The "no paid tools" rule below applies to **Style 1**. For Style 2, paid AI-video providers are an approved opt-in.
+
 ## Look target
 Read `docs/HANDOFF.md` §4b. The owner's end goal is the ink.industries "First kiss effect V2" Pixar-like look; the reference stills go in `references/style/`. Those reels are AI-video generated. The owner knowingly chose Blender anyway, so aim as close as free 3D allows:
 - hair cards with clumps and flyaways
