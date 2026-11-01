@@ -84,6 +84,14 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"   # Blender 4.5.15 in t
 3. Re-run the Audio2Face vs viseme comparison on the new head (drop-in via `out/a2f/<id>.json`).
 4. Environment: cheat the wide-shot f-stop to about 0.4–0.5 for bokeh, and retune the rim light and haze.
 
+## 4. CURRENT PRIORITY: production brief (2026-11-01)
+**Read `docs/superpowers/specs/2026-11-01-cast-sets-editor-brief.md`.** The owner wants:
+- **7 original characters** (4 male, 3 female) in a stylized-sculpt look, with a Gen-Z wardrobe system;
+- **10 environments × 3 lighting presets**;
+- a **dark, minimal editor UI** that uses Higgsfield and InVideo as references only, our own design, with no AI-slop patterns.
+
+The brief's build order supersedes the earlier orders below. The style reference images go in `references/characters/style/`; ask the owner to add them if they're missing.
+
 ## 4a. Platform direction: multiple animation styles (decided 2026-10-31)
 reelforge becomes a **multi-style platform with 5–6 styles**; the user will add more references over time.
 - **Style 1** is the Blender 3D pipeline built in Milestone 1 (`blender3d`).

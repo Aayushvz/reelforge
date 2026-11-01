@@ -38,6 +38,14 @@ You're continuing work on **reelforge**, a private project that turns a written 
 - The `reelforge/` core stays **standard library only**. Heavy machine-learning tools live in optional extras or in `tools/` scripts, imported lazily.
 - **Token-aware:** use cheaper subagent models for mechanical tasks and the most capable model for design and visual judgment.
 
+## CURRENT PRIORITY (overrides the sub-project details below where they conflict)
+Read `docs/superpowers/specs/2026-11-01-cast-sets-editor-brief.md`. Build:
+- 7 original characters with a Gen-Z wardrobe;
+- 10 environments with 3 lighting presets each;
+- the dark, minimal editor UI, with Higgsfield and InVideo as references only.
+
+Follow the brief's build order. Use the stylized-sculpt reference look in `references/characters/style/`, and keep every character original, with no likenesses of real people.
+
 ## Platform direction: multiple styles (read this first)
 reelforge is becoming a **multi-style platform** (5–6 animation styles; the owner will add more). Read `docs/superpowers/specs/2026-10-31-multi-style-engines.md`. Revised build order:
 0. **Engine refactor:** put the existing Blender pipeline behind the style-engine contract as `blender3d`, add the registry and `--style`, with no behaviour change.
