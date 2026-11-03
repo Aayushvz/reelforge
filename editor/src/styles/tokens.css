@@ -1,0 +1,85 @@
+/* ReelForge design tokens. Every colour, size and duration in the app comes from here. */
+:root {
+  /* Surfaces: near-black greys, stepping up in elevation */
+  --bg-0: #0b0b0c;      /* app background */
+  --bg-1: #111113;      /* panels */
+  --bg-2: #161618;      /* elevated: cards, menus */
+  --bg-3: #1c1c1f;      /* inputs, hover */
+  --bg-4: #242428;      /* pressed, active */
+  --canvas: #050506;    /* video canvas surround */
+
+  --line: #232327;
+  --line-strong: #2f2f34;
+  --line-focus: #4a4a52;
+
+  --text-1: #ededef;
+  --text-2: #a1a1a9;
+  --text-3: #6d6d75;
+  --text-4: #4a4a51;
+
+  /* One accent: warm amber, echoing the glow look of the renders */
+  --accent: #f0a43a;
+  --accent-hover: #f5b558;
+  --accent-ink: #1b1204;
+  --accent-soft: rgba(240, 164, 58, 0.12);
+  --accent-line: rgba(240, 164, 58, 0.45);
+
+  /* Status only */
+  --ok: #46b97f;
+  --ok-soft: rgba(70, 185, 127, 0.12);
+  --warn: #e0773a;
+  --warn-soft: rgba(224, 119, 58, 0.12);
+  --err: #e5484d;
+  --err-soft: rgba(229, 72, 77, 0.12);
+  --info: #6e8fd8;
+  --info-soft: rgba(110, 143, 216, 0.12);
+
+  /* Timeline track colours: muted so the imagery stays the focus */
+  --trk-dialogue: #5b7fa8;
+  --trk-shots: #8a7a5c;
+  --trk-anim: #7a6a92;
+  --trk-mood: #5f8a74;
+  --trk-subs: #9a8a6a;
+  --trk-music: #6a8a96;
+  --trk-sfx: #946a6a;
+  --trk-video: #8a7a5c;
+  --trk-audio: #5b7fa8;
+  --trk-overlay: #9a8a6a;
+
+  /* Type */
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-32: 32px;
+
+  /* 8px grid (4px half-steps for dense controls) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+
+  --ctl-h: 32px;
+  --ctl-h-sm: 26px;
+
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--line-strong);
+
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --sidebar-w: 224px;
+  --sidebar-w-collapsed: 56px;
+}

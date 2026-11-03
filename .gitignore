@@ -7,3 +7,8 @@ tools/blender*/
 *.blend1
 .superpowers/
 tools/
+editor/node_modules/
+editor/dist/
+projects/
+samples/*/editor.json
+editor/*.tsbuildinfo
