@@ -1,0 +1,328 @@
+import { useMemo, useRef, useState } from "react";
+import {
+  Plus, Zap, MoreHorizontal, ArrowUp, ArrowDown, Copy, Trash2, Upload, FileText, Lightbulb, Check, AudioLines, ClipboardPaste,
+  AlertTriangle, UserPlus, Pencil,
+} from "lucide-react";
+import { useProject } from "@/stores/project";
+import { EMOTIONS, MOODS, type PerfLine, type Performance } from "@/lib/types";
+import { estimateDuration, nextLineId, parsePasted, scriptNotes, validate, wordCount } from "@/lib/script";
+import { duration, cap } from "@/lib/format";
+import { MOOD_COLORS, VOICES, character } from "@/data/catalog";
+import { Dialog, Tooltip, useMenu } from "@/components/ui/Overlay";
+import { Badge } from "@/components/ui/Feedback";
+import { toast } from "@/stores/ui";
+import { api } from "@/lib/api";
+
+const SPEAKER_TONES = ["#c9a26a", "#6e8fd8", "#7fb38f", "#c47f9a", "#9a8fd0", "#c98f5f", "#6fb0b8"];
+export const speakerTone = (p: Performance | null, name: string) =>
+  SPEAKER_TONES[Math.max(0, Object.keys(p?.characters ?? {}).indexOf(name)) % SPEAKER_TONES.length];
+
+function AutoText({ value, onChange, placeholder, onKeyDown, invalid, inputRef }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; invalid?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void; inputRef?: (el: HTMLTextAreaElement | null) => void;
+}) {
+  return (
+    <textarea ref={(el) => { if (el) { el.style.height = "0"; el.style.height = `${el.scrollHeight}px`; } inputRef?.(el); }}
+      className="line-text" rows={1} value={value} placeholder={placeholder} aria-invalid={invalid}
+      onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} />
+  );
+}
+
+export function ScriptStudio() {
+  const perf = useProject((s) => s.performance);
+  const files = useProject((s) => s.files);
+  const id = useProject((s) => s.id);
+  const cast = useProject((s) => s.editor.cast);
+  const setPerf = useProject((s) => s.setPerformance);
+  const reloadFiles = useProject((s) => s.reloadFiles);
+  const saveNow = useProject((s) => s.saveNow);
+  const [showNotes, setShowNotes] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const menu = useMenu();
+  const refs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const audioInput = useRef<HTMLInputElement>(null);
+  const audioTarget = useRef<string | null>(null);
+
+  const lines = perf?.lines ?? [];
+  const speakers = Object.keys(perf?.characters ?? {});
+  const issues = useMemo(() => validate(perf), [perf]);
+  const notes = useMemo(() => scriptNotes(perf), [perf]);
+  const lineIssues = (lid: string) => issues.filter((i) => i.lineId === lid);
+  const hasAudio = (lid: string) => files.audio.includes(`${lid}.mp3`);
+
+  const patchLine = (lid: string, patch: Partial<PerfLine>) =>
+    setPerf((p) => ({ ...p, lines: p.lines.map((l) => (l.id === lid ? { ...l, ...patch } : l)) }));
+
+  const addLine = (after?: string, focus = true) => {
+    let newId = "";
+    setPerf((p) => {
+      newId = nextLineId(p.lines);
+      const prev = p.lines.find((l) => l.id === after) ?? p.lines[p.lines.length - 1];
+      const speaker = prev ? (Object.keys(p.characters).find((s) => s !== prev.speaker) ?? prev.speaker) : Object.keys(p.characters)[0];
+      const line: PerfLine = { id: newId, speaker, text: "", emotion: "neutral", intensity: 0.5, mood: prev?.mood ?? "calm", pause_after: 0.3 };
+      const idx = after ? p.lines.findIndex((l) => l.id === after) + 1 : p.lines.length;
+      const next = [...p.lines];
+      next.splice(idx, 0, line);
+      return { ...p, lines: next };
+    });
+    if (focus) requestAnimationFrame(() => refs.current[newId]?.focus());
+  };
+
+  const move = (lid: string, dir: -1 | 1) => setPerf((p) => {
+    const i = p.lines.findIndex((l) => l.id === lid);
+    const j = i + dir;
+    if (j < 0 || j >= p.lines.length) return p;
+    const next = [...p.lines];
+    [next[i], next[j]] = [next[j], next[i]];
+    return { ...p, lines: next };
+  });
+
+  const remove = (lid: string) => setPerf((p) => ({ ...p, lines: p.lines.filter((l) => l.id !== lid) }));
+  const duplicate = (lid: string) => setPerf((p) => {
+    const i = p.lines.findIndex((l) => l.id === lid);
+    const next = [...p.lines];
+    next.splice(i + 1, 0, { ...p.lines[i], id: nextLineId(p.lines) });
+    return { ...p, lines: next };
+  });
+
+  const addSpeaker = () => setPerf((p) => {
+    let n = Object.keys(p.characters).length + 1;
+    const names = "ABCDEFG";
+    let name = names[n - 1] ?? `S${n}`;
+    while (p.characters[name]) name = `S${++n}`;
+    return { ...p, characters: { ...p.characters, [name]: { voice_id: VOICES[n % VOICES.length].id, caption_color: "#FFFFFF", highlight_color: "#FFD23F" } } };
+  });
+
+  const renameSpeaker = (from: string, to: string) => {
+    const name = to.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+    setRenaming(null);
+    if (!name || name === from || perf?.characters[name]) return;
+    setPerf((p) => {
+      const characters = Object.fromEntries(Object.entries(p.characters).map(([k, v]) => [k === from ? name : k, v]));
+      return { ...p, characters, lines: p.lines.map((l) => (l.speaker === from ? { ...l, speaker: name } : l)) };
+    });
+    useProject.getState().setEditor((e) => {
+      const { [from]: slot, ...rest } = e.cast;
+      return slot ? { ...e, cast: { ...rest, [name]: slot } } : e;
+    });
+  };
+
+  const removeSpeaker = (name: string) => {
+    if (lines.some((l) => l.speaker === name)) { toast(`${name} still has lines. Reassign them first.`, "err"); return; }
+    setPerf((p) => { const { [name]: _, ...rest } = p.characters; return { ...p, characters: rest }; });
+  };
+
+  const uploadAudio = async (file: File) => {
+    const lid = audioTarget.current;
+    if (!lid) return;
+    const pid = id ?? (await saveNow());
+    if (!pid) { toast("Save the project first", "err"); return; }
+    try {
+      await api.upload(pid, `out/audio/${lid}.mp3`, file);
+      await reloadFiles();
+      toast(`Voice line ${lid} imported`);
+    } catch (e) { toast((e as Error).message, "err"); }
+  };
+
+  const castName = (speaker: string) => character(cast[speaker]?.characterId)?.name;
+
+  return (
+    <section className="script-studio" aria-label="Script">
+      <header className="ss-head">
+        <div className="col" style={{ gap: 2 }}>
+          <h2 className="h2">Script</h2>
+          <div className="row meta" style={{ gap: 12 }}>
+            <span>{lines.length} {lines.length === 1 ? "line" : "lines"}</span>
+            <span>{wordCount(perf)} words</span>
+            <Tooltip label="Estimated from word count. Real timing comes from the voice lines."><span>≈ {duration(estimateDuration(perf))}</span></Tooltip>
+            {issues.length > 0 && lines.length > 0 && <span style={{ color: "var(--warn)" }} className="row"><AlertTriangle size={12} />{issues.length} to fix</span>}
+          </div>
+        </div>
+        <div className="grow" />
+        <button className={`btn btn-sm ${showNotes ? "" : "btn-ghost"}`} aria-pressed={showNotes} onClick={() => setShowNotes(!showNotes)}>
+          <Lightbulb size={14} />Script notes{notes.length > 0 && <span className="mono faint">{notes.length}</span>}
+        </button>
+        <button className="btn btn-sm btn-ghost" onClick={() => setImportOpen(true)}><ClipboardPaste size={14} />Paste or import</button>
+      </header>
+
+      <div className="speakers">
+        {speakers.map((s) => (
+          <div key={s} className="speaker-chip" style={{ ["--tone" as string]: speakerTone(perf, s) }}>
+            <span className="tone-dot" />
+            {renaming === s
+              ? <input className="input sm" autoFocus defaultValue={s} style={{ width: 90 }} onBlur={(e) => renameSpeaker(s, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setRenaming(null); }} />
+              : <span className="mono">{s}</span>}
+            {castName(s) && <span className="faint">· {castName(s)}</span>}
+            <button className="icon-btn xs" aria-label={`Speaker ${s} options`} onClick={(e) => menu.openAt(e.currentTarget.getBoundingClientRect(), [
+              { label: "Rename", icon: <Pencil size={14} />, onSelect: () => setRenaming(s) },
+              { label: "Remove speaker", icon: <Trash2 size={14} />, danger: true, disabled: speakers.length < 2, onSelect: () => removeSpeaker(s) },
+            ])}><MoreHorizontal size={12} /></button>
+          </div>
+        ))}
+        <button className="btn btn-sm btn-ghost" onClick={addSpeaker} disabled={speakers.length >= 2}
+          title={speakers.length >= 2 ? "The renderer has two character marks today" : undefined}><UserPlus size={14} />Speaker</button>
+      </div>
+
+      {showNotes && (
+        <div className="notes">
+          {notes.length === 0 ? <div className="row meta"><Check size={14} style={{ color: "var(--ok)" }} />Nothing to flag. These notes are simple local checks, not an AI review.</div> :
+            notes.map((n, i) => <div key={i} className="row note"><Lightbulb size={14} style={{ color: n.level === "warn" ? "var(--warn)" : "var(--text-3)", flex: "none" }} /><span>{n.text}</span></div>)}
+        </div>
+      )}
+
+      <ol className="lines">
+        {lines.map((l, i) => {
+          const errs = lineIssues(l.id);
+          return (
+            <li key={l.id} className={`line${l.punchline ? " punch" : ""}`} style={{ ["--tone" as string]: speakerTone(perf, l.speaker) }}>
+              <div className="line-gutter mono">{String(i + 1).padStart(2, "0")}</div>
+              <div className="line-main">
+                <div className="line-top">
+                  <select className="speaker-select mono" value={l.speaker} aria-label="Speaker" onChange={(e) => patchLine(l.id, { speaker: e.target.value })}>
+                    {speakers.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {!speakers.includes(l.speaker) && <option value={l.speaker}>{l.speaker} (missing)</option>}
+                  </select>
+                  <AutoText value={l.text} placeholder={i === 0 ? "Open with the hook. Use [sighs] or [excited] for delivery cues." : "Next line…"}
+                    invalid={errs.some((e) => e.field === "text")}
+                    inputRef={(el) => { refs.current[l.id] = el; }}
+                    onChange={(v) => patchLine(l.id, { text: v })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addLine(l.id); }
+                      if (e.key === "Backspace" && !l.text && lines.length > 1) { e.preventDefault(); const prev = lines[i - 1]; remove(l.id); if (prev) requestAnimationFrame(() => refs.current[prev.id]?.focus()); }
+                    }} />
+                </div>
+                <div className="line-controls">
+                  <select className="mini-select" value={l.emotion} aria-label="Emotion" onChange={(e) => patchLine(l.id, { emotion: e.target.value as PerfLine["emotion"] })}>
+                    {EMOTIONS.map((x) => <option key={x} value={x}>{cap(x)}</option>)}
+                  </select>
+                  <label className="mini-range" title="Emotion intensity">
+                    <span className="faint">Intensity</span>
+                    <input type="range" className="range" min={0} max={1} step={0.05} value={l.intensity} style={{ ["--fill" as string]: `${l.intensity * 100}%`, width: 72 }}
+                      onChange={(e) => patchLine(l.id, { intensity: Number(e.target.value) })} aria-label="Intensity" />
+                    <span className="mono">{l.intensity.toFixed(2)}</span>
+                  </label>
+                  <label className="mini-mood" title="Mood drives the set lighting">
+                    <span className="dot" style={{ background: MOOD_COLORS[l.mood] }} />
+                    <select className="mini-select" value={l.mood} aria-label="Mood" onChange={(e) => patchLine(l.id, { mood: e.target.value as PerfLine["mood"] })}>
+                      {MOODS.map((m) => <option key={m} value={m}>{cap(m)}</option>)}
+                    </select>
+                  </label>
+                  <label className="mini-range" title="Pause after the line, seconds">
+                    <span className="faint">Pause</span>
+                    <input className="mini-num mono" type="number" min={0} max={5} step={0.1} value={l.pause_after ?? 0.3} aria-label="Pause after"
+                      onChange={(e) => patchLine(l.id, { pause_after: Math.max(0, Number(e.target.value)) })} />
+                    <span className="faint">s</span>
+                  </label>
+                  <Tooltip label={l.punchline ? "Punchline: close-up and bigger caption pop" : "Mark as punchline"}>
+                    <button className={`chip${l.punchline ? "" : ""}`} aria-pressed={Boolean(l.punchline)} onClick={() => patchLine(l.id, { punchline: !l.punchline })}>
+                      <Zap size={12} />Punchline
+                    </button>
+                  </Tooltip>
+                  <div className="grow" />
+                  <Tooltip label={hasAudio(l.id) ? "Voice line on disk. Reused at render, no new generation." : "No voice line yet. Import the mp3 from ElevenLabs."}>
+                    <button className={`audio-pill${hasAudio(l.id) ? " on" : ""}`} onClick={() => { audioTarget.current = l.id; audioInput.current?.click(); }}>
+                      {hasAudio(l.id) ? <><AudioLines size={12} />Cached</> : <><Upload size={12} />Voice</>}
+                    </button>
+                  </Tooltip>
+                  <button className="icon-btn sm" aria-label="Line options" onClick={(e) => menu.openAt(e.currentTarget.getBoundingClientRect(), [
+                    { label: "Insert line below", icon: <Plus size={14} />, onSelect: () => addLine(l.id) },
+                    { label: "Duplicate", icon: <Copy size={14} />, onSelect: () => duplicate(l.id) },
+                    { label: "Move up", icon: <ArrowUp size={14} />, disabled: i === 0, onSelect: () => move(l.id, -1) },
+                    { label: "Move down", icon: <ArrowDown size={14} />, disabled: i === lines.length - 1, onSelect: () => move(l.id, 1) },
+                    { separator: true },
+                    { label: "Delete line", icon: <Trash2 size={14} />, danger: true, onSelect: () => remove(l.id) },
+                  ], "end")}><MoreHorizontal size={14} /></button>
+                </div>
+                {errs.length > 0 && l.text && <div className="err-text">{errs.map((e) => e.message.replace(/^Line \d+:? ?/, "")).join(" · ")}</div>}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      {lines.length === 0 ? (
+        <div className="script-empty">
+          <FileText size={18} className="faint" />
+          <div className="col" style={{ gap: 2 }}>
+            <span className="h3">Start with the hook</span>
+            <span className="meta">Write line by line, or paste a whole script. "NAME: line" sets the speaker.</span>
+          </div>
+          <div className="grow" />
+          <button className="btn" onClick={() => setImportOpen(true)}><ClipboardPaste size={14} />Paste script</button>
+          <button className="btn btn-primary" onClick={() => addLine()}><Plus size={14} />First line</button>
+        </div>
+      ) : (
+        <button className="add-line" onClick={() => addLine()}><Plus size={14} />Add line<span className="faint" style={{ marginLeft: "auto" }}>or press <span className="kbd">Enter</span> in a line</span></button>
+      )}
+
+      <input ref={audioInput} type="file" accept="audio/mpeg,.mp3" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadAudio(f); e.target.value = ""; }} />
+      {importOpen && <ImportDialog onClose={() => setImportOpen(false)} />}
+      {menu.node}
+    </section>
+  );
+}
+
+function ImportDialog({ onClose }: { onClose: () => void }) {
+  const perf = useProject((s) => s.performance);
+  const setPerf = useProject((s) => s.setPerformance);
+  const [text, setText] = useState("");
+  const [mode, setMode] = useState<"append" | "replace">("append");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const fallback = Object.keys(perf?.characters ?? {})[0] ?? "A";
+  const parsed = parsePasted(text, fallback);
+  const newSpeakers = [...new Set(parsed.map((p) => p.speaker))].filter((s) => !perf?.characters[s]);
+
+  const loadFile = async (f: File) => {
+    const body = await f.text();
+    if (f.name.endsWith(".json")) {
+      try {
+        const data = JSON.parse(body) as Performance;
+        if (!Array.isArray(data.lines)) throw new Error("No lines array");
+        setPerf((p) => ({ ...p, ...data, version: 1 }));
+        toast(`Imported ${data.lines.length} lines from ${f.name}`);
+        onClose();
+      } catch (e) { toast(`Couldn't read ${f.name}: ${(e as Error).message}`, "err"); }
+      return;
+    }
+    setText(body);
+  };
+
+  const apply = () => {
+    setPerf((p) => {
+      const characters = { ...p.characters };
+      newSpeakers.forEach((s, i) => { characters[s] = { voice_id: VOICES[(Object.keys(characters).length + i) % VOICES.length].id, caption_color: "#FFFFFF", highlight_color: "#FFD23F" }; });
+      const base = mode === "replace" ? [] : p.lines;
+      const added: PerfLine[] = [];
+      for (const row of parsed) {
+        const all = [...base, ...added];
+        added.push({ id: nextLineId(all), speaker: row.speaker, text: row.text, emotion: "neutral", intensity: 0.5, mood: "calm", pause_after: 0.3 });
+      }
+      return { ...p, characters, lines: [...base, ...added] };
+    });
+    toast(`${parsed.length} lines added`);
+    onClose();
+  };
+
+  return (
+    <Dialog title="Paste or import a script" onClose={onClose} wide footer={<>
+      <span className="meta grow">{parsed.length} lines{newSpeakers.length > 0 && ` · new speakers: ${newSpeakers.join(", ")}`}</span>
+      <button className="btn" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={!parsed.length} onClick={apply}>{mode === "replace" ? "Replace script" : "Add lines"}</button>
+    </>}>
+      <textarea className="textarea mono" rows={10} autoFocus value={text} onChange={(e) => setText(e.target.value)}
+        placeholder={"KAI: The client said it's great.\nARIA: [excited] Wait. They actually approved it!"} style={{ fontSize: 12 }} />
+      <div className="row">
+        <button className="btn btn-sm" onClick={() => fileRef.current?.click()}><Upload size={14} />Import .txt or performance.json</button>
+        <div className="grow" />
+        <div className="seg">
+          <button aria-pressed={mode === "append"} onClick={() => setMode("append")}>Append</button>
+          <button aria-pressed={mode === "replace"} onClick={() => setMode("replace")}>Replace</button>
+        </div>
+      </div>
+      <div className="hint">One line per row. "NAME: text" sets the speaker; rows without a name go to {fallback}. Delivery cues in [brackets] are passed to ElevenLabs and left out of captions.</div>
+      <input ref={fileRef} type="file" accept=".txt,.json,.md" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void loadFile(f); e.target.value = ""; }} />
+      {parsed.length > 0 && <Badge>{parsed.length} lines detected</Badge>}
+    </Dialog>
+  );
+}
