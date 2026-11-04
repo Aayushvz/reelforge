@@ -30,7 +30,6 @@ script ─► performance pass (Claude) ─► performance.json   (shared, style
 |---|---|---|---|---|---|
 | 1 | `blender3d` | @canwebuildthis / NMXWZ: stylized 3D characters at a desk, glowing moody sets | Blender 4.5 headless (Milestone 1) | Free, local | **Built** (stand-in character); characters and environments from references are next |
 | 2 | `cinematic-ai` | ink.industries "First kiss effect V2": Pixar-like faces, strand hair, knit fabric, lantern and sunset streets, aerial and VFX shots | AI image keyframes (consistent character sheets) → AI image-to-video → lip sync | **Paid** for top quality (Kling, Veo, Seedance or similar, about $10–30 a month); free option is open-source Wan 2.2 (lower quality, slow on 8 GB) | Planned |
-| 3 | `toon25d` | 2D ink-outlined cartoon characters in a painted 3D world, with gliding cameras and synthesized sound (from mromidev/claude-animated-shorts, MIT) | three.js + Remotion, local | Free | Planned; see `2026-11-05-style-toon25d.md` and `assets/styles/toon25d/` |
 | 4–6 | TBD | The owner will supply references | TBD | TBD | Future |
 
 ### Style 2 (`cinematic-ai`) notes

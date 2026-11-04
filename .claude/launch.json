@@ -6,12 +6,6 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "editor"],
       "port": 5190
-    },
-    {
-      "name": "toon25d-studio",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "studio", "--prefix", "D:/reelforge-wt/toon25d-spike/engines/toon25d/remotion", "--", "--port", "3010", "--no-open"],
-      "port": 3010
     }
   ]
 }
