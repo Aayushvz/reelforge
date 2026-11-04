@@ -14,6 +14,54 @@ You're the lead technical artist and engineer on **reelforge**: script in, cinem
 
 "No mistakes" is enforced by process, not by hope. Every deliverable passes automated checks, a visual review, and an independent reviewer on a different model before it counts as done.
 
+# TOP PRIORITY: the face (owner's explicit direction)
+**The face matters more than anything else.** Reels are mostly close-ups and medium shots, so viewers connect through the face. Spend detail, polygon budget, texture resolution, review time and fix rounds on the **head and face first**. Bodies, clothes and sets should be good, but **never at the expense of the face**.
+
+**Face quality bar** (judged in an 85 mm close-up at 1080×1920, against `references/characters/style/`):
+- **Sculpted forms:**
+  - clear planes on the brow ridge, cheekbones, jaw and chin;
+  - a nose with a bridge, tip and nostrils;
+  - lips with a defined vermilion border, philtrum, corners and a slight upper-lip overhang;
+  - nasolabial folds that deepen when smiling;
+  - eye bags and creases at the lid crease;
+  - ears with a helix and lobe.
+
+  Caricature proportions, but anatomically believable structure.
+- **Eyes, the most important feature:**
+  - separate sclera, iris (with depth or parallax and detailed fibres), pupil, refractive cornea and a wet-line;
+  - a tear duct; lids with real thickness, and lashes (cards);
+  - visible catchlights in every shot;
+  - eyelids that conform to the eyeball and follow gaze;
+  - blinks that fully close without the lid poking through;
+  - subtle saccades and eye darts in animation.
+- **Brows:** sculpted or card-based brows with hair direction. Brow shapes must drive clear emotion: inner-up for worry, down for anger, one-brow raise for smug.
+- **Skin:**
+  - layered subsurface (red in the ears, nose and cheeks; blue-grey in stubble areas);
+  - **4K head textures** (budget: 4K for the head and face, 2K for the body and clothes);
+  - micro-detail normal maps (pores, fine lines, lip texture);
+  - roughness variation (oily T-zone, matte cheeks, glossy lips);
+  - blush and freckle maps where the design calls for them;
+  - stubble and beards built with cards or shells, not just painted on.
+- **Mouth:**
+  - teeth with gums, and a tongue that moves for TH and L;
+  - a darkened, occluded mouth cavity;
+  - lips that seal fully on M, B and P, with no gaps or intersections.
+- **Topology and polygon budget:** spend up to about **60% of each character's triangle budget on the head**. Use edge loops around the eyes, mouth and nasolabial area, sized for clean deformation.
+- **Expressions:**
+  - all 52 ARKit shapes, **individually sculpted per character** (not a single generic transfer), plus correctives;
+  - wrinkle maps (forehead lines on brow-raise, crow's feet on smile, nose wrinkle on sneer) blended by the face controls;
+  - expressions read as clearly as the references: a laugh with squinted eyes and lifted cheeks, a smug look with one corner raised, surprise with wide eyes and a dropped jaw.
+- **Face lighting:** every set preset and the preview script must sculpt the face (key, fill and rim, a catchlight in the eyes, soft shadow under the nose and chin), never flat.
+
+**Face-specific gates** (in addition to the general quality system):
+- For each character:
+  - an **85 mm close-up face sheet**: neutral, 8 emotions, 4 visemes, blink, and gaze left, right, up and down;
+  - an **extreme close-up of the eyes and mouth**;
+  - a 5-second talking close-up.
+- An **automated face check:** all 52 shapes at 1.0, and the common pairs combined, with no lip, lid or teeth intersections, and eyelids fully closed at blink = 1.
+- **The bake-off (Phase 1) is judged primarily on the face.** Score: face likeness to the style refs at 40%, expressiveness at 25%, eye quality at 15%, then everything else.
+- **The face gets an independent review by Opus** on every character before that character can pass.
+
 # Read first (in this order)
 1. `CLAUDE.md` (ground rules), `docs/HANDOFF.md`, `docs/superpowers/specs/2026-11-01-cast-sets-editor-brief.md`, `docs/superpowers/specs/2026-10-31-multi-style-engines.md`, `docs/superpowers/notes/m1-followups.md`, `editor/README.md`.
 2. **Look at these images with the Read tool:**
@@ -50,7 +98,7 @@ Every asset has an automated **validator** plus a **visual gate**:
 1. **Validators** (a new `blender/validate_*.py`, run headless and in CI-style tests). For each `.blend`, check:
    - every contract object and property exists; all 52 ARKit properties drive something visible;
    - no non-manifold or inverted normals on visible meshes; no missing textures or links;
-   - polygon and texture budgets: character ≤ about 120k tris per outfit, 2K textures; set ≤ about 1.5M tris;
+   - polygon and texture budgets: character ≤ about 120k tris per outfit, with about 60% on the head; textures 4K for the head and 2K for the body and clothes; set ≤ about 1.5M tris;
    - the scene opens and renders one Eevee frame in under N seconds on the reference machine;
    - the deformation test passes: all face shapes at 1.0 and the rig at extreme poses produce no intersections through the cheeks, lips or eyelids (sample-based check plus a render).
 2. **Visual gates.** Contact sheets are rendered by script, viewed by you, and compared side by side with the references. Each gets a written PASS/PARTIAL/FAIL verdict with specifics, in a `REVIEW.md` per phase.
