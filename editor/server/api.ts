@@ -249,7 +249,9 @@ function saveSettings(body: { elevenlabsKey?: string | null; elevenlabsModel?: s
 
 // The pipeline's environment: Blender path plus the user's key, passed only to child processes.
 function pipelineEnv(): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env, ELEVENLABS_MODEL: elevenModel(), PYTHONIOENCODING: "utf-8" };
+  const env: NodeJS.ProcessEnv = { ...process.env, ELEVENLABS_MODEL: elevenModel(), PYTHONIOENCODING: "utf-8",
+    // piped Python output is block-buffered: without this the Render page sees no live progress
+    PYTHONUNBUFFERED: "1" };
   const blender = blenderPath();
   if (blender) env.REELFORGE_BLENDER = blender;
   const key = elevenKey();
