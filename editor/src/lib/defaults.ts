@@ -16,7 +16,7 @@ export function defaultEditor(kind: EditorDoc["kind"] = "generated", ratio: Rati
     cast: kind === "generated" ? { A: { characterId: "aria", outfitId: "aria-1" } } : {},
     environment: { id: "night-city-desk", lighting: "blue-night" },
     subtitles: { ...SUBTITLE_TEMPLATES[0].style },
-    output: { ratio, resolution: [...RATIOS[ratio]] as [number, number], fps: 30, quality: "final" },
+    output: { ratio, resolution: [...RATIOS[ratio]] as [number, number], fps: 30, quality: "draft" },
     audio: { musicId: null, musicVolume: 0.35, duckMusic: true, dialogueVolume: 1 },
     grade: { brightness: 0, contrast: 0, saturation: 0, vignette: 0.35, grain: 0.2, glow: 0.3 },
     timeline: null, approvals: {}, history: [], exports: [],

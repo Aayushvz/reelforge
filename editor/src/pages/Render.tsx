@@ -35,6 +35,8 @@ export function RenderPage() {
   const loadSystem = useSystem((s) => s.load);
   const [live, setLive] = useState<Live>({ job: null, frame: null, nFrames: null, log: [] });
   const [draft, setDraft] = useState(true);
+  // follow the quality chosen on Create once the project is loaded
+  useEffect(() => { if (!loading) setDraft(editor.output.quality !== "final"); }, [loading, editor.output.quality]);
   const [now, setNow] = useState(Date.now());
   const [showLog, setShowLog] = useState(false);
   const started = useRef(false);
