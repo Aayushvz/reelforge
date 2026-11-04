@@ -3,6 +3,9 @@ import bmesh
 import bpy
 from mathutils import Vector
 
+# Blender 4.2-4.5 call it EEVEE_NEXT; 5.x renamed it back.
+EEVEE = "BLENDER_EEVEE" if bpy.app.version >= (5, 0, 0) else "BLENDER_EEVEE_NEXT"
+
 
 def material(name, color, rough=0.5, sss=0.0, sheen=0.0, coat=0.0, metal=0.0, emit=0.0):
     m = bpy.data.materials.new(name)

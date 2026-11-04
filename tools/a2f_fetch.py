@@ -14,6 +14,7 @@ Writes {"frames": [{"time": t, "blendshapes": {arkitName: w}}]} at 30 fps.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -165,6 +166,7 @@ def main(argv: list[str] | None = None) -> int:
     frames, stats = run(a.audio, a.model, explicit)
     a.out.parent.mkdir(parents=True, exist_ok=True)
     a.out.write_text(json.dumps({"frames": frames, "source": "audio2face-3d-v2.3-mark-onnx-cpu",
+                                 "audio_sha1": hashlib.sha1(a.audio.read_bytes()).hexdigest(),
                                  "stats": stats}), encoding="utf-8")
     print(json.dumps(stats), file=sys.stderr)
     return 0

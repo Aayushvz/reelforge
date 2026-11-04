@@ -11,12 +11,13 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 align = ["faster-whisper>=1.2,<1.3", "av<19"]
+a2f = ["numpy", "onnxruntime"]
 
 [project.scripts]
 reelforge = "reelforge.cli:main"
 
 [tool.setuptools]
-packages = ["reelforge"]
+packages = ["reelforge", "reelforge.engines"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

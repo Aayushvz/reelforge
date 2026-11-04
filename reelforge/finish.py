@@ -3,32 +3,71 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+# Per-set grade (the set's "LUT"): a colour-balance push applied after the base look.
+GRADES = {
+    "night_city": "colorbalance=bs=0.05:bm=0.02:rh=0.03",
+    "bedroom": "colorbalance=rm=0.02:bs=0.03",
+    "rooftop": "colorbalance=rh=0.04:bs=0.04",
+    "cafe": "colorbalance=rh=0.03:gm=0.01:bs=0.01",
+    "lantern_street": "colorbalance=rh=0.06:gh=0.02:bs=-0.03",
+    "subway": "colorbalance=gm=0.03:bs=0.02",
+    "classroom": "colorbalance=rh=0.02:bh=-0.01",
+    "office": "colorbalance=bs=0.03:bh=0.02",
+    "night_mart": "colorbalance=gm=0.02:bh=0.03",
+    "pier": "colorbalance=rh=0.05:bs=0.03",
+}
+
 # Halation/bloom: isolate highlights, blur, tint warm, screen back over the image.
 FILTER = (
     "[0:v]format=gbrp,split=2[base][hi];"
     "[hi]curves=all='0/0 0.72/0 1/1',gblur=sigma=30,"
     "colorchannelmixer=rr=1:gg=0.45:bb=0.25[halo];"
     "[base][halo]blend=all_mode=screen:all_opacity=0.45,"
-    "eq=contrast=1.04:saturation=1.06,"
+    "eq=contrast=1.04:saturation=1.06,GRADE"
     "vignette=angle=PI/5,"
     "noise=alls=5:allf=t,"
     "ass=captions.ass,"
     "format=yuv420p[v];"
-    "[1:a]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]"
+    "[1:a]acompressor=threshold=0.1:ratio=4:attack=5:release=80:makeup=2,"  # tame speech peaks first
+    "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]"
 )
 
 
-def build_ffmpeg_cmd(fps: int, out_name: str) -> list[str]:
+def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "") -> list[str]:
+    grade = GRADES.get(environment)
+    graph = FILTER.replace("GRADE", f"{grade}," if grade else "")
     return ["ffmpeg", "-y", "-loglevel", "error",
             "-framerate", str(fps), "-start_number", "1", "-i", "frames/%04d.png",
             "-i", "dialogue.wav",
-            "-filter_complex", FILTER, "-map", "[v]", "-map", "[a]",
+            "-filter_complex", graph, "-map", "[v]", "-map", "[a]",
             "-c:v", "libx264", "-preset", "slow", "-crf", "16",
             "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest",
             out_name]
 
 
-def finish(workdir: Path, fps: int, out_name: str) -> Path:
+TARGET_LUFS = -14.0
+
+
+def measure_lufs(path: Path) -> float:
+    r = subprocess.run(["ffmpeg", "-nostats", "-i", str(path), "-af", "ebur128", "-f", "null", "-"],
+                       capture_output=True, text=True, check=True)
+    lines = [ln for ln in r.stderr.splitlines() if ln.strip().startswith("I:")]
+    return float(lines[-1].split()[1])
+
+
+def finish(workdir: Path, fps: int, out_name: str, environment: str = "") -> Path:
     # Relative paths + cwd avoid Windows drive-letter escaping inside the ass= filter.
-    subprocess.run(build_ffmpeg_cmd(fps, out_name), cwd=workdir, check=True)
-    return Path(workdir) / out_name
+    subprocess.run(build_ffmpeg_cmd(fps, out_name, environment), cwd=workdir, check=True)
+    out = Path(workdir) / out_name
+    # One-pass loudnorm undershoots on short clips: correct the residual gain. The peak limiter eats part
+    # of each boost, so repeat a few times.
+    for _ in range(4):
+        gain = TARGET_LUFS - measure_lufs(out)
+        if abs(gain) <= 0.5:
+            break
+        tmp = out.with_name("loud_" + out.name)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out), "-c:v", "copy",
+                        "-af", f"volume={gain:.2f}dB,alimiter=limit=0.84:level=false", "-c:a", "aac",
+                        "-b:a", "192k", "-movflags", "+faststart", str(tmp)], check=True)
+        tmp.replace(out)
+    return out

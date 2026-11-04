@@ -80,10 +80,17 @@ def import_line(line: Line, audio_dir: Path, transcribe=None) -> VoicedLine:
     if not mp3.exists():
         raise VoiceError(f"missing imported audio {mp3}")
     meta = mp3.with_suffix(".align.json")
-    if not meta.exists() or meta.stat().st_mtime < mp3.stat().st_mtime:
+    sha = hashlib.sha1(mp3.read_bytes()).hexdigest()
+    cached = json.loads(meta.read_text(encoding="utf-8")) if meta.exists() else None
+    if isinstance(cached, list):  # legacy cache (no hash): trust it only if newer than the audio
+        fresh = meta.stat().st_mtime >= mp3.stat().st_mtime
+    else:
+        fresh = cached is not None and cached.get("sha1") == sha
+    if not fresh:
         words = [tuple(w) for w in (transcribe or whisper_words)(mp3)]
         if not words:
             raise VoiceError(f"no speech found in {mp3}")
-        meta.write_text(json.dumps([list(w) for w in words]), encoding="utf-8")
-    words = [tuple(w) for w in json.loads(meta.read_text(encoding="utf-8"))]
+        cached = {"sha1": sha, "words": [list(w) for w in words]}
+        meta.write_text(json.dumps(cached), encoding="utf-8")
+    words = [tuple(w) for w in (cached if isinstance(cached, list) else cached["words"])]
     return VoicedLine(line.id, mp3, chars_from_words(words))

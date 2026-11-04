@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "fps": 30,
+  "ratio": "9:16",
+  "environment": "bedroom",
+  "lighting": "rgb_leds",
+  "characters": {
+    "KAI": {"voice_id": "21m00Tcm4TlvDq8ikWAM", "model": "kai", "caption_color": "#FFFFFF", "highlight_color": "#7FE3FF"},
+    "REY": {"voice_id": "21m00Tcm4TlvDq8ikWAM", "model": "rey", "outfit": 1, "caption_color": "#FFFFFF", "highlight_color": "#FFD23F"}
+  },
+  "lines": [
+    {"id": "l01", "speaker": "KAI", "text": "I fixed the bug.", "emotion": "deadpan", "intensity": 0.5, "mood": "calm", "pause_after": 0.4},
+    {"id": "l02", "speaker": "REY", "text": "Which one?", "emotion": "surprised", "intensity": 0.6, "mood": "calm", "pause_after": 0.4},
+    {"id": "l03", "speaker": "KAI", "text": "All of them. I deleted the app.", "emotion": "smug", "intensity": 0.9, "mood": "reveal", "pause_after": 0.6, "punchline": true}
+  ]
+}

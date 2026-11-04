@@ -18,10 +18,12 @@ def build_render_plan(perf: Performance, n_frames: int, faces: dict, shots: list
         "n_frames": n_frames,
         "resolution": list(RATIOS[perf.ratio]),
         "samples": samples,
-        "environment_blend": str(Path(assets_dir) / f"{perf.environment}.blend"),
-        "character_blend": str(Path(assets_dir) / "base.blend"),
-        "characters": [{"name": n, "mark": MARKS[i], "face": faces[n]}
-                       for i, n in enumerate(perf.characters)],
+        "environment_blend": str(Path(assets_dir) / (f"{perf.environment}__{perf.lighting}.blend" if perf.lighting
+                                                     else f"{perf.environment}.blend")),
+        "characters": [{"name": n, "mark": MARKS[i], "face": faces[n],
+                        "blend": str(Path(assets_dir) / (f"{c.model}__o{c.outfit}.blend" if c.outfit
+                                                          else f"{c.model}.blend"))}
+                       for i, (n, c) in enumerate(perf.characters.items())],
         "shots": [asdict(s) for s in shots],
         "moods": [[f, m] for f, m in moods],
         "mood_presets": MOOD_PRESETS,

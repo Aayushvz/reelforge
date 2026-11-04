@@ -36,7 +36,7 @@ def test_build_faces_layers():
     assert all(len(v) == 60 for v in tr.values())
     assert tr["mouthSmileLeft"][30] > 0.3          # emotion layer
     assert max(tr["jawOpen"]) > 0.3                 # speech layer
-    assert max(tr["mouthClose"][12:20]) > 0.4       # 'm' at local 0.05s → global ~frame 13-14
+    assert max(tr["mouthPressLeft"][12:20]) > 0.4   # 'm' at local 0.05s → global ~frame 13-14 (pressed closure)
     assert all(0.0 <= v <= 1.0 for n in ARKIT_NAMES for v in tr[n])
 
 

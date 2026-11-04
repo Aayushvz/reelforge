@@ -28,7 +28,7 @@ def test_import_line_aligns_and_caches(tmp_path):
 
     v = import_line(LINE, tmp_path, transcribe=fake)
     assert "".join(c.ch for c in v.chars) == "Hi yo" and v.audio_path == tmp_path / "l01.mp3"
-    assert json.loads((tmp_path / "l01.align.json").read_text())[0][0] == " Hi"
+    assert json.loads((tmp_path / "l01.align.json").read_text())["words"][0][0] == " Hi"
     import_line(LINE, tmp_path, transcribe=fake)
     assert len(calls) == 1
 
@@ -61,4 +61,21 @@ def test_import_line_realigns_when_mp3_is_newer_than_cache(tmp_path):
     v = import_line(LINE, tmp_path, transcribe=fake)
     assert len(calls) == 1
     assert "".join(c.ch for c in v.chars) == "New"
-    assert json.loads(cache.read_text(encoding="utf-8"))[0][0] == " New"
+    assert json.loads(cache.read_text(encoding="utf-8"))["words"][0][0] == " New"  # rewritten in the hashed format
+
+
+def test_alignment_cache_follows_audio_content_not_mtime(tmp_path):
+    mp3 = tmp_path / "l01.mp3"
+    mp3.write_bytes(b"take one")
+    calls = []
+
+    def fake(p):
+        calls.append(p)
+        return [(" Hi", 0.1, 0.4)]
+
+    import_line(LINE, tmp_path, transcribe=fake)
+    import_line(LINE, tmp_path, transcribe=fake)
+    assert len(calls) == 1  # same bytes: cached
+    mp3.write_bytes(b"take two")
+    import_line(LINE, tmp_path, transcribe=fake)
+    assert len(calls) == 2  # new take: re-aligned even if mtimes tie

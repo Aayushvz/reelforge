@@ -48,3 +48,11 @@ These are fine as Milestone 2 cleanups:
 - assertions on the finish codecs;
 - a resolution-relative halation radius;
 - moving the `Code` brick-texture mapping into `bl_common`.
+
+## Status (2026-11-04)
+- **Done:** 1 (`FaceAnchor`/`EyeFocus`, shot distance from head height); 4 (stills/frames wiped before each render; Whisper cache keyed on the mp3's sha1); 6 (non-numeric intensity/pause → `PerformanceError`, negative pause rejected, at most 2 characters); 7 (`tests/test_plan_contract.py`); 8 partly (imported mp3 always wins over the API, voice source logged per line); 9 (`.gitignore` `tools/*` + `!tools/*.py`, `a2f` extra); two-pass loudness (`finish` corrects residual gain, up to 3 passes).
+- **Also done:** 2 (MBP = jaw shut + press + roll, ~80 ms hold, no mouthClose).
+- **Also done:** A2F overrides carry `audio_sha1` and are skipped when the take changed.
+- **Also done:** 5 (render key = plan + blend/script size+mtime; complete output is skipped, a crash resumes with `use_overwrite=False`).
+- **Also done:** 8 (Blender failures raise `BlenderError` with the last 25 output lines); wide shots use an f/0.5 cheat for bokeh.
+- **Still open:** 3 (A2F A/B on the new head; the ONNX model is not on this machine, so check its download size and ask first), rim retune, the deferred minors.

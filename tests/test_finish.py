@@ -27,3 +27,9 @@ def test_finish_produces_video_with_audio(tmp_path):
                         "-of", "json", str(out)], capture_output=True, text=True, check=True)
     kinds = {s["codec_type"] for s in json.loads(r.stdout)["streams"]}
     assert kinds == {"video", "audio"}
+
+
+def test_set_grade_slots_in_after_the_base_look():
+    fc = lambda env: (c := build_ffmpeg_cmd(30, "f.mp4", env))[c.index("-filter_complex") + 1]
+    assert "colorbalance=rh=0.06" in fc("lantern_street")
+    assert "colorbalance" not in fc("") and "GRADE" not in fc("")
