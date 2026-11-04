@@ -13,3 +13,4 @@ editor/dist/
 projects/
 samples/*/editor.json
 editor/*.tsbuildinfo
+.reelforge.local.json

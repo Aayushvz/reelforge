@@ -1,8 +1,35 @@
-// Placeholder artwork for assets that have no render yet. Each one is drawn from the asset's
-// real data (lighting colours, outfit colours) so it carries information, and every card
-// that uses one says it's a placeholder until the Blender render exists.
-import { useId, type CSSProperties } from "react";
-import { wardrobeItem, type Character, type Environment, type LightingPreset, type Outfit } from "@/data/catalog";
+// Asset artwork. Built cast members and sets show a real Blender render (rendered once by the
+// editor backend and cached in assets/build/thumbs/); the SVG drawn from the asset's data shows
+// while that render loads, or if the asset hasn't been built on this machine.
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
+import { presetPid, wardrobeItem, type Character, type Environment, type LightingPreset, type Outfit } from "@/data/catalog";
+
+export const characterThumbUrl = (c: Character, outfit?: Outfit) =>
+  `/api/thumbs/character/${c.id}/${Math.max(0, c.outfits.findIndex((o) => o.id === outfit?.id))}.jpg`;
+export const envThumbUrl = (env: Environment, preset: LightingPreset) =>
+  env.pipelineId ? `/api/thumbs/set/${env.pipelineId}/${presetPid(env, preset.id)}.jpg` : null;
+
+function Rendered({ src, children, style, position = "center" }: { src: string | null; children: ReactNode; style?: CSSProperties; position?: string }) {
+  const [state, setState] = useState<{ src: string | null; ok: boolean | null; tries: number }>({ src, ok: null, tries: 0 });
+  const cur = state.src === src ? state : { src, ok: null, tries: 0 };
+  const ok = cur.ok;
+  // the first view of an asset starts its render; retry while Blender works (a few seconds each)
+  useEffect(() => {
+    if (ok !== false || cur.tries >= 40) return;
+    const t = setTimeout(() => setState({ src, ok: null, tries: cur.tries + 1 }), 3000);
+    return () => clearTimeout(t);
+  }, [ok, cur.tries, src]);
+  if (!src || ok === false) return <>{children}</>;
+  const url = cur.tries ? `${src}?r=${cur.tries}` : src;
+  return (
+    <span style={{ position: "relative", display: "block", width: "100%", height: "100%", ...style }}>
+      {ok !== true && children}
+      <img src={url} alt="" loading="lazy" decoding="async" draggable={false}
+        onLoad={() => setState({ src, ok: true, tries: cur.tries })} onError={() => setState({ src, ok: false, tries: cur.tries })}
+        style={{ position: ok ? "static" : "absolute", inset: 0, display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: position, opacity: ok ? 1 : 0 }} />
+    </span>
+  );
+}
 import type { SubtitleStyle } from "@/lib/types";
 
 const LAYOUT: Record<string, "windows" | "lanterns" | "horizon" | "tiles" | "room"> = {
@@ -11,6 +38,10 @@ const LAYOUT: Record<string, "windows" | "lanterns" | "horizon" | "tiles" | "roo
 };
 
 export function EnvThumb({ env, preset, style }: { env: Environment; preset: LightingPreset; style?: CSSProperties }) {
+  return <Rendered src={envThumbUrl(env, preset)} style={style} position="center 62%"><EnvSvg env={env} preset={preset} style={style} /></Rendered>;
+}
+
+function EnvSvg({ env, preset, style }: { env: Environment; preset: LightingPreset; style?: CSSProperties }) {
   const id = useId().replace(/:/g, "");
   const layout = LAYOUT[env.id] ?? "room";
   return (
@@ -48,6 +79,14 @@ export function EnvThumb({ env, preset, style }: { env: Environment; preset: Lig
 }
 
 export function CharacterThumb({ character, outfit, style, pose = "bust" }: { character: Character; outfit?: Outfit; style?: CSSProperties; pose?: "bust" | "full" }) {
+  return (
+    <Rendered src={characterThumbUrl(character, outfit)} style={style} position={pose === "full" ? "center" : "center 30%"}>
+      <CharacterSvg character={character} outfit={outfit} style={style} pose={pose} />
+    </Rendered>
+  );
+}
+
+function CharacterSvg({ character, outfit, style, pose = "bust" }: { character: Character; outfit?: Outfit; style?: CSSProperties; pose?: "bust" | "full" }) {
   const id = useId().replace(/:/g, "");
   const items = outfit?.items ?? character.outfits[0]?.items ?? {};
   const colors = outfit?.colors ?? {};

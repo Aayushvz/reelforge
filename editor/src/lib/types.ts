@@ -11,13 +11,13 @@ export type Emotion = (typeof EMOTIONS)[number];
 export type Mood = (typeof MOODS)[number];
 export type Ratio = keyof typeof RATIOS;
 
-export type PerfCharacter = { voice_id: string; caption_color?: string; highlight_color?: string };
+export type PerfCharacter = { voice_id: string; caption_color?: string; highlight_color?: string; model?: string; outfit?: number };
 export type PerfLine = {
   id: string; speaker: string; text: string; emotion: Emotion; intensity: number; mood: Mood;
   pause_after?: number; punchline?: boolean;
 };
 export type Performance = {
-  version: 1; fps: number; ratio: Ratio; environment: string;
+  version: 1; fps: number; ratio: Ratio; environment: string; lighting?: string; style?: string; ambience?: boolean;
   characters: Record<string, PerfCharacter>; lines: PerfLine[];
 };
 
@@ -91,6 +91,11 @@ export type ProjectData = ProjectSummary & {
 export type SystemStatus = {
   repo: string; reelforge: boolean; blender: boolean; ffmpeg: boolean; assetsBuilt: boolean; elevenlabsKey: boolean;
 };
+
+export type LocalSettings = { elevenlabsKey: boolean; elevenlabsKeySource: "settings" | "environment" | null; elevenlabsKeyHint: string | null; elevenlabsModel: string };
+
+export type VoiceState = "imported" | "ready" | "generating" | "error" | "missing" | "empty";
+export type VoiceLine = { line: string; status: VoiceState; file?: string; error?: string };
 
 export type Job = {
   id: string; projectId: string; stage: "stills" | "full"; draft: boolean;

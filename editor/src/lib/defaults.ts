@@ -4,8 +4,8 @@ import { RATIOS } from "./types";
 
 export function defaultPerformance(): Performance {
   return {
-    version: 1, fps: 30, ratio: "9:16", environment: "night_city",
-    characters: { A: { voice_id: VOICES[0].id, caption_color: "#FFFFFF", highlight_color: "#FFD23F" } },
+    version: 1, fps: 30, ratio: "9:16", environment: "night_city", lighting: "blue_night",
+    characters: { A: { voice_id: VOICES[0].id, caption_color: "#FFFFFF", highlight_color: "#FFD23F", model: "aria", outfit: 0 } },
     lines: [],
   };
 }
@@ -13,7 +13,7 @@ export function defaultPerformance(): Performance {
 export function defaultEditor(kind: EditorDoc["kind"] = "generated", ratio: Ratio = "9:16"): EditorDoc {
   return {
     name: "Untitled reel", kind, style: "blender3d",
-    cast: {},
+    cast: kind === "generated" ? { A: { characterId: "aria", outfitId: "aria-1" } } : {},
     environment: { id: "night-city-desk", lighting: "blue-night" },
     subtitles: { ...SUBTITLE_TEMPLATES[0].style },
     output: { ratio, resolution: [...RATIOS[ratio]] as [number, number], fps: 30, quality: "final" },
