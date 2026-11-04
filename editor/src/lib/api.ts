@@ -1,4 +1,4 @@
-import type { Job, Library, ProjectData, ProjectSummary, SystemStatus } from "./types";
+import type { Job, Library, LocalSettings, ProjectData, ProjectSummary, SystemStatus, VoiceLine } from "./types";
 
 async function req<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -25,6 +25,10 @@ export const api = {
   run: (id: string, stage: "stills" | "full", draft: boolean) => req<Job>("POST", `${P(id)}/run`, { stage, draft }),
   jobs: (id: string) => req<Job[]>("GET", `${P(id)}/jobs`),
   cancel: (jobId: string) => req<Job>("POST", `/api/jobs/${jobId}/cancel`),
+  settings: () => req<LocalSettings>("GET", "/api/settings"),
+  saveSettings: (body: { elevenlabsKey?: string | null; elevenlabsModel?: string | null }) => req<LocalSettings>("PUT", "/api/settings", body),
+  voices: (id: string) => req<VoiceLine[]>("GET", `${P(id)}/voices`),
+  generateVoices: (id: string, lines?: string[], force = false) => req<VoiceLine[]>("POST", `${P(id)}/voices`, { lines, force }),
   library: () => req<Library>("GET", "/api/library"),
   saveLibrary: (lib: Library) => req<{ ok: true }>("PUT", "/api/library", lib),
 };

@@ -37,7 +37,7 @@ def test_writes_audio_alignment_and_caches(tmp_path):
     url, headers, body = calls[0]
     assert "/VOICE/with-timestamps" in url and "output_format=mp3_44100_128" in url
     assert headers["xi-api-key"] == "KEY"
-    assert body == {"text": "[sighs] Hi yo", "model_id": "eleven_v3"}
+    assert body == {"text": "[sighs] Hi yo", "model_id": "eleven_v4"}
     synthesize_line(LINE, "VOICE", tmp_path, "KEY", post=post)
     assert len(calls) == 1  # second call served from cache
 
@@ -72,3 +72,26 @@ def test_auth_error_raises_without_retry(tmp_path):
     with pytest.raises(VoiceError, match="401"):
         synthesize_line(LINE, "V", tmp_path, "K", post=post, sleep=lambda s: None)
     assert len(calls) == 1
+
+
+def test_falls_back_to_v3_when_v4_rejected(tmp_path, monkeypatch):
+    monkeypatch.delenv("ELEVENLABS_MODEL", raising=False)
+    models = []
+
+    def post(u, h, b):
+        models.append(b["model_id"])
+        if b["model_id"] == "eleven_v4":
+            raise _http_error(400)
+        return _resp()
+
+    v = synthesize_line(LINE, "V", tmp_path, "K", post=post, sleep=lambda s: None)
+    assert models == ["eleven_v4", "eleven_v3"] and v.audio_path.exists()
+
+
+def test_error_message_includes_elevenlabs_detail(tmp_path):
+    def post(u, h, b):
+        raise urllib.error.HTTPError("https://x", 401, "err", {},
+                                     io.BytesIO(b'{"detail": {"message": "Invalid API key"}}'))
+
+    with pytest.raises(VoiceError, match="Invalid API key"):
+        synthesize_line(LINE, "V", tmp_path, "K", post=post, sleep=lambda s: None)

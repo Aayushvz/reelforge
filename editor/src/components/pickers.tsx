@@ -1,6 +1,6 @@
 // Visual pickers shared by Create, the editor inspector and the asset pages.
 import { useMemo, useState } from "react";
-import { Check, Search, Star, X, Info } from "lucide-react";
+import { Check, Search, Star, X } from "lucide-react";
 import {
   CHARACTERS, ENVIRONMENTS, SUBTITLE_TEMPLATES, CAPTION_FONTS, SLOTS, wardrobeItem,
   type Character, type Environment,
@@ -39,7 +39,6 @@ export function CharacterDrawer({ speaker, value, outfit, onPick, onClose }: {
       <div className="drawer-head"><div className="col grow" style={{ gap: 2 }}><span className="eyebrow">Cast for {speaker}</span><h2 className="h2">Choose a character</h2></div>
         <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={16} /></button></div>
       <div className="drawer-body">
-        <div className="callout info"><Info size={14} /><div>The cast is designed but not built in Blender yet. Renders use the M1 stand-in for every speaker; your picks are saved and carry over once a character lands.</div></div>
         <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 10 }}>
           {CHARACTERS.map((ch) => (
             <button key={ch.id} className="tile" aria-pressed={sel === ch.id} onClick={() => { setSel(ch.id); setFit(ch.outfits[0].id); }}>
@@ -66,7 +65,7 @@ export function CharacterDetail({ c, outfit, onOutfit }: { c: Character; outfit:
   const o = all.find((x) => x.id === outfit) ?? all[0];
   return (
     <div className="panel" style={{ padding: 16, display: "grid", gridTemplateColumns: "120px 1fr", gap: 16 }}>
-      <div style={{ borderRadius: 6, overflow: "hidden", aspectRatio: "10/16", position: "relative" }}><CharacterThumb character={c} outfit={o} pose="full" /><span className="placeholder-tag">Concept</span></div>
+      <div style={{ borderRadius: 6, overflow: "hidden", aspectRatio: "10/16", position: "relative" }}><CharacterThumb character={c} outfit={o} pose="full" /></div>
       <div className="col" style={{ gap: 10 }}>
         <div className="row"><h3 className="h2 grow">{c.name}</h3><AssetBadge status={c.status} /></div>
         <p className="muted" style={{ margin: 0 }}>{c.personality}</p>
@@ -115,7 +114,6 @@ export function EnvironmentDrawer({ value, lighting, onPick, onClose }: {
               {env.presets.map((x) => <button key={x.id} className="chip" aria-pressed={x.id === p.id} onClick={() => setPreset(x.id)}><span className="dot" style={{ background: x.glow }} />{x.name}</button>)}
             </div>
           </div>
-          <span className="placeholder-tag">Lighting study · render pending</span>
         </div>
         <div className="row" style={{ flexWrap: "wrap" }}>
           <div className="search grow"><Search size={14} /><input className="input sm" placeholder="Search sets" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: "100%" }} /></div>
@@ -127,8 +125,7 @@ export function EnvironmentDrawer({ value, lighting, onPick, onClose }: {
         </div>
       </div>
       <div className="dialog-foot">
-        {env.status !== "available" && <span className="meta grow">Renders as Night-city desk until this set is built.</span>}
-        {env.status === "available" && <div className="grow" />}
+        <div className="grow" />
         <button className="btn" onClick={onClose}>Cancel</button>
         <button className="btn btn-primary" onClick={() => { onPick(sel, p.id); onClose(); }}>Use {env.name}</button>
       </div>

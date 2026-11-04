@@ -16,7 +16,7 @@ from .face import build_faces
 from .finish import finish
 from .schema import RATIOS, load_performance
 from .timeline import mix_dialogue, place_lines, probe_duration
-from .voice import import_line, synthesize_line
+from .voice import VoiceError, has_take, import_line, synthesize_line, take_path
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -31,7 +31,45 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--stage", choices=["stills", "full"], default="full")
     r.add_argument("--draft", action="store_true", help="16 samples instead of 64")
     r.add_argument("--style", choices=list(ENGINES), help="override the project's style")
+    v = sub.add_parser("voices", help="generate missing ElevenLabs takes (one JSON status line each)")
+    v.add_argument("project", type=Path)
+    v.add_argument("--line", action="append", default=[], help="only these line ids")
+    v.add_argument("--force", action="store_true", help="drop the cached take and generate a new one")
     return p
+
+
+def voices(project: Path, only: list[str], force: bool) -> int:
+    """Generate API takes for lines without an imported mp3. Prints {"line", "status", ...} per line."""
+    project = project.resolve()
+    perf = load_performance(project / "performance.json")
+    audio = project / "out" / "audio"
+    key = os.environ.get("ELEVENLABS_API_KEY")
+    failed = 0
+    for l in perf.lines:
+        if only and l.id not in only:
+            continue
+        voice_id = perf.characters[l.speaker].voice_id
+        if (audio / f"{l.id}.mp3").exists():
+            status = {"status": "imported"}
+        elif not l.text.strip():
+            status = {"status": "error", "error": "Empty line"}
+        else:
+            if force:
+                for f in (take_path(l, voice_id, audio), take_path(l, voice_id, audio).with_suffix(".json")):
+                    f.unlink(missing_ok=True)
+            if has_take(l, voice_id, audio):
+                status = {"status": "ready"}
+            elif not key:
+                status = {"status": "error", "error": "No ElevenLabs API key. Add it in Settings."}
+            else:
+                try:
+                    synthesize_line(l, voice_id, audio, key)
+                    status = {"status": "ready"}
+                except VoiceError as e:
+                    status = {"status": "error", "error": str(e)}
+        failed += status["status"] == "error"
+        print(json.dumps({"line": l.id, **status}), flush=True)
+    return 1 if failed else 0
 
 
 def run(project: Path, stage: str, draft: bool, style: str | None = None) -> Path | None:
@@ -41,7 +79,9 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None) -> Pat
     out = project / "out"
     key = os.environ.get("ELEVENLABS_API_KEY")
     audio = out / "audio"
-    if not key and not all((audio / f"{l.id}.mp3").exists() for l in perf.lines):
+    def voiced_ok(l):
+        return (audio / f"{l.id}.mp3").exists() or has_take(l, perf.characters[l.speaker].voice_id, audio)
+    if not key and not all(voiced_ok(l) for l in perf.lines):
         raise SystemExit(f"Set ELEVENLABS_API_KEY or put <line_id>.mp3 files in {audio}")
     out.mkdir(parents=True, exist_ok=True)
 
@@ -89,6 +129,8 @@ def main(argv: list[str] | None = None) -> None:
     ns = build_parser().parse_args(argv)
     if ns.cmd == "build-assets":
         get_engine(ns.style).build_assets()
+    elif ns.cmd == "voices":
+        raise SystemExit(voices(ns.project, ns.line, ns.force))
     else:
         run(ns.project, ns.stage, ns.draft, ns.style)
 

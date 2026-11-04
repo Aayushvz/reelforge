@@ -40,14 +40,14 @@ function CharacterGrid() {
         <div className="page-head">
           <div className="grow"><h1 className="h1">Characters</h1><div className="muted">Seven original characters in a stylized-sculpt look, each with three outfits and a shared wardrobe.</div></div>
         </div>
-        <div className="callout info" style={{ marginBottom: 16 }}><Info size={14} /><div>The cast is designed in the production brief but not built in Blender yet. These are concept cards drawn from each character's data. Renders use the M1 stand-in until a character lands; casting and outfits you choose now carry over.</div></div>
+        <div className="callout info" style={{ marginBottom: 16 }}><Info size={14} /><div>Each card is a real render of the character as built in Blender. Renders use the character's three built looks; custom outfits you save are kept in your library.</div></div>
         <div className="tabs">
           {([["all", "All"], ["male", "Male"], ["female", "Female"], ["fav", "Favourites"]] as const).map(([k, l]) => <button key={k} className="tab" aria-selected={filter === k} onClick={() => setFilter(k)}>{l}</button>)}
         </div>
         <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 14 }}>
           {list.map((c) => (
             <div key={c.id} className="card interactive asset-card" role="button" tabIndex={0} onClick={() => nav(`/characters/${c.id}`)} onKeyDown={(e) => e.key === "Enter" && nav(`/characters/${c.id}`)}>
-              <div className="thumb portrait"><CharacterThumb character={c} pose="full" /><div className="over"><AssetBadge status={c.status} /><span className="fav"><FavButton k={`char:${c.id}`} /></span></div><span className="placeholder-tag">Concept</span></div>
+              <div className="thumb portrait"><CharacterThumb character={c} pose="full" /><div className="over"><AssetBadge status={c.status} /><span className="fav"><FavButton k={`char:${c.id}`} /></span></div></div>
               <div className="body"><span className="title">{c.name}</span><span className="meta">{c.vibe}</span><span className="meta faint ellipsis">{c.signature}</span></div>
             </div>
           ))}
@@ -97,7 +97,7 @@ function CharacterDetailPage({ c }: { c: Character }) {
           <button className="btn btn-primary" onClick={() => setCastOpen(true)}><UserCheck size={14} />Cast in project</button>
         </div>
         <div className="char-layout">
-          <div className="char-stage"><CharacterThumb character={c} outfit={draft} pose="full" /><span className="placeholder-tag">Concept · Blender build pending</span></div>
+          <div className="char-stage"><CharacterThumb character={c} outfit={draft} pose="full" /></div>
           <div className="col" style={{ gap: 16, minWidth: 0 }}>
             <div className="panel" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
               <p style={{ margin: 0 }}>{c.personality}</p>

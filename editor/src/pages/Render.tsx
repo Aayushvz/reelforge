@@ -8,7 +8,7 @@ import { api, fileUrl, jobEventsUrl } from "@/lib/api";
 import type { Job } from "@/lib/types";
 import { validate } from "@/lib/script";
 import { duration, relativeTime } from "@/lib/format";
-import { useProject } from "@/stores/project";
+import { lineVoiced, useProject } from "@/stores/project";
 import { pipelineReady, useSystem } from "@/stores/system";
 import { Badge, Callout, Spinner } from "@/components/ui/Feedback";
 import { Segmented } from "@/components/ui/Form";
@@ -35,9 +35,13 @@ export function RenderPage() {
   const loadSystem = useSystem((s) => s.load);
   const [live, setLive] = useState<Live>({ job: null, frame: null, nFrames: null, log: [] });
   const [draft, setDraft] = useState(true);
+  // follow the quality chosen on Create once the project is loaded
+  useEffect(() => { if (!loading) setDraft(editor.output.quality !== "final"); }, [loading, editor.output.quality]);
   const [now, setNow] = useState(Date.now());
   const [showLog, setShowLog] = useState(false);
   const started = useRef(false);
+  // "Generate video" may arrive while voices are still being generated: start once they're ready.
+  const [pending, setPending] = useState<"stills" | "full" | null>(null);
 
   useEffect(() => { void load(id); void loadSystem(); }, [id, load, loadSystem]);
   useEffect(() => { if (!live.job || live.job.status !== "running") return; const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, [live.job]);
@@ -47,7 +51,8 @@ export function RenderPage() {
 
   const issues = validate(performance);
   const lines = performance?.lines ?? [];
-  const missing = lines.filter((l) => !files.audio.includes(`${l.id}.mp3`));
+  const voices = useProject((s) => s.voices);
+  const missing = lines.filter((l) => !lineVoiced(voices[l.id]));
   const ready = pipelineReady(system) && issues.length === 0 && missing.length === 0 && lines.length > 0;
   const running = live.job?.status === "running";
 
@@ -91,8 +96,16 @@ export function RenderPage() {
     if (!want || started.current || loading || !system) return;
     started.current = true;
     setParams({}, { replace: true });
-    if (ready && !running) void start(want === "full" ? "full" : "stills");
+    setPending(want === "full" ? "full" : "stills");
   }, [params, loading, system, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const voicing = lines.some((l) => voices[l.id]?.status === "generating");
+  const voiceFailed = lines.some((l) => voices[l.id]?.status === "error");
+  useEffect(() => {
+    if (!pending) return;
+    if (ready && !running) { setPending(null); void start(pending); return; }
+    if (!voicing && (voiceFailed || issues.length > 0 || (system && !pipelineReady(system)))) setPending(null);
+  }, [pending, ready, running, voicing, voiceFailed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stage inference: honest, from what the process has actually printed.
   const stageIdx = useMemo(() => {
@@ -134,8 +147,9 @@ export function RenderPage() {
                 <Check2 ok={Boolean(system?.blender)} label="Blender 4.5 found" fix={<>Put the portable build in <span className="mono">tools/blender-4.5/</span> and its path in <span className="mono">tools/blender_path.txt</span>.</>} />
                 <Check2 ok={Boolean(system?.ffmpeg)} label="ffmpeg on PATH" fix="Install ffmpeg and make sure ffmpeg and ffprobe run in a terminal." />
                 <Check2 ok={issues.length === 0 && lines.length > 0} label={lines.length ? "Script is valid" : "Script has lines"} fix={issues[0]?.message ?? "Write the script on Create."} />
-                <Check2 ok={missing.length === 0 && lines.length > 0} label={`Voice lines cached (${lines.length - missing.length}/${lines.length})`}
-                  fix={<>Import mp3s for {missing.map((l) => l.id).join(", ")} on <Link className="link" to="/voices">Voices</Link> or in the script.</>} />
+                <Check2 ok={missing.length === 0 && lines.length > 0} label={`Voice lines ready (${lines.length - missing.length}/${lines.length})`}
+                  fix={voicing ? <>Generating {missing.map((l) => l.id).join(", ")} with ElevenLabs…{pending ? " The render starts when they're ready." : ""}</>
+                    : <>Not voiced: {missing.map((l) => l.id).join(", ")}. Check the key in <Link className="link" to="/settings">Settings</Link> and retry on <Link className="link" to="/voices">Voices</Link>.</>} />
               </ul>
               {!system && <div className="row meta"><Spinner />Checking the render engine…</div>}
             </section>

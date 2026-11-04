@@ -45,14 +45,13 @@ export function EnvironmentsPage() {
     <div className="page">
       <div className="page-inner">
         <div className="page-head">
-          <div className="grow"><h1 className="h1">Environments</h1><div className="muted">Ten sets, three lighting presets each. Night-city desk renders today; the rest are designed and waiting on the environment build.</div></div>
+          <div className="grow"><h1 className="h1">Environments</h1><div className="muted">Ten sets, three lighting presets each, all built in Blender. Previews are real renders of each set and preset.</div></div>
         </div>
         <div className="env-studio">
           <div className="env-big" onDoubleClick={() => setFull(true)}>
             <EnvThumb env={env} preset={p} />
             <div className="env-big-top"><AssetBadge status={env.status} /><span className="grow" /><FavButton k={`env:${env.id}`} />
               <button className="fav-btn" aria-label="Full-screen preview" onClick={() => setFull(true)}><Maximize2 size={13} /></button></div>
-            <span className="placeholder-tag">Lighting study · render pending</span>
           </div>
           <div className="panel env-side">
             <div className="col" style={{ gap: 4 }}><span className="eyebrow">{env.category}</span><h2 className="h2">{env.name}</h2><p className="muted" style={{ margin: 0 }}>{env.description}</p></div>

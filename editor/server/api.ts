@@ -5,6 +5,7 @@ import type { Plugin } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +14,11 @@ const PROJECT_ROOTS = ["samples", "projects"];
 const TRASH = path.join(REPO, "projects", ".trash");
 const LIBRARY = path.join(REPO, "projects", "library.json");
 const UPLOAD_DIRS = ["out/audio", "media"];
+// Local-only secrets (the user's ElevenLabs key). Git-ignored; never logged or sent back whole.
+const SETTINGS = path.join(REPO, ".reelforge.local.json");
+const ASSETS = path.join(REPO, "assets", "build");
+const THUMBS = path.join(ASSETS, "thumbs");
+const DEFAULT_MODEL = "eleven_v4";
 
 const MIME: Record<string, string> = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
@@ -209,6 +215,50 @@ function trashProject(id: string) {
   return { ok: true };
 }
 
+// ---------- local settings (API key) ----------
+
+type LocalSettings = { elevenlabsKey?: string; elevenlabsModel?: string };
+function readSettings(): LocalSettings { try { return readJsonFile<LocalSettings>(SETTINGS) ?? {}; } catch { return {}; } }
+function elevenKey() { return readSettings().elevenlabsKey || process.env.ELEVENLABS_API_KEY || ""; }
+function elevenModel() { return readSettings().elevenlabsModel || process.env.ELEVENLABS_MODEL || DEFAULT_MODEL; }
+function settingsView() {
+  const key = readSettings().elevenlabsKey;
+  return {
+    elevenlabsKey: Boolean(elevenKey()),
+    elevenlabsKeySource: key ? "settings" : process.env.ELEVENLABS_API_KEY ? "environment" : null,
+    elevenlabsKeyHint: key ? `…${key.slice(-4)}` : null,
+    elevenlabsModel: elevenModel(),
+  };
+}
+function saveSettings(body: { elevenlabsKey?: string | null; elevenlabsModel?: string | null }) {
+  const cur = readSettings();
+  if (body.elevenlabsKey !== undefined) {
+    const k = (body.elevenlabsKey ?? "").trim();
+    if (k && !/^[A-Za-z0-9_-]{20,128}$/.test(k)) throw new HttpError(400, "That doesn't look like an ElevenLabs API key.");
+    if (k) cur.elevenlabsKey = k; else delete cur.elevenlabsKey;
+  }
+  if (body.elevenlabsModel !== undefined) {
+    const m = (body.elevenlabsModel ?? "").trim();
+    if (m && !/^[a-z0-9_]{3,40}$/.test(m)) throw new HttpError(400, "Bad model id");
+    if (m) cur.elevenlabsModel = m; else delete cur.elevenlabsModel;
+  }
+  writeJsonFile(SETTINGS, cur);
+  systemCache = null;
+  return settingsView();
+}
+
+// The pipeline's environment: Blender path plus the user's key, passed only to child processes.
+function pipelineEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, ELEVENLABS_MODEL: elevenModel(), PYTHONIOENCODING: "utf-8",
+    // piped Python output is block-buffered: without this the Render page sees no live progress
+    PYTHONUNBUFFERED: "1" };
+  const blender = blenderPath();
+  if (blender) env.REELFORGE_BLENDER = blender;
+  const key = elevenKey();
+  if (key) env.ELEVENLABS_API_KEY = key; else delete env.ELEVENLABS_API_KEY;
+  return env;
+}
+
 // ---------- system + pipeline ----------
 
 function reelforgeBin() {
@@ -237,7 +287,7 @@ function systemStatus() {
     blender: Boolean(blenderPath()),
     ffmpeg: onPath("ffmpeg"),
     assetsBuilt: fs.existsSync(path.join(REPO, "assets", "build", "kai.blend")),
-    elevenlabsKey: Boolean(process.env.ELEVENLABS_API_KEY),
+    elevenlabsKey: Boolean(elevenKey()),
   };
   systemCache = { at: Date.now(), value };
   return value;
@@ -275,7 +325,7 @@ function startJob(id: string, stage: "stills" | "full", draft: boolean): Job {
   };
   jobs.set(job.id, job);
   const args = ["run", dir, "--stage", stage, ...(draft ? ["--draft"] : [])];
-  const proc = spawn(bin, args, { cwd: REPO, env: { ...process.env, REELFORGE_BLENDER: blender } });
+  const proc = spawn(bin, args, { cwd: REPO, env: pipelineEnv() });
   job.proc = proc;
   const onData = (buf: Buffer) => {
     for (const line of buf.toString("utf-8").split(/\r?\n/)) {
@@ -300,6 +350,138 @@ function startJob(id: string, stage: "stills" | "full", draft: boolean): Job {
     for (const res of job.listeners) res.end();
     job.listeners.clear();
   });
+  return job;
+}
+
+// ---------- voices: ElevenLabs takes generated automatically per line ----------
+
+type PerfJson = { characters?: Record<string, { voice_id?: string }>; lines?: { id: string; speaker: string; text: string }[] };
+type VoiceRun = { running: boolean; generating: Set<string>; errors: Map<string, { key: string; error: string }>; again: Set<string>; force: boolean };
+const voiceRuns = new Map<string, VoiceRun>();
+const voiceRun = (id: string) => {
+  let r = voiceRuns.get(id);
+  if (!r) { r = { running: false, generating: new Set(), errors: new Map(), again: new Set(), force: false }; voiceRuns.set(id, r); }
+  return r;
+};
+
+// Same name as reelforge/voice.py take_path(): <line>-<sha1(model|voice|text)[:10]>.mp3
+function takeName(lineId: string, voiceId: string, text: string) {
+  return `${lineId}-${crypto.createHash("sha1").update(`${elevenModel()}|${voiceId}|${text}`, "utf8").digest("hex").slice(0, 10)}.mp3`;
+}
+
+function voiceStatus(id: string) {
+  const dir = projectDir(id);
+  const perf = readJsonFile<PerfJson>(path.join(dir, "performance.json"));
+  const audio = path.join(dir, "out", "audio");
+  const run = voiceRuns.get(id);
+  return (perf?.lines ?? []).map((l) => {
+    const take = takeName(l.id, perf?.characters?.[l.speaker]?.voice_id ?? "", l.text);
+    if (fs.existsSync(path.join(audio, `${l.id}.mp3`))) return { line: l.id, status: "imported", file: `out/audio/${l.id}.mp3` };
+    if (run?.generating.has(l.id)) return { line: l.id, status: "generating" };
+    if (fs.existsSync(path.join(audio, take)) && fs.existsSync(path.join(audio, take.replace(/\.mp3$/, ".json")))) {
+      return { line: l.id, status: "ready", file: `out/audio/${take}` };
+    }
+    const err = run?.errors.get(l.id);
+    if (err && err.key === take) return { line: l.id, status: "error", error: err.error };
+    return { line: l.id, status: l.text.trim() ? "missing" : "empty" };
+  });
+}
+
+function generateVoices(id: string, lines: string[] | undefined, force: boolean) {
+  const dir = projectDir(id);
+  const bin = reelforgeBin();
+  if (!bin) throw new HttpError(409, "The reelforge pipeline isn't installed.");
+  if (!elevenKey()) throw new HttpError(409, "Add your ElevenLabs API key in Settings to generate voices.");
+  const run = voiceRun(id);
+  const want = voiceStatus(id).filter((s) => (lines ? lines.includes(s.line) : true) &&
+    (force ? s.status !== "imported" && s.status !== "empty" : s.status === "missing" || s.status === "error")).map((s) => s.line);
+  if (!want.length) return voiceStatus(id);
+  want.forEach((l) => { run.generating.add(l); run.errors.delete(l); });
+  if (run.running) { want.forEach((l) => run.again.add(l)); run.force ||= force; return voiceStatus(id); }
+  run.running = true;
+  const perf = readJsonFile<PerfJson>(path.join(dir, "performance.json"));
+  const keyOf = (lineId: string) => {
+    const l = perf?.lines?.find((x) => x.id === lineId);
+    return l ? takeName(l.id, perf?.characters?.[l.speaker]?.voice_id ?? "", l.text) : "";
+  };
+  const args = ["voices", dir, ...want.flatMap((l) => ["--line", l]), ...(force ? ["--force"] : [])];
+  const proc = spawn(bin, args, { cwd: REPO, env: pipelineEnv() });
+  let buf = "", errText = "";
+  proc.stdout?.on("data", (d: Buffer) => {
+    buf += d.toString("utf-8");
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const raw = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      try {
+        const r = JSON.parse(raw) as { line: string; status: string; error?: string };
+        if (!run.again.has(r.line)) run.generating.delete(r.line);
+        if (r.status === "error") run.errors.set(r.line, { key: keyOf(r.line), error: r.error ?? "Failed" });
+      } catch { /* not a status line */ }
+    }
+  });
+  proc.stderr?.on("data", (d: Buffer) => { errText = (errText + d.toString("utf-8")).slice(-2000); });
+  const finish = () => {
+    if (!run.running) return;
+    // anything still marked generating crashed before reporting (bad script, unknown speaker...)
+    const msg = errText.trim().split(/\r?\n/).filter(Boolean).pop() ?? "Voice generation stopped";
+    for (const l of want) if (run.generating.has(l) && !run.again.has(l)) { run.generating.delete(l); run.errors.set(l, { key: keyOf(l), error: msg }); }
+    run.running = false;
+    if (run.again.size) {
+      const next = [...run.again], f = run.force;
+      run.again.clear(); run.force = false; next.forEach((l) => run.generating.delete(l));
+      try { generateVoices(id, next, f); } catch { /* key removed meanwhile */ }
+    }
+  };
+  proc.on("close", finish);
+  proc.on("error", (e) => { errText += e.message; finish(); });
+  return voiceStatus(id);
+}
+
+// ---------- asset thumbnails: real Blender renders of the built cast and sets, cached on disk ----------
+
+const thumbJobs = new Map<string, Promise<string>>();
+let thumbActive = 0;
+const thumbWaiters: (() => void)[] = [];
+async function thumbSlot<T>(fn: () => Promise<T>): Promise<T> {
+  while (thumbActive >= 2) await new Promise<void>((r) => thumbWaiters.push(r));
+  thumbActive++;
+  try { return await fn(); } finally { thumbActive--; thumbWaiters.shift()?.(); }
+}
+
+function runProc(cmd: string, args: string[]) {
+  return new Promise<void>((resolve, reject) => {
+    const p = spawn(cmd, args, { cwd: REPO, stdio: ["ignore", "ignore", "pipe"] });
+    let err = "";
+    p.stderr?.on("data", (d: Buffer) => { err = (err + d.toString()).slice(-800); });
+    p.on("error", reject);
+    p.on("close", (code) => code === 0 ? resolve() : reject(new Error(err.trim().split(/\r?\n/).pop() || `exit ${code}`)));
+  });
+}
+
+function thumbFor(kind: string, a: string, b: string): Promise<string> {
+  if (!/^[a-z0-9_]+$/.test(a) || !/^[a-z0-9_]+$/.test(b)) throw new HttpError(400, "Bad asset id");
+  const name = kind === "character" ? `char_${a}_o${b}.jpg` : kind === "set" ? `set_${a}__${b}.jpg` : null;
+  if (!name) throw new HttpError(404, "Unknown thumbnail kind");
+  const out = path.join(THUMBS, name);
+  if (fs.existsSync(out)) return Promise.resolve(out);
+  const pending = thumbJobs.get(name);
+  if (pending) return pending;
+  const blender = blenderPath();
+  if (!blender) throw new HttpError(409, "Blender isn't set up");
+  const png = path.join(THUMBS, `.${name}.png`);
+  const blend = path.join(ASSETS, kind === "character" ? (b === "0" ? `${a}.blend` : `${a}__o${b}.blend`) : `${a}__${b}.blend`);
+  if (!fs.existsSync(blend)) throw new HttpError(404, `Not built yet: ${path.basename(blend)}. Run reelforge build-assets.`);
+  const args = kind === "character"
+    ? ["-b", blend, "-P", path.join(REPO, "blender", "preview_character.py"), "--", png, "yaw=20", "shot=bust"]
+    : ["-b", blend, "-P", path.join(REPO, "blender", "preview_set.py"), "--", png, path.join(ASSETS, "aria.blend"), "wide"];
+  fs.mkdirSync(THUMBS, { recursive: true });
+  const job = thumbSlot(async () => {
+    await runProc(blender, args);
+    await runProc("ffmpeg", ["-v", "error", "-y", "-i", png, "-vf", "scale=480:-2", "-q:v", "4", out]);
+    fs.rmSync(png, { force: true });
+    return out;
+  }).finally(() => thumbJobs.delete(name));
+  thumbJobs.set(name, job);
   return job;
 }
 
@@ -336,6 +518,23 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   const [head, id, action, ...rest] = parts;
 
   if (head === "system" && method === "GET") return send(res, 200, systemStatus());
+  if (head === "settings") {
+    if (method === "GET") return send(res, 200, settingsView());
+    if (method === "PUT") return send(res, 200, saveSettings(await readJson(req)));
+  }
+  if (head === "thumbs" && method === "GET" && id && action && rest[0]) {
+    // Never hold the request while Blender renders: browsers allow ~6 connections per host,
+    // and parked thumbnail requests would stall saves. Answer 503 and let the image retry.
+    const job = thumbFor(id, action, rest[0].replace(/\.jpg$/, ""));
+    const done = await Promise.race([job, new Promise<null>((r) => setTimeout(() => r(null), 50))]).catch(() => null);
+    if (!done) {
+      job.catch(() => undefined);
+      res.setHeader("Retry-After", "3");
+      return send(res, 503, { pending: true });
+    }
+    res.setHeader("Cache-Control", "max-age=3600");
+    return serveFile(req, res, done);
+  }
 
   if (head === "library") {
     if (method === "GET") return send(res, 200, readJsonFile(LIBRARY) ?? {});
@@ -366,6 +565,13 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (id && action === "run" && method === "POST") {
       const body = await readJson<{ stage?: "stills" | "full"; draft?: boolean }>(req);
       return send(res, 202, jobView(startJob(id, body.stage === "full" ? "full" : "stills", Boolean(body.draft))));
+    }
+    if (id && action === "voices") {
+      if (method === "GET") return send(res, 200, voiceStatus(id));
+      if (method === "POST") {
+        const body = await readJson<{ lines?: string[]; force?: boolean }>(req);
+        return send(res, 202, generateVoices(id, Array.isArray(body.lines) ? body.lines : undefined, Boolean(body.force)));
+      }
     }
     if (id && action === "jobs" && method === "GET") {
       return send(res, 200, [...jobs.values()].filter((j) => j.projectId === id).map(jobView));
