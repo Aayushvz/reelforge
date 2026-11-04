@@ -137,6 +137,25 @@ export const CHARACTERS: Character[] = [
       { id: "noor-3", name: "Sweater & beret", items: { top: "oversized-sweater", bottom: "wide-leg-jeans", shoes: "boots", accessories: "beret" } },
     ],
   },
+  // Imported, full-detail models (blender/imported.py): realistic faces, standing, one authored outfit each.
+  {
+    id: "matt", name: "Matt", gender: "male", vibe: "Easy-going, sincere", tone: "#c89a70",
+    signature: "Swept ginger hair, light-blue oxford shirt", status: "available", suggestedVoice: "Josh",
+    personality: "Says the honest thing a beat too early. Full face rig: every ARKit shape.",
+    outfits: [{ id: "matt-1", name: "Oxford & jeans", items: {} }],
+  },
+  {
+    id: "freya", name: "Freya", gender: "female", vibe: "Cool, confident", tone: "#b08c78",
+    signature: "Long two-tone hair, black corset top", status: "available", suggestedVoice: "Rachel",
+    personality: "Never raises her voice. Doesn't need to.",
+    outfits: [{ id: "freya-1", name: "All black", items: {} }],
+  },
+  {
+    id: "cute_girl", name: "Mina", gender: "female", vibe: "Warm, playful", tone: "#d0a090",
+    signature: "Bangs and a loose ponytail, tied white shirt", status: "available", suggestedVoice: "Elli",
+    personality: "Laughs first, explains later.",
+    outfits: [{ id: "cute_girl-1", name: "Tied shirt & denim", items: {} }],
+  },
 ];
 export const character = (id: string | null | undefined) => CHARACTERS.find((c) => c.id === id);
 
@@ -182,6 +201,16 @@ export const ENVIRONMENTS: Environment[] = [
   { id: "pier", pipelineId: "pier", name: "Beach pier", category: "Exterior", status: "available",
     description: "Boardwalk pier over the water, railings and a ferris wheel far off.",
     presets: [P("sunset", "Sunset", "#ffa868", "#ff6848", "#ffb070", "#3a1a20"), P("pastel-morning", "Pastel morning", "#f8e0e0", "#c0d8f0", "#ffe8d8", "#3a3440"), P("carnival", "Night carnival lights", "#f0b080", "#4060ff", "#ff60a0", "#08080e")] },
+  // Imported, modelled rooms (blender/imported.py); best with the standing imported cast.
+  { id: "neon-tunnel", pipelineId: "neon_tunnel", name: "Neon tunnel", category: "Interior", status: "available",
+    description: "Glossy black corridor with cyan floor strips and pink neon panels.",
+    presets: [P("neon", "Neon", "#f0a0d0", "#40e0ff", "#ff50b0", "#0a080e"), P("blackout", "Blackout", "#f0ece4", "#40e0ff", "#ff50b0", "#020203")] },
+  { id: "gaming-den", pipelineId: "gaming_den", name: "Gaming den", category: "Interior", status: "available",
+    description: "Real-scale gaming room: desk, LED coves, PlayStation-symbol neon wall.",
+    presets: [P("rgb-night", "RGB night", "#f0b890", "#6078ff", "#ff9040", "#080a10"), P("late-session", "Late session", "#90a8ff", "#e040c8", "#60a0ff", "#040408")] },
+  { id: "cozy-gaming-room", pipelineId: "cozy_gaming_room", name: "Cozy gaming room", category: "Interior", status: "available",
+    description: "Stylised room with sofas, a coffee table, a big TV wall and a gaming desk.",
+    presets: [P("purple-neon", "Purple neon", "#f0b8a0", "#b060ff", "#ff60a0", "#0a0614"), P("chill-evening", "Chill evening", "#ffb070", "#5080ff", "#ffb060", "#100c12")] },
 ];
 export const environment = (id: string | null | undefined) => ENVIRONMENTS.find((e) => e.id === id);
 

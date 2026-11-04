@@ -132,3 +132,24 @@ The user's ultimate references are the **ink.industries "First kiss effect V2"**
 - **Sound + grade per set:** `reelforge/ambience.py` mixes a procedural ffmpeg bed (room tone, wind, waves, murmur, hum; plus rain for rain presets) at -24 dB under the dialogue (`"ambience": false` turns it off; the dry mix stays in `dialogue_dry.wav`). `finish.GRADES` adds a per-set colour-balance push, which plays the role of the brief's LUT.
 - Verdict vs `references/characters/style/`: rig and expressions work across the cast; look is "clean stylized toy", below the references (soft face planes, simple tube bodies, mitten hands, no outfit layering yet). Sets are procedural boxes lit well rather than modelled; see `docs/review/cast-sets-v1/REVIEW.md`.
 - **Next steps (suggested):** (1) swap the placeholder Windows-TTS voices in `samples/*/out/audio` for real ElevenLabs takes and re-run (`pip install -e ".[align]"` for Whisper); (2) the face quality pass in `docs/review/cast-sets-v1/REVIEW.md` (crisper planes, bigger smile range); (3) wrist/finger poses and a proper body rig; (4) fold/seam detail on clothes; (5) the editor's cast/outfit/set/lighting pickers now have real data to bind to (`blender/cast.py`, `blender/sets.py`); (6) the `cinematic-ai` engine. This folder is not a git repo: nothing from this session is committed.
+
+## 8. Session 2026-11-04 (imported cast + sets)
+The owner supplied third-party Blender files (`~/Downloads/BLENDER FILES`; RARs extracted to `extracted/`). They're wired to the existing contracts and live next to the procedural cast and sets.
+- **Rule (in CLAUDE.md):** never reduce character quality. No decimation, texture downscaling or shape-key pruning. Facial detail is the target.
+- `blender/imported.py` holds the data: source paths (`SRC_ROOT`, override with `REELFORGE_IMPORTS`), rig bone maps, and ARKit → face maps. The face maps are CC4 shape keys for Matt, Rigify controls for Freya, and Auto-Rig Pro controls for cute girl ("Mina" in the editor).
+- `blender/import_character.py -- <out> <id>` does the following:
+  - removes widgets, lights, cameras and unused armatures, and prefixes object names;
+  - resets the pose, then relaxes the arms down from the A/T pose;
+  - builds `CHAR_root` → `Body` → `Head`/`ElbowL`/`ElbowR`, which steer bones through Copy Rotation from pivot empties;
+  - adds `FaceCtrl` (52 ARKit props) with simple-expression drivers that work without autoexec, plus `FaceAnchor`/`EyeFocus` on the head bone;
+  - fixes FBX material slips (Reflection→Metallic, sRGB data maps, glossy alpha cards, opaque hair shadows);
+  - saves into a clean scene, because Freya's source scene settings darkened half her face.
+- `blender/import_set.py -- <out> <set> <preset>` scales each room to metres facing -Y (the tunnel ×1.4, the cozy room ×0.36, the den rotated -90°). It keeps the authored practicals (energy × scale²), adds the Key/Rim/Fill/Glow contract and `Mark_A`/`Mark_B`, and switches to EEVEE + AgX.
+- The engine (`cast_ids`, `set_presets`, `build_assets`) merges these assets in. The editor catalog lists Matt, Freya, Mina and the 3 rooms. `tests/test_imported.py` covers the registry. 71 tests pass.
+- Demo: `samples/imported-test` (Matt + Mina, neon_tunnel) renders through `render_plan.py`.
+- **Known gaps:**
+  - **Tasha has no rig**, so she isn't wired. The owner can auto-rig her (for example Mixamo, which needs their own account), then add her spec.
+  - `matt.blend` is 1.6 GB (a 900k-vertex body × 149 morphs). That's expected, and it loads slowly.
+  - The Rigify and ARP face moves are hand-tuned bone offsets. Freya's smile range is subtle.
+  - Wide-shot framing was tuned for the seated stand-in, so standing characters sit low in frame.
+  - The procedural (seated) cast doesn't suit the imported rooms.

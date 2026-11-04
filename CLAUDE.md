@@ -12,4 +12,5 @@ Ground rules:
 - Ask before large downloads (over 2 GB) or system-wide installs.
 - Blender path: `export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"`. Never use `setx`.
 - Tests: `.venv/Scripts/python -m pytest -q`. Keep the `reelforge/` core standard-library only.
+- **Never reduce character quality**: no decimation, no texture downscaling, no shape-key pruning on characters. Facial detail is the target. Optimizing a character means cleanup and wiring only.
 - Keep token use low: fresh sessions, and cheaper subagent models for mechanical tasks.
