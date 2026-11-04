@@ -1,0 +1,28 @@
+{
+  "name": "reelforge-toon25d-remotion",
+  "private": true,
+  "type": "module",
+  "description": "Remotion project for the toon25d style (vendored from mromidev/claude-animated-shorts, MIT).",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/fiber": "9.1.2",
+    "@react-three/postprocessing": "3.0.4",
+    "@remotion/bundler": "4.0.290",
+    "@remotion/cli": "4.0.290",
+    "@remotion/renderer": "4.0.290",
+    "@remotion/three": "4.0.290",
+    "postprocessing": "6.37.2",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.290",
+    "three": "0.175.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.2",
+    "@types/three": "0.175.0",
+    "typescript": "5.8.3"
+  }
+}
