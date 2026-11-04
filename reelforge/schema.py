@@ -11,6 +11,7 @@ RATIOS: dict[str, tuple[int, int]] = {
     "9:16": (1080, 1920), "16:9": (1920, 1080), "3:4": (1080, 1440), "1:1": (1080, 1080),
 }
 REQUIRED_LINE_KEYS = ("id", "speaker", "text", "emotion", "intensity", "mood")
+MAX_CHARACTERS = 2  # one per mark (Mark_A, Mark_B)
 
 
 class PerformanceError(ValueError):
@@ -23,6 +24,8 @@ class Character:
     voice_id: str
     caption_color: str
     highlight_color: str
+    model: str = "kai"  # cast member the engine renders
+    outfit: int = 0  # index into that member's wardrobe
 
 
 @dataclass(frozen=True)
@@ -44,6 +47,9 @@ class Performance:
     environment: str
     characters: dict[str, Character]
     lines: list[Line]
+    style: str = "blender3d"
+    lighting: str = ""  # preset of the environment; empty = the set's default
+    ambience: bool = True  # procedural room tone / weather bed under the dialogue
 
 
 def load_performance(path: Path) -> Performance:
@@ -65,9 +71,12 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"character {name}: missing voice_id")
             continue
         chars[name] = Character(name, c["voice_id"], c.get("caption_color", "#FFFFFF"),
-                                c.get("highlight_color", "#FFD23F"))
+                                c.get("highlight_color", "#FFD23F"), c.get("model", "kai"),
+                                int(c.get("outfit", 0)))
     if not chars:
         errors.append("at least one character required")
+    if len(chars) > MAX_CHARACTERS:
+        errors.append(f"at most {MAX_CHARACTERS} characters (one per mark), got {len(chars)}")
 
     lines: list[Line] = []
     seen: set[str] = set()
@@ -86,14 +95,21 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"{where}: emotion must be one of {EMOTIONS}")
         if raw["mood"] not in MOODS:
             errors.append(f"{where}: mood must be one of {MOODS}")
-        intensity = float(raw["intensity"])
+        try:
+            intensity, pause = float(raw["intensity"]), float(raw.get("pause_after", 0.3))
+        except (TypeError, ValueError):
+            errors.append(f"{where}: intensity and pause_after must be numbers")
+            continue
         if not 0.0 <= intensity <= 1.0:
             errors.append(f"{where}: intensity must be 0..1")
+        if pause < 0:
+            errors.append(f"{where}: pause_after must be >= 0")
         lines.append(Line(raw["id"], raw["speaker"], raw["text"], raw["emotion"], intensity,
-                          raw["mood"], float(raw.get("pause_after", 0.3)),
-                          bool(raw.get("punchline", False))))
+                          raw["mood"], pause, bool(raw.get("punchline", False))))
     if not lines:
         errors.append("at least one line required")
     if errors:
         raise PerformanceError("; ".join(errors))
-    return Performance(fps, ratio, data.get("environment", "night_city"), chars, lines)
+    return Performance(fps, ratio, data.get("environment", "night_city"), chars, lines,
+                       data.get("style", "blender3d"), data.get("lighting", ""),
+                       bool(data.get("ambience", True)))

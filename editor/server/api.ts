@@ -236,7 +236,7 @@ function systemStatus() {
     reelforge: Boolean(reelforgeBin()),
     blender: Boolean(blenderPath()),
     ffmpeg: onPath("ffmpeg"),
-    assetsBuilt: fs.existsSync(path.join(REPO, "assets", "build", "base.blend")),
+    assetsBuilt: fs.existsSync(path.join(REPO, "assets", "build", "kai.blend")),
     elevenlabsKey: Boolean(process.env.ELEVENLABS_API_KEY),
   };
   systemCache = { at: Date.now(), value };

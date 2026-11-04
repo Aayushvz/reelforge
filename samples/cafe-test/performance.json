@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "fps": 30,
+  "ratio": "9:16",
+  "environment": "cafe",
+  "lighting": "rainy_day",
+  "characters": {
+    "LEAD": {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "model": "aria",
+      "outfit": 1,
+      "caption_color": "#FFFFFF",
+      "highlight_color": "#FFB347"
+    }
+  },
+  "lines": [
+    {"id": "l01", "speaker": "LEAD", "text": "[flat] He said the deadline is flexible.",
+     "emotion": "deadpan", "intensity": 0.6, "mood": "calm", "pause_after": 0.5},
+    {"id": "l02", "speaker": "LEAD", "text": "[smug] Flexible. Like, it's due yesterday.",
+     "emotion": "smug", "intensity": 0.9, "mood": "awkward", "pause_after": 0.6, "punchline": true}
+  ]
+}

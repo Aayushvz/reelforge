@@ -9,7 +9,9 @@ VISEME_POSES: dict[str, dict[str, float]] = {
     "EE": {"jawOpen": 0.25, "mouthStretchLeft": 0.35, "mouthStretchRight": 0.35},
     "OH": {"jawOpen": 0.4, "mouthFunnel": 0.6},
     "OO": {"jawOpen": 0.12, "mouthPucker": 0.85},
-    "MBP": {"mouthClose": 0.7, "mouthPressLeft": 0.4, "mouthPressRight": 0.4},
+    # ARKit-correct closure: jaw shut, lips pressed and rolled. mouthClose would push lips through each other.
+    "MBP": {"jawOpen": 0.0, "mouthPressLeft": 0.7, "mouthPressRight": 0.7, "mouthRollLower": 0.45,
+            "mouthRollUpper": 0.35},
     "FV": {"jawOpen": 0.08, "mouthRollLower": 0.6},
     "TH": {"jawOpen": 0.2, "tongueOut": 0.3},
     "LNT": {"jawOpen": 0.22},
@@ -22,6 +24,7 @@ VOWELS = {"AA", "EE", "OH", "OO"}
 FULL_STRENGTH = {"MBP", "FV"}  # lip closures must hit fully or sync looks wrong
 CONSONANT_SCALE = 0.75
 GAP_SIL = 0.15
+MBP_HOLD_S = 0.08  # ~2.5 frames at 30 fps: closures must read on screen
 
 DIGRAPHS = {"th": "TH", "ch": "CH", "sh": "CH", "oo": "OO", "ee": "EE", "ph": "FV",
             "ck": "KG", "qu": "KG", "ou": "OH", "ow": "OH"}
@@ -53,9 +56,13 @@ def viseme_events(chars: list[Char]) -> list[tuple[float, str]]:
             v, s, e = LETTERS.get(low), c.start, c.end
             i += 1
         prev_end = e
-        if v:
+        if v == "MBP":
+            mid = (s + e) / 2
+            events += [(mid - MBP_HOLD_S / 2, v), (mid + MBP_HOLD_S / 2, v)]
+        elif v:
             events.append(((s + e) / 2, v))
     if events:
+        events.sort(key=lambda ev: ev[0])  # a held closure can overlap its neighbour's midpoint
         events.insert(0, (max(0.0, events[0][0] - 0.12), "sil"))
         events.append((prev_end + 0.08, "sil"))
     return events

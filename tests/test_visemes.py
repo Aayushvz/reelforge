@@ -11,7 +11,7 @@ def names(ev):
 
 
 def test_events_for_mama():
-    assert names(viseme_events(chars("mama"))) == ["sil", "MBP", "AA", "MBP", "AA", "sil"]
+    assert names(viseme_events(chars("mama"))) == ["sil", "MBP", "MBP", "AA", "MBP", "MBP", "AA", "sil"]
 
 
 def test_digraph_th():
@@ -31,7 +31,8 @@ def test_events_sorted():
 
 def test_tracks_rest_close_and_open():
     tr = sample_tracks(viseme_events(chars("mama")), 30, 20)
-    assert tr["mouthClose"][0] == 0.0
-    assert tr["mouthClose"][2] > 0.5   # near first 'm' (t=0.05)
+    assert tr["mouthPressLeft"][0] == 0.0
+    assert tr["mouthPressLeft"][1] > 0.5 and tr["jawOpen"][1] < 0.05   # held closure around the first 'm'
+    assert "mouthClose" not in tr       # never mouthClose with a shut jaw
     assert tr["jawOpen"][5] > 0.4      # near first 'a' (t=0.15)
     assert all(0.0 <= v <= 1.0 for vals in tr.values() for v in vals)

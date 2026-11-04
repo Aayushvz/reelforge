@@ -4,7 +4,7 @@
 
 You write the script and generate the voice lines. reelforge handles timing, facial animation and emotion, camera shots, mood lighting, rendering, captions and the final mix.
 
-> Status: **Milestone 1 (pipeline) is done.** Next up: a 7-character cast, 10 environments and the editor UI. See [Roadmap](#roadmap).
+> Status: **Milestone 1 (pipeline) is done.** v1 of the 7-character cast (3 outfits each) and the 10 sets × 3 lighting presets are in; they get a quality pass next, then the editor UI. See [Roadmap](#roadmap).
 
 ## How it works
 ```
@@ -15,7 +15,7 @@ It's a multi-style platform. Each animation style is a pluggable "engine":
 
 | Style | Look | Status |
 |---|---|---|
-| `blender3d` | Stylized 3D characters in moody, glowing sets | Pipeline works; cast and sets are in progress |
+| `blender3d` | Stylized 3D characters in moody, glowing sets | Works: 7-character cast, 10 sets × 3 lighting presets (v1 look) |
 | `cinematic-ai` | Pixar-like cinematic AI video (opt-in, paid providers) | Planned |
 | more | From future references | Planned |
 
@@ -36,16 +36,18 @@ python -m venv .venv
 # and extract it into tools/blender-4.5/, then:
 echo "<absolute path to blender.exe>" > tools/blender_path.txt
 export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
-.venv/Scripts/python -m pytest -q          # 49 tests should pass
+.venv/Scripts/python -m pytest -q          # 63 tests should pass
 ```
 
 ## Make a reel
 1. Create a project folder with a `performance.json`. Copy `samples/look-test/performance.json` as a template. It lists the lines, speaker, emotion, intensity, mood and punchline.
+   - Cast: give each character `"model"` (kai, rey, dev, mo, aria, zoe, noor) and `"outfit"` (0–2). Dials live in `blender/cast.py`.
+   - Set: `"environment"` (night_city, bedroom, rooftop, cafe, lantern_street, subway, classroom, office, night_mart, pier) and optional `"lighting"` (a preset name from `blender/sets.py`, e.g. `"cafe"` + `"rainy_day"`).
 2. Put one mp3 per line in `<project>/out/audio/<line_id>.mp3`, or set `ELEVENLABS_API_KEY`.
 3. Build and render:
 ```bash
-.venv/Scripts/reelforge build-assets
-.venv/Scripts/reelforge run <project> --stage stills --draft   # quick per-shot preview
+.venv/Scripts/reelforge build-assets   # whole cast (21 outfits) + 30 set files, a few minutes
+.venv/Scripts/reelforge run <project> --stage stills --draft   # quick per-shot preview (draft = 16 samples, half resolution)
 .venv/Scripts/reelforge run <project> --stage full             # final video → <project>/out/final_9x16.mp4
 ```
 
@@ -56,7 +58,7 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
 | `blender/` | Headless Blender scripts: character, set, render-plan executor |
 | `tools/a2f_fetch.py` | Audio2Face ONNX experiment (optional) |
 | `tests/` | pytest suite |
-| `samples/look-test/` | Example project plus `REVIEW.md` |
+| `samples/` | Example projects: `look-test` (M1), `cafe-test` (one character), `duo-test` (two characters), `talk-<name>` (one per cast member) |
 | `references/` | Style, character and environment reference images |
 | `docs/` | Handoff, specs, plans, notes |
 
@@ -68,9 +70,9 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
 - [Original design spec](docs/superpowers/specs/2026-10-31-animated-reel-generator-design.md)
 
 ## Roadmap
-0. Engine refactor (pluggable styles)
-1. **Cast:** 4 male and 3 female original stylized characters, with a Gen-Z wardrobe system (25+ items)
-2. **Sets:** 10 environments × 3 lighting presets
+0. ~~Engine refactor (pluggable styles)~~ done
+1. **Cast:** 4 male and 3 female original stylized characters, with a Gen-Z wardrobe system (25+ items): v1 done
+2. **Sets:** 10 environments × 3 lighting presets: v1 done
 3. **Editor:** a dark, minimal desktop-class web editor (script → cast → set → voice → timeline → approve → render)
 4. `cinematic-ai` style engine
 5. More styles

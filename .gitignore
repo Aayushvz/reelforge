@@ -6,7 +6,8 @@ samples/*/out/
 tools/blender*/
 *.blend1
 .superpowers/
-tools/
+tools/*
+!tools/*.py
 editor/node_modules/
 editor/dist/
 projects/
