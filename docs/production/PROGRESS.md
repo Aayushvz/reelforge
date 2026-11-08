@@ -31,7 +31,8 @@ than one or two of them at once. Every such download also needs the owner's appr
 | 1 | Boards + lead scoring (`phase1/REVIEW.md`) | done | 3739f08 | (c) 6.73 vs (b) 4.95; recommend (c) as a hybrid base |
 | 1 | Independent review (Opus, blind) | done | this commit | (c) 6.2 vs (b) 3.8; agrees with the lead: route (c) |
 | 1 | Fix pass on route (c): stubble mask (defined beard edge, fine soft dots) | done | this commit | reviewers' defect #2; hair is now the top defect |
-| 1 | Owner side-by-side + route approval | waiting on owner | — | boards in `phase1/boards/` |
+| 1 | Owner side-by-side + route approval | done | this commit | **route (c) approved** by Dhairya 2026-11-08 |
+| 1 | Fix pass on route (c): hair → matte clumped curls; caricature restyle; cloth cleanup; jaw pivot / blink seam | **next** | — | then re-board vs refs 1 and 3 |
 | 1 | Bake-off on Kai: (a) image-to-3D, (b) procedural v2, (c) CC-BY base | not started | — | judged 40% face likeness, 25% expressiveness, 15% eyes |
 | 2 | Cast production (7 × 3 looks) | not started | — | |
 | 3 | Environments (10 × 3) + R1 AI plates | not started | — | |
@@ -43,6 +44,7 @@ than one or two of them at once. Every such download also needs the owner's appr
 - Hardware: image-to-3D, FLUX/SDXL plates and the enhance pass need an 8 GB GPU (or a free cloud GPU) and multi-GB downloads.
 
 ## Decisions
+- 2026-11-08 (Dhairya): **Route (c) approved** as the cast base (Rain v3 face rig + restyle), per `phase1/REVIEW.md`. Route (a) stays a later challenger.
 - 2026-11-08 (Dhairya): Phase 1 bake-off runs routes **(b) procedural v2** and **(c) CC-BY base** on this laptop.
   Route **(a) image-to-3D** joins later on the owner's 8 GB machine or a free cloud GPU, scored on the same rubric.
 - 2026-11-08 (Dhairya): OK to download one Blender Studio CC-BY character for route (c), size checked first, < 2 GB.
