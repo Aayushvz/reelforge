@@ -1,0 +1,419 @@
+{
+ "baseline": {
+  "teeth": 419,
+  "tongue": 51,
+  "eye": 394
+ },
+ "cases": {
+  "eyeBlinkLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookDownLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookInLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookOutLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookUpLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeSquintLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeWideLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeBlinkRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookDownRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookInRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookOutRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeLookUpRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeSquintRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "eyeWideRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "jawForward": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "jawLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "jawRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "jawOpen": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthClose": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthFunnel": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthPucker": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthSmileLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthSmileRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthFrownLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthFrownRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthDimpleLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthDimpleRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthStretchLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthStretchRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthRollLower": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthRollUpper": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthShrugLower": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthShrugUpper": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthPressLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthPressRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthLowerDownLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthLowerDownRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthUpperUpLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "mouthUpperUpRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "browDownLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "browDownRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "browInnerUp": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "browOuterUpLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "browOuterUpRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "cheekPuff": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "cheekSquintLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "cheekSquintRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "noseSneerLeft": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "noseSneerRight": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "tongueOut": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "smile+jawOpen": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "blink+squint": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   },
+   "lid_coverage": 0.989
+  },
+  "pucker+jawOpen": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "funnel+jawOpen": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  },
+  "smile+blink": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   },
+   "lid_coverage": 0.989
+  },
+  "press+close": {
+   "poke_through": {
+    "teeth": 0,
+    "tongue": 0,
+    "eye": 0
+   }
+  }
+ },
+ "failures": [],
+ "verdict": "PASS"
+}

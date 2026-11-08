@@ -24,10 +24,11 @@ than one or two of them at once. Every such download also needs the owner's appr
 | 1 | Brainstorm look route; route scope decided | done | — | (b) vs (c) here, (a) later; see Decisions |
 | 1 | Download + inspect Rain v3 (CC-BY, 64 MB) | done | — | renders in Blender 5.2; bone-driven face; `phase1/rain_v3_lookcheck.jpg` |
 | 1 | Phase 1 spec (`phase1-spec.md`) | done | f0fbf9f | approved by Dhairya 2026-11-08 |
-| 1 | Bake-off harness: `blender/bakeoff/face_sheet.py`, `face_check.py`; v1 Kai baseline sheets | done | 5216eb6 | v1 check: tongueOut + gaze-down poke-through |
-| 1 | Route (c) build: Rain v3 → Kai (`route_c_rain.py`) | in progress (subagent, Sonnet) | — | brief: `phase1/brief_route_c.md` |
-| 1 | Route (b) build: procedural v2 Kai (`route_b_procedural.py`) | in progress (subagent, Sonnet) | — | brief: `phase1/brief_route_b.md` |
-| 1 | Scoring + independent review + owner side-by-side | not started | — | |
+| 1 | Bake-off harness: `blender/bakeoff/face_sheet.py`, `face_check.py`, `compare_board.py`; v1 Kai baseline | done | 2267b27, 5f7d694 | v1 check: tongueOut + gaze-down poke-through; turnaround framing fixed |
+| 1 | Route (c) build: Rain v3 → Kai (`route_c_rain.py`) | done (subagent, Sonnet) | checkpoint | face_check PASS; 92k base / 345k render tris; ~2.2 s/close-up; see `route_c_notes.md` |
+| 1 | Route (b) build: procedural v2 Kai (`route_b_procedural.py`) | done (subagent, Sonnet) | 2267b27 | face_check PASS; 945k tris (hair 631k); ~2 s/close-up; see `route_b_notes.md` |
+| 1 | Usage checkpoint: WIP commit + push at 85% (user rule) | done | this commit | pushed to origin/prod/phase1-look-route |
+| 1 | Scoring + independent review + owner side-by-side | **next** | — | re-render kai_c sheets with the fixed harness first (route_c_turnaround.py becomes redundant) |
 | 1 | Bake-off on Kai: (a) image-to-3D, (b) procedural v2, (c) CC-BY base | not started | — | judged 40% face likeness, 25% expressiveness, 15% eyes |
 | 2 | Cast production (7 × 3 looks) | not started | — | |
 | 3 | Environments (10 × 3) + R1 AI plates | not started | — | |
