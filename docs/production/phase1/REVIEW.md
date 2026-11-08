@@ -37,4 +37,26 @@ angry, viseme M, blink), `boards/board_ecu.png` (eyes, mouth), `boards/board_tur
 
 **Still open:** route (a) image-to-3D (needs an 8 GB GPU) may beat both on likeness. It should get the same sheets before Phase 2 commits fully.
 
-Independent review: see the section below once it runs.
+
+## Independent review (Opus, scored blind)
+| Criterion (weight) | (b) | (c) |
+|---|---|---|
+| Face likeness (40%) | 3.5 | 6.0 |
+| Expressiveness (25%) | 4.5 | 7.5 |
+| Eye quality (15%) | 4.0 | 7.0 |
+| Everything else (20%) | 3.5 | 4.5 |
+| **Weighted total** | **3.8** | **6.2** |
+
+**Route (c) defects (fix-pass list):**
+1. **Hair looks metallic:** the coils read as hex nuts or chainmail. They should be matte black clumped curls, like reference 1. This is the single most visible flaw.
+2. **Stubble reads as dirt:** it needs a beard-region mask with a defined edge and falloff.
+3. **The face is still too young and round:** it needs a longer, narrower nose, a sharper jaw and a heavier hooded neutral lid.
+4. **Clothes are broken:** ragged collar and hem, holes at the back of the shoulders, legging-like trousers, tiny shoes.
+5. **Deformation artifacts:** a lid-seam ring on blink, a lumpy jaw bulge on laugh (jaw pivot a few mm off), and flat slab brows that stand proud of the skin.
+
+**Route (b) defects:** a structureless rubbery face, goggly bulging eyes with gapped lid shells, an open "A" that reads as a dark slot, weak smug and angry, and a helmet of hair on a stiff body.
+
+**Recommendation:** build the cast on route (c). Its rendering, eyes and expression range are in the right league, and most of its defects are surface work. The bigger job is a stronger restyle toward angular caricature. Gate the cast build on the hair rework and the stubble mask, then re-board against references 1 and 3.
+
+## Consensus
+Both reviewers pick **route (c)**, with weighted scores within 0.6 of each other, and they list the same top defects. Next step: the owner approves route (c), then a fix pass covers hair, stubble mask, caricature restyle, cloth cleanup and the jaw pivot. Route (a) image-to-3D stays open as a later challenger (it needs an 8 GB GPU).

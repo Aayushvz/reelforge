@@ -28,7 +28,9 @@ than one or two of them at once. Every such download also needs the owner's appr
 | 1 | Route (c) build: Rain v3 → Kai (`route_c_rain.py`) | done (subagent, Sonnet) | checkpoint | face_check PASS; 92k base / 345k render tris; ~2.2 s/close-up; see `route_c_notes.md` |
 | 1 | Route (b) build: procedural v2 Kai (`route_b_procedural.py`) | done (subagent, Sonnet) | 2267b27 | face_check PASS; 945k tris (hair 631k); ~2 s/close-up; see `route_b_notes.md` |
 | 1 | Usage checkpoint: WIP commit + push at 85% (user rule) | done | this commit | pushed to origin/prod/phase1-look-route |
-| 1 | Scoring + independent review + owner side-by-side | **next** | — | re-render kai_c sheets with the fixed harness first (route_c_turnaround.py becomes redundant) |
+| 1 | Boards + lead scoring (`phase1/REVIEW.md`) | done | 3739f08 | (c) 6.73 vs (b) 4.95; recommend (c) as a hybrid base |
+| 1 | Independent review (Opus, blind) | done | this commit | (c) 6.2 vs (b) 3.8; agrees with the lead: route (c) |
+| 1 | Owner side-by-side + route approval | waiting on owner | — | boards in `phase1/boards/` |
 | 1 | Bake-off on Kai: (a) image-to-3D, (b) procedural v2, (c) CC-BY base | not started | — | judged 40% face likeness, 25% expressiveness, 15% eyes |
 | 2 | Cast production (7 × 3 looks) | not started | — | |
 | 3 | Environments (10 × 3) + R1 AI plates | not started | — | |
