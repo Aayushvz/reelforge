@@ -789,11 +789,12 @@ b.inputs["Coat Weight"].default_value = 0.04
 col = mixrgb(nt, attr_node(nt, "lip"), SKIN, LIPC)
 tc = nt.nodes.new("ShaderNodeTexCoord")
 nz = nt.nodes.new("ShaderNodeTexNoise")
-nz.inputs["Scale"].default_value = 1100.0
+nz.inputs["Scale"].default_value = 2600.0  # fine stubble dots, not speckle
 nz.inputs["Detail"].default_value = 1.0
 nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
 ramp = nt.nodes.new("ShaderNodeValToRGB")
-ramp.color_ramp.elements[0].position, ramp.color_ramp.elements[1].position = 0.50, 0.66
+ramp.color_ramp.elements[0].position, ramp.color_ramp.elements[1].position = 0.52, 0.64
+ramp.color_ramp.elements[1].color = (0.55, 0.55, 0.55, 1)  # dots stay soft
 nt.links.new(nz.outputs["Fac"], ramp.inputs["Fac"])
 dots = nt.nodes.new("ShaderNodeMath")
 dots.operation = "MULTIPLY"
@@ -802,15 +803,15 @@ nt.links.new(attr_node(nt, "stub"), dots.inputs[1])
 shade = nt.nodes.new("ShaderNodeMath")
 shade.operation = "MULTIPLY"
 nt.links.new(attr_node(nt, "stub"), shade.inputs[0])
-shade.inputs[1].default_value = 0.22
+shade.inputs[1].default_value = 0.32  # even blue-grey shadow carries the read
 both = nt.nodes.new("ShaderNodeMath")
 both.operation, both.use_clamp = "ADD", True
 nt.links.new(dots.outputs[0], both.inputs[0])
 nt.links.new(shade.outputs[0], both.inputs[1])
-col = mixrgb(nt, both.outputs[0], col, (0.030, 0.018, 0.014))
+col = mixrgb(nt, both.outputs[0], col, (0.040, 0.034, 0.036))  # cool grey-brown, not mud
 nt.links.new(col, b.inputs["Base Color"])
 bumpn = nt.nodes.new("ShaderNodeBump")
-bumpn.inputs["Strength"].default_value = 0.25
+bumpn.inputs["Strength"].default_value = 0.1
 bumpn.inputs["Distance"].default_value = 0.0006
 nt.links.new(dots.outputs[0], bumpn.inputs["Height"])
 nt.links.new(bumpn.outputs["Normal"], b.inputs["Normal"])
@@ -832,9 +833,13 @@ for v in hme.vertices:
     lip[v.index] = min(1.0, sum(g.weight for g in v.groups if g.group in lip_idx))
 Pn = neutral_pos["GEO-rain-head"]
 ax_, ay_, az_ = np.abs(Pn[:, 0]), Pn[:, 1], Pn[:, 2]
-# jaw, chin, upper lip, sideburns and the underside of the neck; fades up the cheek, away from nostrils and lips
-stub = sstep(1.455, 1.425, az_) * sstep(-0.02, -0.07, ay_)
+# Beard region with a defined edge (reviewers: the old soft mask read as dirt across the cheeks). The cheek line runs
+# from the sideburn (|x| 0.095, z 1.47) down to the mouth corner (|x| 0.035, z 1.405), with a 3 mm falloff.
+z_line = 1.405 + np.clip((ax_ - 0.035) / 0.06, 0.0, 1.0) * 0.065
+stub = sstep(z_line + 0.003, z_line - 0.003, az_) * sstep(0.02, -0.03, ay_)
 stub = np.maximum(stub, 0.85 * sstep(1.50, 1.47, az_) * sstep(0.095, 0.115, ax_) * sstep(0.0, -0.05, ay_))
+moustache = sstep(1.426, 1.419, az_) * sstep(1.397, 1.404, az_) * (1 - sstep(0.03, 0.037, ax_))
+stub = np.maximum(stub, 0.8 * moustache)
 stub *= 1 - 0.9 * sstep(0.5, 0.9, lip)
 nose = sstep(1.46, 1.43, az_) * (1 - sstep(0.012, 0.03, ax_)) * sstep(1.40, 1.425, az_)  # keep the philtrum light
 stub = stub * (1 - 0.6 * nose)

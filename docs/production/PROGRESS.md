@@ -30,6 +30,7 @@ than one or two of them at once. Every such download also needs the owner's appr
 | 1 | Usage checkpoint: WIP commit + push at 85% (user rule) | done | this commit | pushed to origin/prod/phase1-look-route |
 | 1 | Boards + lead scoring (`phase1/REVIEW.md`) | done | 3739f08 | (c) 6.73 vs (b) 4.95; recommend (c) as a hybrid base |
 | 1 | Independent review (Opus, blind) | done | this commit | (c) 6.2 vs (b) 3.8; agrees with the lead: route (c) |
+| 1 | Fix pass on route (c): stubble mask (defined beard edge, fine soft dots) | done | this commit | reviewers' defect #2; hair is now the top defect |
 | 1 | Owner side-by-side + route approval | waiting on owner | — | boards in `phase1/boards/` |
 | 1 | Bake-off on Kai: (a) image-to-3D, (b) procedural v2, (c) CC-BY base | not started | — | judged 40% face likeness, 25% expressiveness, 15% eyes |
 | 2 | Cast production (7 × 3 looks) | not started | — | |
