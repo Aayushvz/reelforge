@@ -23,7 +23,11 @@ than one or two of them at once. Every such download also needs the owner's appr
 | 0 | Baseline: `reelforge build-assets` | done | — | 61 blend files in 210 s, no errors |
 | 1 | Brainstorm look route; route scope decided | done | — | (b) vs (c) here, (a) later; see Decisions |
 | 1 | Download + inspect Rain v3 (CC-BY, 64 MB) | done | — | renders in Blender 5.2; bone-driven face; `phase1/rain_v3_lookcheck.jpg` |
-| 1 | Phase 1 spec (`phase1-spec.md`) | waiting on owner | — | approve routes, deliverables and scoring |
+| 1 | Phase 1 spec (`phase1-spec.md`) | done | f0fbf9f | approved by Dhairya 2026-11-08 |
+| 1 | Bake-off harness: `blender/bakeoff/face_sheet.py`, `face_check.py`; v1 Kai baseline sheets | done | 5216eb6 | v1 check: tongueOut + gaze-down poke-through |
+| 1 | Route (c) build: Rain v3 → Kai (`route_c_rain.py`) | in progress (subagent, Sonnet) | — | brief: `phase1/brief_route_c.md` |
+| 1 | Route (b) build: procedural v2 Kai (`route_b_procedural.py`) | in progress (subagent, Sonnet) | — | brief: `phase1/brief_route_b.md` |
+| 1 | Scoring + independent review + owner side-by-side | not started | — | |
 | 1 | Bake-off on Kai: (a) image-to-3D, (b) procedural v2, (c) CC-BY base | not started | — | judged 40% face likeness, 25% expressiveness, 15% eyes |
 | 2 | Cast production (7 × 3 looks) | not started | — | |
 | 3 | Environments (10 × 3) + R1 AI plates | not started | — | |
@@ -32,7 +36,6 @@ than one or two of them at once. Every such download also needs the owner's appr
 | 6 | Ship (docs, release asset) | not started | — | |
 
 ## Open questions for the owner
-- Approve `docs/production/phase1-spec.md` (bake-off plan, rubric, ARKit-bake approach c1 for Rain).
 - Hardware: image-to-3D, FLUX/SDXL plates and the enhance pass need an 8 GB GPU (or a free cloud GPU) and multi-GB downloads.
 
 ## Decisions
