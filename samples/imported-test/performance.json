@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "fps": 30,
-  "ratio": "9:16",
+  "fps": 60,
+  "ratio": "3:4",
   "environment": "neon_tunnel",
   "lighting": "neon",
   "characters": {
@@ -9,7 +9,7 @@
       "voice_id": "21m00Tcm4TlvDq8ikWAM",
       "caption_color": "#FFFFFF",
       "highlight_color": "#FFD23F",
-      "model": "cute_girl",
+      "model": "freya",
       "outfit": 0
     },
     "MINA": {

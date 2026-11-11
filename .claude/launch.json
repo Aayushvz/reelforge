@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "editor"],
       "port": 5190
+    },
+    {
+      "name": "open-generative-ai",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/aayus/tools/Open-Generative-AI"],
+      "port": 3000
     }
   ]
 }
