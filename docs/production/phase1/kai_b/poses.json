@@ -1,0 +1,109 @@
+{
+ "neutral": {},
+ "laugh": {
+  "jawOpen": 0.45,
+  "mouthSmileLeft": 1,
+  "mouthSmileRight": 1,
+  "cheekSquintLeft": 0.8,
+  "cheekSquintRight": 0.8,
+  "eyeSquintLeft": 0.6,
+  "eyeSquintRight": 0.6,
+  "browInnerUp": 0.2
+ },
+ "smug": {
+  "mouthSmileLeft": 0.8,
+  "mouthDimpleLeft": 0.4,
+  "mouthPressRight": 0.4,
+  "browOuterUpRight": 0.9,
+  "browDownLeft": 0.5,
+  "eyeSquintLeft": 0.35,
+  "eyeBlinkLeft": 0.2,
+  "eyeBlinkRight": 0.2
+ },
+ "surprised": {
+  "jawOpen": 0.55,
+  "mouthFunnel": 0.4,
+  "eyeWideLeft": 1,
+  "eyeWideRight": 1,
+  "browInnerUp": 1,
+  "browOuterUpLeft": 1,
+  "browOuterUpRight": 1
+ },
+ "sad": {
+  "mouthFrownLeft": 1,
+  "mouthFrownRight": 1,
+  "mouthShrugLower": 0.5,
+  "browInnerUp": 0.9,
+  "eyeLookDownLeft": 0.4,
+  "eyeLookDownRight": 0.4,
+  "eyeBlinkLeft": 0.25,
+  "eyeBlinkRight": 0.25
+ },
+ "angry": {
+  "browDownLeft": 1,
+  "browDownRight": 1,
+  "noseSneerLeft": 0.7,
+  "noseSneerRight": 0.7,
+  "mouthFrownLeft": 0.5,
+  "mouthFrownRight": 0.5,
+  "mouthPressLeft": 0.6,
+  "mouthPressRight": 0.6,
+  "eyeSquintLeft": 0.5,
+  "eyeSquintRight": 0.5
+ },
+ "worried": {
+  "browInnerUp": 1,
+  "browDownLeft": 0.2,
+  "browDownRight": 0.2,
+  "mouthStretchLeft": 0.4,
+  "mouthStretchRight": 0.4,
+  "mouthRollLower": 0.3,
+  "eyeWideLeft": 0.3,
+  "eyeWideRight": 0.3
+ },
+ "deadpan": {
+  "eyeBlinkLeft": 0.4,
+  "eyeBlinkRight": 0.4,
+  "mouthPressLeft": 0.3,
+  "mouthPressRight": 0.3
+ },
+ "viseme_A": {
+  "jawOpen": 0.6
+ },
+ "viseme_E": {
+  "jawOpen": 0.25,
+  "mouthStretchLeft": 0.5,
+  "mouthStretchRight": 0.5
+ },
+ "viseme_O": {
+  "jawOpen": 0.35,
+  "mouthFunnel": 0.8,
+  "mouthPucker": 0.3
+ },
+ "viseme_M": {
+  "mouthPressLeft": 0.7,
+  "mouthPressRight": 0.7,
+  "mouthRollLower": 0.45,
+  "mouthRollUpper": 0.35
+ },
+ "blink": {
+  "eyeBlinkLeft": 1,
+  "eyeBlinkRight": 1
+ },
+ "gaze_left": {
+  "eyeLookOutLeft": 1,
+  "eyeLookInRight": 1
+ },
+ "gaze_right": {
+  "eyeLookInLeft": 1,
+  "eyeLookOutRight": 1
+ },
+ "gaze_up": {
+  "eyeLookUpLeft": 1,
+  "eyeLookUpRight": 1
+ },
+ "gaze_down": {
+  "eyeLookDownLeft": 1,
+  "eyeLookDownRight": 1
+ }
+}
