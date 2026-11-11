@@ -28,13 +28,16 @@ def blender_cmd(script: Path, args: list[str], blend: Path | None = None) -> lis
     return cmd + ["--factory-startup", "--python-exit-code", "1", "-P", str(script), "--", *args]
 
 
-def run_blender(script: Path, args: list[str], blend: Path | None = None) -> None:
-    """Stream Blender's output live; on failure raise with its last lines (the traceback)."""
+def run_blender(script: Path, args: list[str], blend: Path | None = None, on_line=None) -> None:
+    """Stream Blender's output live; on failure raise with its last lines (the traceback).
+    on_line(text) also receives every line, for callers that read timings out of it."""
     tail: deque[str] = deque(maxlen=25)
     with subprocess.Popen(blender_cmd(script, args, blend), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                           text=True, errors="replace") as proc:
         for line in proc.stdout:
             print(line, end="")
             tail.append(line)
+            if on_line:
+                on_line(line.rstrip())
     if proc.returncode:
         raise BlenderError(f"{Path(script).name} failed (exit {proc.returncode}):\n{''.join(tail)}")

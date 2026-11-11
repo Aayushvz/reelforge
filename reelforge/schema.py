@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 EMOTIONS = ("neutral", "happy", "sad", "worried", "surprised", "smug", "deadpan",
@@ -12,6 +12,11 @@ RATIOS: dict[str, tuple[int, int]] = {
 }
 REQUIRED_LINE_KEYS = ("id", "speaker", "text", "emotion", "intensity", "mood")
 MAX_CHARACTERS = 2  # one per mark (Mark_A, Mark_B)
+LOOKS = ("classic", "cinema")  # classic = the original Eevee look; cinema = Cycles faces + the camera rig
+QUALITIES = ("preview", "standard", "cinema")
+CAMERA_MOVES = ("static", "push_in", "pull_out", "orbit", "truck", "drift", "crane_down", "crane_up",
+                "slow_zoom", "whip_pan")
+SHOT_KINDS = ("wide", "medium", "closeup", "ecu")
 
 
 class PerformanceError(ValueError):
@@ -50,6 +55,10 @@ class Performance:
     style: str = "blender3d"
     lighting: str = ""  # preset of the environment; empty = the set's default
     ambience: bool = True  # procedural room tone / weather bed under the dialogue
+    look: str = "classic"  # render look of the blender3d engine (LOOKS)
+    quality: str = "standard"  # preview | standard | cinema (cinema look only; --draft forces preview)
+    camera: dict = field(default_factory=dict)  # cinema look: {seed, handheld, overrides: {"<shot>": {...}}}
+    look_params: dict = field(default_factory=dict)  # per-look number dials, e.g. {"skin_glow": 1.0}
 
 
 def load_performance(path: Path) -> Performance:
@@ -108,8 +117,34 @@ def parse_performance(data: dict) -> Performance:
                           raw["mood"], pause, bool(raw.get("punchline", False))))
     if not lines:
         errors.append("at least one line required")
+    look, quality = data.get("look", "classic"), data.get("quality", "standard")
+    if look not in LOOKS:
+        errors.append(f"look must be one of {LOOKS}, got {look}")
+    if quality not in QUALITIES:
+        errors.append(f"quality must be one of {QUALITIES}, got {quality}")
+    camera, look_params = data.get("camera") or {}, data.get("look_params") or {}
+    if not isinstance(camera, dict) or not isinstance(look_params, dict):
+        errors.append("camera and look_params must be objects")
+        camera, look_params = {}, {}
+    handheld = camera.get("handheld", 0.15)
+    if isinstance(handheld, bool) or not isinstance(handheld, (int, float)) or not 0.0 <= handheld <= 1.0:
+        errors.append("camera.handheld must be a number 0..1")
+    overrides = camera.get("overrides") or {}
+    for key, o in (overrides.items() if isinstance(overrides, dict) else []):
+        where = f"camera.overrides[{key}]"
+        if not str(key).isdigit() or not isinstance(o, dict):
+            errors.append(f"{where}: the key must be a shot index and the value an object")
+            continue
+        if "move" in o and o["move"] not in CAMERA_MOVES:
+            errors.append(f"{where}: move must be one of {CAMERA_MOVES}")
+        if "kind" in o and o["kind"] not in SHOT_KINDS:
+            errors.append(f"{where}: kind must be one of {SHOT_KINDS}")
+        if "subject" in o and o["subject"] not in chars:
+            errors.append(f"{where}: unknown subject {o['subject']}")
+    if any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in look_params.values()):
+        errors.append("look_params values must be numbers")
     if errors:
         raise PerformanceError("; ".join(errors))
     return Performance(fps, ratio, data.get("environment", "night_city"), chars, lines,
                        data.get("style", "blender3d"), data.get("lighting", ""),
-                       bool(data.get("ambience", True)))
+                       bool(data.get("ambience", True)), look, quality, camera, look_params)

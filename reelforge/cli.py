@@ -5,16 +5,17 @@ import hashlib
 import json
 import math
 import os
+from dataclasses import replace
 from pathlib import Path
 
 from .a2f import frames_to_tracks
 from .ambience import add_ambience
 from .captions import build_ass
-from .direct import mood_keys, plan_shots
+from .direct import mood_keys, plan_shots, plan_shots_v2
 from .engines import DEFAULT, ENGINES, get_engine
 from .face import build_faces
 from .finish import finish
-from .schema import RATIOS, load_performance
+from .schema import LOOKS, QUALITIES, RATIOS, load_performance
 from .timeline import mix_dialogue, place_lines, probe_duration
 from .voice import VoiceError, has_take, import_line, synthesize_line, take_path
 
@@ -31,6 +32,13 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--stage", choices=["stills", "full"], default="full")
     r.add_argument("--draft", action="store_true", help="16 samples instead of 64")
     r.add_argument("--style", choices=list(ENGINES), help="override the project's style")
+    r.add_argument("--look", choices=list(LOOKS), help="override the project's look")
+    r.add_argument("--quality", choices=list(QUALITIES), help="cinema look: preview | standard | cinema")
+    bn = sub.add_parser("bench", help="time fixed stills for a look and quality (no voices needed)")
+    bn.add_argument("--look", choices=list(LOOKS), default="cinema")
+    bn.add_argument("--quality", choices=list(QUALITIES), default="standard")
+    bn.add_argument("--room", help="only this room")
+    bn.add_argument("--out", type=Path, default=REPO / "samples" / "_bench" / "out")
     v = sub.add_parser("voices", help="generate missing ElevenLabs takes (one JSON status line each)")
     v.add_argument("project", type=Path)
     v.add_argument("--line", action="append", default=[], help="only these line ids")
@@ -72,9 +80,11 @@ def voices(project: Path, only: list[str], force: bool) -> int:
     return 1 if failed else 0
 
 
-def run(project: Path, stage: str, draft: bool, style: str | None = None) -> Path | None:
+def run(project: Path, stage: str, draft: bool, style: str | None = None, look: str | None = None,
+        quality: str | None = None) -> Path | None:
     project = project.resolve()
     perf = load_performance(project / "performance.json")
+    perf = replace(perf, look=look or perf.look, quality="preview" if draft else (quality or perf.quality))
     engine = get_engine(style or perf.style)
     out = project / "out"
     key = os.environ.get("ELEVENLABS_API_KEY")
@@ -112,7 +122,11 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None) -> Pat
             overrides[p.line.id] = frames_to_tracks(data["frames"], perf.fps,
                                                     math.ceil(p.duration * perf.fps) + 2)
     faces = build_faces(perf, placed, perf.fps, n_frames, lipsync_override=overrides)
-    shots = plan_shots(placed, perf.fps, n_frames)
+    if perf.look == "classic":
+        shots = plan_shots(placed, perf.fps, n_frames)
+    else:  # seeded by the project so the editor preview and the render agree
+        seed = int(perf.camera.get("seed", int(hashlib.sha1(project.name.encode()).hexdigest()[:6], 16)))
+        shots = plan_shots_v2(placed, perf.fps, n_frames, list(perf.characters), seed, perf.camera)
     moods = mood_keys(placed, perf.fps)
     w, h = RATIOS[perf.ratio]
     (out / "captions.ass").write_text(build_ass(placed, perf, w, h), encoding="utf-8")
@@ -120,7 +134,7 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None) -> Pat
     if stage == "stills":
         print(f"stills: {out / 'stills'}")
         return None
-    final = finish(out, perf.fps, f"final_{perf.ratio.replace(':', 'x')}.mp4", perf.environment)
+    final = finish(out, perf.fps, f"final_{perf.ratio.replace(':', 'x')}.mp4", perf.environment, perf.look)
     print(f"final: {final}")
     return final
 
@@ -129,10 +143,13 @@ def main(argv: list[str] | None = None) -> None:
     ns = build_parser().parse_args(argv)
     if ns.cmd == "build-assets":
         get_engine(ns.style).build_assets()
+    elif ns.cmd == "bench":
+        from .bench import bench
+        bench(ns.look, ns.quality, ns.out, only=ns.room)
     elif ns.cmd == "voices":
         raise SystemExit(voices(ns.project, ns.line, ns.force))
     else:
-        run(ns.project, ns.stage, ns.draft, ns.style)
+        run(ns.project, ns.stage, ns.draft, ns.style, ns.look, ns.quality)
 
 
 if __name__ == "__main__":

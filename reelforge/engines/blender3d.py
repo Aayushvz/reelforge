@@ -101,7 +101,8 @@ def render_key(plan_text: str, plan: dict) -> str:
     """Plan + the blend files and scripts it renders with (size + mtime: hashing blends is slow)."""
     h = hashlib.sha1(plan_text.encode())
     for f in [plan["environment_blend"], *(c["blend"] for c in plan["characters"]),
-              BLENDER_DIR / "render_plan.py"]:
+              BLENDER_DIR / "render_plan.py", BLENDER_DIR / "camera_rig.py",
+              *sorted((BLENDER_DIR / "looks").glob("*.py"))]:
         st = Path(f).stat()
         h.update(f"{f}:{st.st_size}:{st.st_mtime_ns}".encode())
     return h.hexdigest()

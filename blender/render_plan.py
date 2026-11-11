@@ -3,19 +3,23 @@ Run: blender -b <env.blend> --factory-startup --python-exit-code 1 -P blender/re
 import json
 import math
 import sys
+import time
 from pathlib import Path
 
 import bpy
-from mathutils import Vector
+from mathutils import Euler, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from bl_common import EEVEE, look_at  # noqa: E402
+import camera_rig as rig  # noqa: E402
+import looks  # noqa: E402
+from bl_common import look_at  # noqa: E402
 
 args = sys.argv[sys.argv.index("--") + 1:]
 plan = json.loads(Path(args[0]).read_text(encoding="utf-8"))
 mode = args[1] if len(args) > 1 else "full"
 sc = bpy.context.scene
 fps, n = plan["fps"], plan["n_frames"]
+LOOK = looks.get(plan.get("look"))
 
 # shot kind -> (distance m, f-stop, azimuth rad, elevation rad)
 SHOT = {"wide": (2.6, 0.5, math.radians(-15), math.radians(6)),  # f/0.5 cheat: wide shots get bokeh too
@@ -32,6 +36,9 @@ for char in plan["characters"]:
     objs = {o.name.split(".")[0]: o for o in coll.objects}
     root, head = objs["CHAR_root"], objs["Head"]
     root.location = bpy.data.objects[char["mark"]].location
+    others_x = [bpy.data.objects[c["mark"]].location.x for c in plan["characters"] if c is not char]
+    if LOOK.BODY_CHEAT and others_x:  # open the body toward the other character (facing is -Y)
+        root.rotation_euler.z = math.copysign(LOOK.BODY_CHEAT, others_x[0] - root.location.x)
     bpy.context.view_layer.update()
     if "FaceAnchor" in objs:  # sculpted cast: anchors + real head size
         face_pos = objs["FaceAnchor"].matrix_world.translation.copy()
@@ -45,6 +52,7 @@ for char in plan["characters"]:
         head_k = 1.0
     CH[char["name"]] = {"head": head, "ctrl": objs["FaceCtrl"], "face_pos": face_pos, "focus": focus,
                         "head_k": head_k, "face": char["face"], "body": objs.get("Body"),
+                        "objects": list(coll.objects), "head_h": 0.43 * head_k,
                         "elbows": {k: objs[k] for k in ("ElbowL", "ElbowR") if k in objs}}
 
 
@@ -103,7 +111,7 @@ for name, c in CH.items():
         spk = speaker_at(f)
         if spk in others:  # listening: turn toward whoever is talking
             dx = CH[spk]["face_pos"].x - c["face_pos"].x
-            yaw = math.copysign(0.35, dx)
+            yaw = math.copysign(LOOK.LISTEN_YAW, dx)
         c["head"].rotation_euler = (nod[f] + 0.02 * math.sin(f * 0.05), 0.015 * math.sin(f * 0.031), yaw)
         c["head"].keyframe_insert("rotation_euler", frame=f + 1)
     if c["body"] is not None:  # breathe (~3.5 s cycle) and lean in while talking
@@ -141,8 +149,9 @@ def apply_mood(p, frame):
         obj = bpy.data.objects[name]
         base_c, base_w = list(obj.get("base_color", calm[ck])), obj.get("base_energy", calm[wk])
         ld = obj.data
-        ld.color = [b + (m - b) * TINT for b, m in zip(base_c, p[ck])]
-        ld.energy = base_w * p[wk] / calm[wk]
+        tint = TINT * LOOK.MOOD_TINT[name]
+        ld.color = [b + (m - b) * tint for b, m in zip(base_c, p[ck])]
+        ld.energy = base_w * p[wk] / calm[wk] * LOOK.LIGHT_SCALE[name]
         ld.keyframe_insert("color", frame=frame)
         ld.keyframe_insert("energy", frame=frame)
     c = p["screen"]
@@ -164,7 +173,9 @@ for (f, m), (_, prev) in zip(moods[1:], moods[:-1]):
 
 # --- cameras per shot --------------------------------------------------------
 cams = []
-for i, s in enumerate(plan["shots"]):
+
+
+def classic_camera(i, s):
     dist, fstop, az, el = SHOT[s["kind"]]
     subj = CH.get(s["subject"]) or next(iter(CH.values()))
     dist *= {"closeup": subj["head_k"], "medium": subj["head_k"] ** 0.5}.get(s["kind"], 1.0)
@@ -195,31 +206,87 @@ for i, s in enumerate(plan["shots"]):
         look_at(cam, aim)
         cam.keyframe_insert("location", frame=f)
         cam.keyframe_insert("rotation_euler", frame=f)
+    return cam, a, b
+
+
+MAX_DIST = {"wide": 3.3, "medium": 2.6, "closeup": 2.2, "ecu": 2.0}  # stay inside the rooms
+
+
+def rig_camera(i, s):
+    """camera_rig.py: framing from the head size, an eased move, seeded sway, a key on every frame."""
+    w, h = plan["resolution"]
+    subj = CH.get(s["subject"]) or next(iter(CH.values()))
+    others = [c for c in CH.values() if c is not subj]
+    kind = s["kind"] if s["kind"] in rig.FRAMING else "medium"
+    eye = subj["focus"].matrix_world.translation.copy()
+    if others:  # stand on the other speaker's side; leave looking room in front of the subject
+        side = 1.0 if others[0]["face_pos"].x > subj["face_pos"].x else -1.0
+    else:
+        side = 1.0 if s.get("seed", 0) % 2 else -1.0
+    room = 0.05 * side if others and kind in ("closeup", "medium") else 0.0
+    xs = [c["focus"].matrix_world.translation.x for c in CH.values()] if kind == "wide" else None
+    base = rig.base_pose(kind, tuple(eye), subj["head_h"], w, h, side, s.get("az_pick", 0.5), room, xs,
+                         s.get("lens") or None)
+    base["dist"] = min(base["dist"], MAX_DIST[kind])
+    cd = bpy.data.cameras.new(f"Cam{i}")
+    cd.lens = base["lens"]
+    cd.dof.use_dof = True
+    cd.dof.focus_object = subj["focus"]
+    cd.dof.aperture_fstop = s.get("fstop") or base["fstop"]
+    cd.dof.aperture_blades, cd.dof.aperture_ratio = 7, 1.0
+    cam = bpy.data.objects.new(f"Cam{i}", cd)
+    sc.collection.objects.link(cam)
+    a, b = s["start_frame"] + 1, s["end_frame"]
+    move, prev = s.get("move") or "static", None
+    for f in range(a, b + 1):
+        u = (f - a) / max(1, b - a)
+        p = rig.pose(base, move, u, s.get("move_params"), s.get("ease", 0.35))
+        (dx, dy, dz), (pitch, yaw, roll) = rig.handheld(f, fps, s.get("seed", 0), s.get("handheld", 0.0), b - a + 1, a)
+        cam.location = Vector(p["pos"]) + Vector((dx, dy, dz))
+        q = (Vector(p["aim"]) - cam.location).to_track_quat("-Z", "Y")
+        q = q @ Euler((pitch, yaw, roll + p["roll"])).to_quaternion()  # sway in the camera's own axes
+        cam.rotation_euler = q.to_euler("XYZ", prev) if prev else q.to_euler("XYZ")
+        prev = cam.rotation_euler.copy()
+        cam.keyframe_insert("location", frame=f)
+        cam.keyframe_insert("rotation_euler", frame=f)
+        if move == "slow_zoom":
+            cd.lens = p["lens"]
+            cd.keyframe_insert("lens", frame=f)
+    return cam, a, b
+
+
+for i, s in enumerate(plan["shots"]):
+    cam, a, b = (rig_camera if LOOK.USE_RIG else classic_camera)(i, s)
     marker = sc.timeline_markers.new(f"S{i}", frame=a)
     marker.camera = cam
     cams.append((cam, a, b))
 
-# --- render settings ---------------------------------------------------------
-sc.render.engine = EEVEE
-sc.eevee.taa_render_samples = plan["samples"]
-sc.render.resolution_x, sc.render.resolution_y = plan["resolution"]
-sc.render.resolution_percentage = plan.get("resolution_percentage", 100)
-sc.render.fps = fps
-sc.frame_start, sc.frame_end = 1, n
-sc.render.image_settings.file_format = "PNG"
-sc.render.image_settings.color_depth = "8"
+# --- render settings (owned by the look) ---------------------------------------
+LOOK.apply_scene(sc, plan, list(CH.values()))
 sc.camera = cams[0][0]
 
 if mode == "stills":
     Path(plan["out_stills"]).mkdir(parents=True, exist_ok=True)
     for i, (cam, a, b) in enumerate(cams):
+        t0 = time.time()
+        engine = LOOK.shot_settings(sc, plan, plan["shots"][i])
         sc.camera = cam
         sc.frame_set((a + b) // 2)
         sc.render.filepath = str(Path(plan["out_stills"]) / f"shot_{i:02d}.png")
         bpy.ops.render.render(write_still=True)
+        print(f"STILL {i} {plan['shots'][i]['kind']} {engine} {time.time() - t0:.2f}s")
 else:
     Path(plan["out_frames"]).mkdir(parents=True, exist_ok=True)
     sc.render.filepath = str(Path(plan["out_frames"])) + "/"
     sc.render.use_overwrite = False  # resume after a crash: keep frames already on disk
-    bpy.ops.render.render(animation=True)
+    if LOOK.PER_SHOT:  # each shot on its own: close-ups and wides may use different engines
+        for i, (cam, a, b) in enumerate(cams):
+            t0 = time.time()
+            engine = LOOK.shot_settings(sc, plan, plan["shots"][i])
+            sc.frame_start, sc.frame_end = a, b
+            bpy.ops.render.render(animation=True)
+            print(f"SHOT {i} {plan['shots'][i]['kind']} {engine} frames {a}-{b} {time.time() - t0:.1f}s")
+        sc.frame_start, sc.frame_end = 1, n
+    else:
+        bpy.ops.render.render(animation=True)
 print("render_plan done")

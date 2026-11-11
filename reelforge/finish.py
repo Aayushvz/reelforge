@@ -33,14 +33,35 @@ FILTER = (
 )
 
 
-def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "") -> list[str]:
+# Cinema look: the render already carries the light. Only a faint highlight halo (bright practicals, not skin
+# tones), a soft vignette and fine grain; work in 16 bits and dither down so dark gradients don't band.
+FILTER_CINEMA = (
+    "[0:v]format=gbrp16le,split=2[base][hi];"
+    "[hi]curves=all='0/0 0.86/0 1/1',gblur=sigma=22,"
+    "colorchannelmixer=rr=1:gg=0.6:bb=0.4[halo];"
+    "[base][halo]blend=all_mode=screen:all_opacity=0.16,"
+    "GRADE"
+    "vignette=angle=PI/7,"
+    "noise=alls=2:allf=t,"
+    "ass=captions.ass,"
+    "scale=out_color_matrix=bt709:out_range=tv:sws_dither=ed,"
+    "format=yuv420p[v];"
+    "[1:a]acompressor=threshold=0.1:ratio=4:attack=5:release=80:makeup=2,"
+    "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]"
+)
+BT709 = ["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
+
+
+def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "", look: str = "classic") -> list[str]:
     grade = GRADES.get(environment)
-    graph = FILTER.replace("GRADE", f"{grade}," if grade else "")
+    cinema = look == "cinema"
+    graph = (FILTER_CINEMA if cinema else FILTER).replace("GRADE", f"{grade}," if grade else "")
     return ["ffmpeg", "-y", "-loglevel", "error",
             "-framerate", str(fps), "-start_number", "1", "-i", "frames/%04d.png",
             "-i", "dialogue.wav",
             "-filter_complex", graph, "-map", "[v]", "-map", "[a]",
-            "-c:v", "libx264", "-preset", "slow", "-crf", "16",
+            "-c:v", "libx264", "-preset", "slow", "-crf", "14" if cinema else "16",
+            *(["-profile:v", "high", "-level", "4.2", *BT709] if cinema else []),
             "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest",
             out_name]
 
@@ -55,9 +76,9 @@ def measure_lufs(path: Path) -> float:
     return float(lines[-1].split()[1])
 
 
-def finish(workdir: Path, fps: int, out_name: str, environment: str = "") -> Path:
+def finish(workdir: Path, fps: int, out_name: str, environment: str = "", look: str = "classic") -> Path:
     # Relative paths + cwd avoid Windows drive-letter escaping inside the ass= filter.
-    subprocess.run(build_ffmpeg_cmd(fps, out_name, environment), cwd=workdir, check=True)
+    subprocess.run(build_ffmpeg_cmd(fps, out_name, environment, look), cwd=workdir, check=True)
     out = Path(workdir) / out_name
     # One-pass loudnorm undershoots on short clips: correct the residual gain. The peak limiter eats part
     # of each boost, so repeat a few times.
