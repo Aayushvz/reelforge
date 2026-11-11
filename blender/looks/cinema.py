@@ -1,5 +1,7 @@
-"""Cinema look: Cycles (GPU, denoised) for faces, Eevee for wider shots, real skin scattering, natural skin
-tones under mood light, a film-style camera (camera_rig.py). Quality tiers: preview | standard | cinema.
+"""Cinema look: Cycles (GPU, denoised) with real skin scattering, natural skin tones under mood light, a dark
+room, a film-style camera (camera_rig.py). Quality tiers: preview (Eevee, half size) | standard | cinema.
+Every shot of a reel uses one engine: mixing Eevee wides with Cycles close-ups changed the room's brightness
+and the softness of faces from cut to cut.
 
 Nothing here edits the built assets: materials are adjusted in the render session only."""
 import bpy
@@ -11,14 +13,17 @@ USE_RIG = True
 PER_SHOT = True
 # Moods colour the room, not the face: the key keeps most of its own colour so skin stays skin.
 MOOD_TINT = {"Key": 0.30, "Rim": 0.65, "Glow": 1.0}
+DESATURATE = {"Rim": 0.55}  # a saturated rim paints the cheek teal or magenta: pull it toward white
 # Low-key: a dimmer key and little fill, so the shadow side models the face; the rim keeps the edge.
 LIGHT_SCALE = {"Key": 0.55, "Rim": 0.9, "Glow": 0.8, "Fill": 0.35}
+PRACTICALS = 0.45  # the room's own lights: dimmed so walls and ceiling fall away behind the face
+CONTRACT = ("Key", "Rim", "Fill", "Glow")
 BODY_CHEAT = 0.28  # two characters open up toward each other (about 16 degrees), like stage blocking
 LISTEN_YAW = 0.22
 FACE_KINDS = ("closeup", "ecu")
 
-# quality -> (cycles samples for faces, cycles samples for wider shots, eevee samples, noise threshold)
-TIERS = {"preview": (24, 24, 24, 0.05), "standard": (48, 48, 32, 0.02), "cinema": (128, 96, 64, 0.01)}
+# quality -> (cycles samples for close-ups, cycles samples for wider shots, eevee samples, noise threshold)
+TIERS = {"preview": (24, 24, 24, 0.05), "standard": (48, 40, 32, 0.02), "cinema": (128, 96, 64, 0.01)}
 
 
 def _gpu(sc):
@@ -80,6 +85,7 @@ def apply_scene(sc, plan, characters):
     im = sc.render.image_settings
     im.file_format = "PNG"
     im.color_depth = "16" if q == "cinema" else "8"
+    im.color_mode, im.compression = "RGB", 15  # some sets save RGBA at compression 0: 4x the disk
     sc.render.dither_intensity = 1.0  # dark gradients band in 8 bits without it
     sc.render.use_motion_blur = True
     sc.render.motion_blur_shutter = 0.5
@@ -97,13 +103,19 @@ def apply_scene(sc, plan, characters):
     cy.denoising_prefilter = "ACCURATE"
     if hasattr(cy, "denoising_use_gpu"):
         cy.denoising_use_gpu = kind != "CPU"
-    cy.max_bounces, cy.diffuse_bounces, cy.glossy_bounces = 8, 3, 4
-    cy.transmission_bounces, cy.volume_bounces, cy.transparent_max_bounces = 6, 1, 8
+    deep = q == "cinema"  # standard: fewer bounces; faces are lit directly, the room is out of focus
+    cy.max_bounces, cy.diffuse_bounces, cy.glossy_bounces = (8, 3, 4) if deep else (5, 2, 3)
+    cy.transmission_bounces, cy.volume_bounces, cy.transparent_max_bounces = (6 if deep else 4), 0, 8
     cy.sample_clamp_indirect, cy.sample_clamp_direct = 8.0, 0.0
     cy.caustics_reflective = cy.caustics_refractive = False
     cy.filter_width = 1.2
-    cy.use_persistent_data = False  # shots switch engines; keep memory predictable on 8 GB
+    cy.use_persistent_data = True  # keep the static room on the GPU between frames; only characters rebuild
     _skin(characters, float(lp.get("skin_glow", 1.0)))
+    dim = PRACTICALS * float(lp.get("room_light", 1.0))
+    for o in sc.objects:
+        if o.type == "LIGHT" and o.name.split(".")[0] not in CONTRACT and not (
+                o.data.animation_data and o.data.animation_data.action):
+            o.data.energy *= dim
     fill = bpy.data.objects.get("Fill")
     if fill:
         fill.data.energy *= LIGHT_SCALE["Fill"]
@@ -126,7 +138,7 @@ _HAZE = {}  # the world's haze volume link, unplugged for Cycles shots
 def shot_settings(sc, plan, shot):
     q = plan.get("quality", "standard")
     face = shot["kind"] in FACE_KINDS
-    cycles = q == "cinema" or (q == "standard" and face)
+    cycles = q != "preview"
     sc.render.engine = "CYCLES" if cycles else EEVEE
     if _HAZE:  # a world-wide volume costs Cycles minutes per frame and greys the picture out
         linked = _HAZE["dst"].is_linked

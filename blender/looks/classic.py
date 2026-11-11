@@ -8,6 +8,7 @@ USE_RIG = False
 PER_SHOT = False
 MOOD_TINT = {"Key": 1.0, "Rim": 1.0, "Glow": 1.0}
 LIGHT_SCALE = {"Key": 1.0, "Rim": 1.0, "Glow": 1.0, "Fill": 1.0}
+DESATURATE = {}
 BODY_CHEAT = 0.0
 LISTEN_YAW = 0.35
 

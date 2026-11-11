@@ -16,7 +16,7 @@ LOOKS = ("classic", "cinema")  # classic = the original Eevee look; cinema = Cyc
 QUALITIES = ("preview", "standard", "cinema")
 CAMERA_MOVES = ("static", "push_in", "pull_out", "orbit", "truck", "drift", "crane_down", "crane_up",
                 "slow_zoom", "whip_pan")
-SHOT_KINDS = ("wide", "medium", "closeup", "ecu")
+SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu")
 
 
 class PerformanceError(ValueError):

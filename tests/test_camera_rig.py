@@ -50,12 +50,33 @@ def test_landscape_frames_use_the_same_head_fraction():
     assert abs((chin - top) - rig.FRAMING["closeup"]["head"]) < 0.03
 
 
-def test_wide_two_shot_holds_both_faces():
-    base = rig.base_pose("wide", (0.0, 0.0, 1.65), HEAD, W, H, faces_x=[0.0, 1.05])
+def test_nothing_is_wider_than_waist_up():
+    """Full-body shots expose stiff poses and bare floor: the hips must fall at or below the bottom edge."""
+    for kind in rig.FRAMING:
+        base = rig.base_pose(kind, EYE, HEAD, W, H)
+        p = rig.pose(base, "static", 0.5)
+        knees = rig.screen_point((EYE[0], EYE[1], 0.5), p["pos"], p["aim"], p["lens"], W, H)[1]
+        assert knees > 1.0, kind
+
+
+def test_min_head_keeps_a_character_from_being_framed_wide():
+    for kind in ("wide", "medium"):
+        base = rig.base_pose(kind, EYE, HEAD, W, H, min_head=0.45)
+        p = rig.pose(base, "static", 0.5)
+        top = rig.screen_point((0, 0, EYE[2] + HEAD / 2), p["pos"], p["aim"], p["lens"], W, H)[1]
+        chin = rig.screen_point((0, 0, EYE[2] - HEAD / 2), p["pos"], p["aim"], p["lens"], W, H)[1]
+        assert abs((chin - top) - 0.45) < 0.03 and top > 0.10
+    close = rig.base_pose("closeup", EYE, HEAD, W, H, min_head=0.45)
+    assert close["dist"] == rig.base_pose("closeup", EYE, HEAD, W, H)["dist"]  # already tighter: untouched
+
+
+def test_raking_two_shot_holds_both_faces_with_the_listener_nearer():
+    spk, lis = (0.0, 0.0, 1.65), (1.05, 0.0, 1.62)
+    base = rig.base_pose("two", rig.two_shot_aim(spk, lis), HEAD, W, H, side=1.0)
     p = rig.pose(base, "static", 0.5)
-    for x in (0.0, 1.05):
-        sx = rig.screen_point((x, 0.0, 1.65), p["pos"], p["aim"], p["lens"], W, H)[0]
-        assert 0.12 < sx < 0.88
+    xs = [rig.screen_point(e, p["pos"], p["aim"], p["lens"], W, H)[0] for e in (spk, lis)]
+    assert all(0.08 < x < 0.92 for x in xs) and abs(xs[0] - xs[1]) > 0.25
+    assert math.dist(p["pos"], lis) < math.dist(p["pos"], spk)
 
 
 @pytest.mark.parametrize("move", [m for m in rig.MOVES if m != "whip_pan"])

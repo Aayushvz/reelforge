@@ -8,12 +8,18 @@ import math
 SENSOR = 36.0  # mm, Blender's default sensor; sensor fit AUTO puts it on the frame's larger side
 
 # shot kind -> framing: lens (mm), head height as a fraction of frame height, eye line (fraction from the top),
-# f-stop, azimuth range (deg, toward the other speaker), elevation (deg)
+# f-stop, azimuth range (deg, toward the other speaker), elevation (deg).
+# Portrait-first: nothing is wider than waist-up. Full-body shots expose stiff standing poses, bare floor and
+# hands; faces and shoulders are where these characters hold up. Azimuths sit at or just outside the
+# subject's own axis, so a body opened toward the other speaker reads as a three-quarter face with looking
+# room, not a passport photo. "two" is a raking two-shot down the line of both speakers; it is only used when
+# asked for (a camera override): with side-by-side standing characters the near body takes over the frame.
 FRAMING = {
-    "wide":    {"lens": 32, "head": 0.105, "eyes": 0.30, "fstop": 4.5, "az": (4, 9),   "el": 5.0},
-    "medium":  {"lens": 50, "head": 0.215, "eyes": 0.36, "fstop": 3.2, "az": (8, 14),  "el": 3.0},
-    "closeup": {"lens": 85, "head": 0.50,  "eyes": 0.42, "fstop": 3.2, "az": (10, 17), "el": 1.5},
-    "ecu":     {"lens": 110, "head": 0.78, "eyes": 0.42, "fstop": 4.0, "az": (6, 12),  "el": 0.5},
+    "wide":    {"lens": 40, "head": 0.26, "eyes": 0.32, "fstop": 3.5, "az": (-6, 4),   "el": 2.0},
+    "two":     {"lens": 40, "head": 0.20, "eyes": 0.32, "fstop": 2.2, "az": (64, 72),  "el": 2.0},
+    "medium":  {"lens": 60, "head": 0.38, "eyes": 0.38, "fstop": 3.2, "az": (-8, 2),   "el": 2.0},
+    "closeup": {"lens": 85, "head": 0.55, "eyes": 0.42, "fstop": 3.2, "az": (-8, 2),   "el": 1.5},
+    "ecu":     {"lens": 110, "head": 0.78, "eyes": 0.42, "fstop": 4.0, "az": (-6, 2),  "el": 0.5},
 }
 SAFE_TOP, SAFE_BOTTOM = 0.14, 0.20  # 9:16 platform UI / caption bands to keep faces out of
 
@@ -62,28 +68,33 @@ def frame_size(distance, lens, width, height):
 
 
 def base_pose(kind, eye_pos, head_height, width, height, side=1.0, az_pick=0.5, look_room=0.0,
-              faces_x=None, lens=None):
+              lens=None, min_head=0.0):
     """Framing for one shot: where the camera stands and what it aims at before any move.
 
     eye_pos: the subject's eye point. side: +1 puts the camera on the +X side of the subject (use the side of
     the other speaker, so the subject is seen from "inside" the conversation). az_pick 0..1 picks inside the
     kind's azimuth range. look_room: fraction of the frame width to leave in front of the subject's gaze
-    (sign = gaze direction on X). faces_x: X of every face for a wide that must hold all of them."""
+    (sign = gaze direction on X). For "two", pass eye_pos between the two faces (see two_shot_aim).
+    min_head: the smallest head fraction this character may be framed at (its widest flattering shot);
+    the eye line drops with it so the head keeps its headroom."""
     fr = FRAMING[kind]
     lens = lens or fr["lens"]
-    dist = distance_for(head_height, lens, fr["head"], width, height)
+    head = max(fr["head"], min_head)
+    eyes = max(fr["eyes"], min(0.42, 0.30 + 0.24 * head)) if head > fr["head"] else fr["eyes"]
+    dist = distance_for(head_height, lens, head, width, height)
     ex, ey, ez = eye_pos
-    if kind == "wide" and faces_x and len(faces_x) > 1:  # hold everyone: widen until the group fits 70% of the width
-        ex = (min(faces_x) + max(faces_x)) / 2.0
-        need = (max(faces_x) - min(faces_x) + 2.2 * head_height) / 0.70
-        th, _ = half_fov_tan(lens, width, height)
-        dist = max(dist, need / (2.0 * th))
     fw, fh = frame_size(dist, lens, width, height)
     # eyes sit `eyes` from the top: aim below them by the distance from the eye line to the frame centre
-    aim = (ex + look_room * fw, ey, ez - (0.5 - fr["eyes"]) * fh)
+    aim = (ex + look_room * fw, ey, ez - (0.5 - eyes) * fh)
     az = math.radians(fr["az"][0] + (fr["az"][1] - fr["az"][0]) * az_pick) * side
     el = math.radians(fr["el"])
     return {"aim": aim, "dist": dist, "az": az, "el": el, "lens": float(lens), "fstop": fr["fstop"], "kind": kind}
+
+
+def two_shot_aim(speaker_eye, listener_eye, bias=0.35):
+    """Aim point for the raking two-shot: between the faces, nearer the listener, which from the raking camera
+    puts the two faces evenly left and right of centre."""
+    return tuple(s * bias + l * (1.0 - bias) for s, l in zip(speaker_eye, listener_eye))
 
 
 def _place(aim, dist, az, el):
@@ -177,7 +188,7 @@ def screen_point(point, pos, aim, lens, width, height):
 def aim_angles(pos, aim):
     """(yaw, pitch) of the view direction, for smoothness checks."""
     d = [a - b for a, b in zip(aim, pos)]
-    return math.atan2(d[0], -d[1]), math.atan2(d[2], math.hypot(d[0], d[1]))
+    return math.atan2(d[0], d[1]), math.atan2(d[2], math.hypot(d[0], d[1]))
 
 
 def max_angular_accel(poses, fps):

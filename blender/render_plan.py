@@ -1,5 +1,5 @@
 """Render a reelforge render_plan.json inside an environment .blend.
-Run: blender -b <env.blend> --factory-startup --python-exit-code 1 -P blender/render_plan.py -- <plan.json> <stills|full>"""
+Run: blender -b <env.blend> --factory-startup --python-exit-code 1 -P blender/render_plan.py -- <plan.json> <stills|full|profile>"""
 import json
 import math
 import sys
@@ -53,6 +53,7 @@ for char in plan["characters"]:
     CH[char["name"]] = {"head": head, "ctrl": objs["FaceCtrl"], "face_pos": face_pos, "focus": focus,
                         "head_k": head_k, "face": char["face"], "body": objs.get("Body"),
                         "objects": list(coll.objects), "head_h": 0.43 * head_k,
+                        "min_head": float(objs["FaceAnchor"].get("min_head", 0.0)) if "FaceAnchor" in objs else 0.0,
                         "elbows": {k: objs[k] for k in ("ElbowL", "ElbowR") if k in objs}}
 
 
@@ -150,7 +151,9 @@ def apply_mood(p, frame):
         base_c, base_w = list(obj.get("base_color", calm[ck])), obj.get("base_energy", calm[wk])
         ld = obj.data
         tint = TINT * LOOK.MOOD_TINT[name]
-        ld.color = [b + (m - b) * tint for b, m in zip(base_c, p[ck])]
+        col = [b + (m - b) * tint for b, m in zip(base_c, p[ck])]
+        d = LOOK.DESATURATE.get(name, 0.0)
+        ld.color = [c + (max(col) - c) * d for c in col]
         ld.energy = base_w * p[wk] / calm[wk] * LOOK.LIGHT_SCALE[name]
         ld.keyframe_insert("color", frame=frame)
         ld.keyframe_insert("energy", frame=frame)
@@ -209,7 +212,7 @@ def classic_camera(i, s):
     return cam, a, b
 
 
-MAX_DIST = {"wide": 3.3, "medium": 2.6, "closeup": 2.2, "ecu": 2.0}  # stay inside the rooms
+MAX_DIST = {"wide": 2.6, "two": 2.6, "medium": 2.4, "closeup": 2.2, "ecu": 2.0}  # stay inside the rooms
 
 
 def rig_camera(i, s):
@@ -218,15 +221,18 @@ def rig_camera(i, s):
     subj = CH.get(s["subject"]) or next(iter(CH.values()))
     others = [c for c in CH.values() if c is not subj]
     kind = s["kind"] if s["kind"] in rig.FRAMING else "medium"
+    if kind == "two" and not others:
+        kind = "wide"
     eye = subj["focus"].matrix_world.translation.copy()
     if others:  # stand on the other speaker's side; leave looking room in front of the subject
         side = 1.0 if others[0]["face_pos"].x > subj["face_pos"].x else -1.0
     else:
         side = 1.0 if s.get("seed", 0) % 2 else -1.0
-    room = 0.05 * side if others and kind in ("closeup", "medium") else 0.0
-    xs = [c["focus"].matrix_world.translation.x for c in CH.values()] if kind == "wide" else None
-    base = rig.base_pose(kind, tuple(eye), subj["head_h"], w, h, side, s.get("az_pick", 0.5), room, xs,
-                         s.get("lens") or None)
+    room = 0.05 * side if others and kind in ("closeup", "medium", "wide") else 0.0
+    if kind == "two":  # look down the line of both speakers: listener near and soft, speaker sharp
+        eye = Vector(rig.two_shot_aim(tuple(eye), tuple(others[0]["focus"].matrix_world.translation)))
+    base = rig.base_pose(kind, tuple(eye), subj["head_h"], w, h, side, s.get("az_pick", 0.5), room,
+                         s.get("lens") or None, 0.0 if kind == "two" else subj["min_head"])
     base["dist"] = min(base["dist"], MAX_DIST[kind])
     cd = bpy.data.cameras.new(f"Cam{i}")
     cd.lens = base["lens"]
@@ -265,7 +271,13 @@ for i, s in enumerate(plan["shots"]):
 LOOK.apply_scene(sc, plan, list(CH.values()))
 sc.camera = cams[0][0]
 
-if mode == "stills":
+if mode == "profile":  # where a frame's time goes before any pixel is rendered: animation + mesh evaluation
+    for f in (10, 11, 12, 13, 14, 15):
+        t0 = time.time()
+        sc.frame_set(f)
+        bpy.context.view_layer.update()
+        print(f"EVAL frame {f} {time.time() - t0:.2f}s")
+elif mode == "stills":
     Path(plan["out_stills"]).mkdir(parents=True, exist_ok=True)
     for i, (cam, a, b) in enumerate(cams):
         t0 = time.time()

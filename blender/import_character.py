@@ -280,6 +280,7 @@ def bone_child(name, loc, bone):
 anchor_bone = hd.name if hd else BN["head"]
 FA = bone_child("FaceAnchor", Vector((eye_mid.x, front + 0.01, eye_mid.z - 0.025)), anchor_bone)
 FA["head_height"] = head_height
+FA["min_head"] = float(SPEC.get("min_head", 0.0))  # the cinema camera never frames this character wider
 bone_child("EyeFocus", Vector((eye_mid.x, front - 0.005, eye_mid.z)), anchor_bone)
 
 # --- material fixes for known FBX-import mistakes (no resolution change) -------------------------------

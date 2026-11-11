@@ -34,6 +34,7 @@ def test_grammar_establishing_wide_punchline_push_in_and_no_repeats():
     placed, n = _placed()
     shots = plan_shots_v2(placed, FPS, n, ["A", "B"], seed=5)
     assert shots[0].kind == "wide" and shots[0].ease == 1.0
+    assert all(s.kind != "two" for s in shots)  # the raking two-shot is opt-in (camera overrides)
     punch = next(s for s in shots if s.start_frame >= 11.0 * FPS - 4 and s.subject == "A")
     assert punch.kind == "closeup" and punch.move == "push_in" and punch.move_params["amount"] >= 0.10
     assert all(not (a.kind == b.kind and a.subject == b.subject) for a, b in zip(shots, shots[1:]))
@@ -88,8 +89,8 @@ def test_schema_accepts_the_cinema_look_and_rejects_bad_values():
 def test_bench_plan_carries_look_and_quality(tmp_path):
     plan = bench_plan("neon_tunnel", "neon", "cinema", "preview", tmp_path)
     assert plan["look"] == "cinema" and plan["quality"] == "preview" and plan["resolution_percentage"] == 50
-    assert [s["kind"] for s in plan["shots"]] == ["wide", "closeup", "closeup"]
-    assert plan["shots"][1]["move"] == "push_in" and len(plan["characters"]) == 2
+    assert [s["kind"] for s in plan["shots"]] == ["wide", "medium", "closeup", "closeup"]
+    assert plan["shots"][2]["move"] == "push_in" and len(plan["characters"]) == 2
 
 
 def test_bench_reads_still_timings():

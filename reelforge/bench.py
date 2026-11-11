@@ -1,4 +1,4 @@
-"""`reelforge bench`: time a fixed set of stills (a wide and two close-ups in each room) for a look and quality.
+"""`reelforge bench`: time a fixed set of stills (two-shot, medium, two close-ups per room) for a look and quality.
 
 Needs no voices: a synthetic two-character plan goes straight to blender/render_plan.py. Prints seconds per
 still and the peak GPU memory (when nvidia-smi is present), and writes bench.json next to the stills."""
@@ -31,9 +31,10 @@ def bench_perf(room: str, lighting: str, look: str, quality: str, cast: tuple[st
 
 
 def bench_shots() -> list[Shot]:
-    return [Shot(0, 30, "wide", 32, "A", 0.05, "drift", {}, 0.0, 0.15, 11, 0.5, 1.0),
-            Shot(30, 60, "closeup", 85, "A", 0.05, "push_in", {"amount": 0.08}, 0.0, 0.15, 12, 0.5),
-            Shot(60, 90, "closeup", 85, "B", 0.05, "static", {}, 0.0, 0.15, 13, 0.5)]
+    return [Shot(0, 24, "wide", 40, "A", 0.05, "drift", {}, 0.0, 0.15, 11, 0.5, 1.0),
+            Shot(24, 46, "medium", 60, "B", 0.05, "drift", {}, 0.0, 0.15, 14, 0.5),
+            Shot(46, 68, "closeup", 85, "A", 0.05, "push_in", {"amount": 0.08}, 0.0, 0.15, 12, 0.5),
+            Shot(68, 90, "closeup", 85, "B", 0.05, "static", {}, 0.0, 0.15, 13, 0.5)]
 
 
 def bench_plan(room: str, lighting: str, look: str, quality: str, out: Path) -> dict:

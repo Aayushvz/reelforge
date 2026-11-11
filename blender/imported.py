@@ -202,7 +202,8 @@ CHARACTERS = {
                         "upperarm_l": ("upper_arm_fk.L", "forearm_fk.L"), "forearm_l": ("forearm_fk.L", "hand_fk.L"),
                         "upperarm_r": ("upper_arm_fk.R", "forearm_fk.R"), "forearm_r": ("forearm_fk.R", "hand_fk.R")},
               "eyes": {"mode": "target", "bones": ("eye.L", "eye.R"), "centers": ("DEF-eye.L", "DEF-eye.R")},
-              "bone_face": RIGIFY_FACE, "outfits": [{}]},
+              "bone_face": RIGIFY_FACE, "outfits": [{}],
+              "min_head": 0.34},  # widest flattering shot: shoulders up (head = 34% of the frame height)
     # Auto-Rig Pro rig ("rig"); an unused Rigify copy is dropped. Bone-based face.
     "cute_girl": {"name": "Cute girl", "gender": "female", "src": "extracted/cute+girl/cute girl/cute girl 4.5.blend",
                   "rig": "rig", "delete_armatures": ["sexy girl_Rigify"], "body_mesh": "body",
@@ -211,5 +212,5 @@ CHARACTERS = {
                             "upperarm_l": ("c_arm_fk.l", "c_forearm_fk.l"), "forearm_l": ("c_forearm_fk.l", "c_hand_fk.l"),
                             "upperarm_r": ("c_arm_fk.r", "c_forearm_fk.r"), "forearm_r": ("c_forearm_fk.r", "c_hand_fk.r")},
                   "eyes": {"mode": "target", "bones": ("c_eye_target.l", "c_eye_target.r"), "centers": ("c_eye.l", "c_eye.r")},
-                  "bone_face": ARP_FACE, "outfits": [{}]},
+                  "bone_face": ARP_FACE, "outfits": [{}], "min_head": 0.50},
 }

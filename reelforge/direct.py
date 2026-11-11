@@ -70,7 +70,7 @@ def mood_keys(placed: list[Placed], fps: int) -> list[tuple[int, str]]:
 
 
 # --- director v2 (cinema look): motivated moves, reaction shots, no repeated set-ups -----------------------
-LENSES_V2 = {"wide": 32, "medium": 50, "closeup": 85, "ecu": 110}
+LENSES_V2 = {"wide": 40, "two": 40, "medium": 60, "closeup": 85, "ecu": 110}  # "wide" is waist-up, never full body
 MIN_SHOT_S = 0.9
 ESTABLISH_S = 2.0
 REACTION_S = (0.8, 1.2, 1.6)
@@ -90,8 +90,8 @@ def _move_for(kind: str, line, first: bool, two: bool, reaction: bool, seed: int
     """A camera move that means something for this beat: (move, params)."""
     if reaction:
         return "static", {}
-    if kind == "wide":
-        opts = [("crane_down", {}), ("drift", {})] if first else [("drift", {}), ("pull_out", {"amount": 0.06})]
+    if kind in ("wide", "two"):
+        opts = [("push_in", {"amount": 0.06}), ("drift", {})] if first else [("drift", {}), ("pull_out", {"amount": 0.06})]
         if line.mood == "sad":
             opts = [("pull_out", {"amount": 0.10})]
     elif kind in ("closeup", "ecu"):
@@ -114,7 +114,7 @@ def _move_for(kind: str, line, first: bool, two: bool, reaction: bool, seed: int
 
 def plan_shots_v2(placed: list[Placed], fps: int, n_frames: int, speakers: list[str], seed: int = 0,
                   camera: dict | None = None) -> list[Shot]:
-    """Shots for the cinema look. Rules: open on an establishing wide; punchlines and intense lines get a
+    """Shots for the cinema look. Rules: open on the speaker from the waist up (never full body); punchlines and intense lines get a
     close-up that pushes in; long lines cut away to the listener; no two consecutive shots share kind and
     subject; nothing shorter than MIN_SHOT_S or longer than MAX_SHOT_S. camera: {"handheld": 0..1,
     "overrides": {"<shot index>": {kind, lens, move, intensity, fstop, handheld, subject}}}."""
@@ -122,6 +122,7 @@ def plan_shots_v2(placed: list[Placed], fps: int, n_frames: int, speakers: list[
     two = len(speakers) > 1
     limit, min_len = int(MAX_SHOT_S * fps), int(MIN_SHOT_S * fps)
     raw: list[tuple] = []  # (start, end, kind, subject, line, is_reaction)
+    opener = "wide"  # the speaker from the waist up, the room behind: never full body
     for i, p in enumerate(placed):
         start = 0 if i == 0 else max(0, int(round(p.start * fps)) - CUT_LEAD_V2)
         end = n_frames if i == len(placed) - 1 else int(round(placed[i + 1].start * fps)) - CUT_LEAD_V2
@@ -132,9 +133,9 @@ def plan_shots_v2(placed: list[Placed], fps: int, n_frames: int, speakers: list[
         if i == 0:  # establish the place first
             est = min(int(ESTABLISH_S * fps), int((end - start) * 0.45))
             if end - start < int(1.8 * fps) or est < min_len:
-                raw.append((start, end, "wide", who, line, False))
+                raw.append((start, end, opener, who, line, False))
                 continue
-            raw.append((start, start + est, "wide", who, line, False))
+            raw.append((start, start + est, opener, who, line, False))
             start += est
         length = end - start
         n = max(1, math.ceil(length / limit))
@@ -166,7 +167,7 @@ def plan_shots_v2(placed: list[Placed], fps: int, n_frames: int, speakers: list[
             kind = "medium" if kind == "closeup" else "closeup"
         move, params = _move_for(kind, line, i == 0, two, reaction, seed, i, prev_move)
         prev_move = move
-        at_rest = kind == "wide" and (i == 0 or i == len(merged) - 1)
+        at_rest = kind in ("wide", "two") and (i == 0 or i == len(merged) - 1)
         shots.append(Shot(a, b, kind, LENSES_V2[kind], who, 0.0, move, dict(params), 0.0,
                           float(camera.get("handheld", 0.15)), (seed * 7919 + i * 104729) & 0x7FFFFFFF,
                           round(_hash(seed, i, "az") / 0xFFFFFFFF, 3), 1.0 if at_rest else 0.35))
