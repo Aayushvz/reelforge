@@ -16,8 +16,11 @@ export type PerfLine = {
   id: string; speaker: string; text: string; emotion: Emotion; intensity: number; mood: Mood;
   pause_after?: number; punchline?: boolean;
 };
+export type Look = "classic" | "cinema";  // reelforge/schema.py LOOKS
+export type RenderQuality = "preview" | "standard" | "cinema";  // QUALITIES; Draft renders force preview
 export type Performance = {
   version: 1; fps: number; ratio: Ratio; environment: string; lighting?: string; style?: string; ambience?: boolean;
+  look?: Look; quality?: RenderQuality;
   characters: Record<string, PerfCharacter>; lines: PerfLine[];
 };
 

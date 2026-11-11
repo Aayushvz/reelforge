@@ -198,6 +198,8 @@ export function VoicePanel() {
 
 export function OutputPanel() {
   const out = useProject((s) => s.editor.output);
+  const look = useProject((s) => s.performance?.look ?? "classic");
+  const finalQuality = useProject((s) => (s.performance?.quality === "cinema" ? "cinema" : "standard"));
   const setEditor = useProject((s) => s.setEditor);
   const setPerf = useProject((s) => s.setPerformance);
   const setRatio = (ratio: Ratio) => {
@@ -214,7 +216,21 @@ export function OutputPanel() {
             options={FPS_OPTIONS.map((f) => ({ value: String(f), label: `${f} fps` }))} /></div>
         <div className="field" style={{ width: 124 }}><span className="label">Quality</span>
           <Segmented full size="sm" value={out.quality} onChange={(q) => setEditor((e) => ({ ...e, output: { ...e.output, quality: q } }))}
-            options={[{ value: "draft", label: "Draft", title: "16 samples, faster" }, { value: "final", label: "Final", title: "64 samples" }]} /></div>
+            options={look === "cinema"
+              ? [{ value: "draft", label: "Draft", title: "Half size, fast preview" }, { value: "final", label: "Final", title: "Full size, ray-traced" }]
+              : [{ value: "draft", label: "Draft", title: "16 samples, faster" }, { value: "final", label: "Final", title: "64 samples" }]} /></div>
+      </div>
+      <div className="row" style={{ gap: 8 }}>
+        <div className="field grow"><span className="label">Look</span>
+          <Segmented full size="sm" value={look} onChange={(l) => setPerf((p) => ({ ...p, look: l }))}
+            options={[{ value: "classic", label: "Classic", title: "The original look. Fastest." },
+              { value: "cinema", label: "Cinema", title: "Ray-traced faces, a film camera, a darker room. Slower." }]} /></div>
+        {look === "cinema" && (
+          <div className="field" style={{ width: 168 }}><span className="label">Final render</span>
+            <Segmented full size="sm" value={finalQuality} onChange={(q) => setPerf((p) => ({ ...p, quality: q }))}
+              options={[{ value: "standard", label: "Standard", title: "About 10 to 25 seconds a frame" },
+                { value: "cinema", label: "Max", title: "More samples, 16-bit frames. Roughly twice as slow." }]} /></div>
+        )}
       </div>
     </Panel>
   );

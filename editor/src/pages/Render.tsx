@@ -35,6 +35,7 @@ export function RenderPage() {
   const loadSystem = useSystem((s) => s.load);
   const [live, setLive] = useState<Live>({ job: null, frame: null, nFrames: null, log: [] });
   const [draft, setDraft] = useState(true);
+  const cinema = useProject((st) => st.performance?.look === "cinema");
   // follow the quality chosen on Create once the project is loaded
   useEffect(() => { if (!loading) setDraft(editor.output.quality !== "final"); }, [loading, editor.output.quality]);
   const [now, setNow] = useState(Date.now());
@@ -162,7 +163,9 @@ export function RenderPage() {
               </div>
               <div className="row" style={{ gap: 10 }}>
                 <span className="label">Quality</span>
-                <Segmented value={draft ? "draft" : "final"} onChange={(v) => setDraft(v === "draft")} options={[{ value: "draft", label: "Draft · 16 samples" }, { value: "final", label: "Final · 64 samples" }]} />
+                <Segmented value={draft ? "draft" : "final"} onChange={(v) => setDraft(v === "draft")} options={cinema
+                  ? [{ value: "draft", label: "Draft · half size" }, { value: "final", label: "Final · ray-traced" }]
+                  : [{ value: "draft", label: "Draft · 16 samples" }, { value: "final", label: "Final · 64 samples" }]} />
               </div>
               <div className="stage-cards">
                 <div className="stage-card">
