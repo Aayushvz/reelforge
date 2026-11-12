@@ -25,7 +25,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | 319b54e | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
 | 1 | Innocence pass + two soft hair designs | done | da4dd8b | `p1/hair_options.jpg`, `p1/expressions.jpg`. Hair: all six kept as editor options, default `fringe` (owner, 2026-11-12) |
 | 2 | Gate P2: brand literalness | **passed** | 1fd68c9 | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
-| 3 | Six rooms (`blender/shotsav/rooms.py`), room builds, schema `AV_ROOMS`, engine `room_blend()`, tests | done | P3 commit | `p3/rooms.jpg` (a wide and a hero close-up per room, hero and the Claude robot in place), `p3/rooms.json` |
+| 3 | Six rooms (`blender/shotsav/rooms.py`), room builds, schema `AV_ROOMS`, engine `room_blend()`, tests | done | 116b164 | `p3/rooms.jpg` (a wide and a hero close-up per room, hero and the Claude robot in place), `p3/rooms.json` |
 | 3 | **Gate P3: owner reviews the 12 stills** | **waiting on owner** | — | |
 | 4-8 | Camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
