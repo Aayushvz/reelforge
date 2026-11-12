@@ -190,7 +190,7 @@ def test_hero_table_matches_the_schema_and_the_brand():
     assert tuple(hero["glasses"]["options"]) == schema.AV_GLASSES and hero["glasses"]["default"] == "bold"
     assert tuple(hero["beard"]["options"]) == schema.AV_BEARDS and hero["beard"]["default"] == "light"
     assert set(hero["headphones"]["options"]) == set(schema.AV_HEADPHONES) and hero["headphones"]["default"] == "neck"
-    assert tuple(hero["hair"]["options"]) == ("fringe", "swept", "curly_top", "buzz") and hero["hair"]["default"] == "fringe"
+    assert tuple(hero["hair"]["options"]) == schema.AV_HAIRS and hero["hair"]["default"] == "fringe"
     assert set(t["SKINS"]) == set(schema.AV_SKINS) and hero["skin"]["default"] == schema.AV_SKINS[0]
     assert tuple(hero["hair"]["options"]) == tuple(schema.AV_HAIRS)
     assert hero["stubble"]["default"] == 0.3 and hero["outfit"]["default"] == "puffer"

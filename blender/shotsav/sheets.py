@@ -259,7 +259,13 @@ def sheet_outfits(out):
     save(grid(tiles_of(out, "outfit", specs), 3), out / "outfits_poses.jpg")
 
 
-SHEETS = {"turnaround": sheet_turnaround, "expressions": sheet_expressions, "mouth": sheet_mouth,
+def sheet_hair(out):
+    specs = [{"dials": {"hair": h}, "shot": "head", "view": v, "size": (600, 640), "label": f"HAIR: {h.upper()}"}
+             for v in ("front", "34r") for h in ("fringe", "soft_fringe", "curtain")]
+    save(grid(tiles_of(out, "hair", specs), 3), out / "hair_options.jpg")
+
+
+SHEETS = {"hair": sheet_hair, "turnaround": sheet_turnaround, "expressions": sheet_expressions, "mouth": sheet_mouth,
           "purple": sheet_purple, "options": sheet_options, "outfits": sheet_outfits}
 
 if __name__ == "__main__":

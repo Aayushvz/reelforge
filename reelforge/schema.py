@@ -28,7 +28,7 @@ AV_GLASSES = ("bold", "round", "rect", "none")  # bold: the owner's black acetat
 AV_HEADPHONES = ("on", "neck", "none")
 # Skin and hair are the viewer's pick in the editor (owner decision, gate P1); the first entry is the default.
 AV_SKINS = ("wheat", "porcelain", "light", "tan", "warm_brown", "brown", "deep")  # wheat: the owner's tone
-AV_HAIRS = ("fringe", "swept", "curly_top", "buzz")  # fringe: the owner's hair
+AV_HAIRS = ("fringe", "soft_fringe", "curtain", "swept", "curly_top", "buzz")  # fringe: the owner's hair
 AV_BEARDS = ("light", "stubble", "none")  # light: thin moustache and chin beard
 AV_GRAMMARS = ("signature", "reference")  # signature (default) = the reference grammar plus our upgrades
 AV_ACTIONS = ("hop", "tilt", "dry", "happy", "think", "shrink", "nod", "lookaway")  # buddy reaction clips

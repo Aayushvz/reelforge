@@ -147,7 +147,7 @@ def sheet_lineup(out):
     focus = bpy.data.objects.new("Focus", None)
     sc.collection.objects.link(focus)
     focus.location = (0, -0.50, 0.82)
-    cam = camera(sc, (0.0, -2.35, 1.05), (0, -0.30, 0.97), 50, 5.6, focus)
+    cam = camera(sc, (0.0, -2.45, 1.10), (0, -0.30, 1.01), 50, 5.6, focus)  # the whole head fits
     label(sc, cam, "CLAUDE  /  CHATGPT  /  FIGMA  /  NOVA   (hero for scale)")
     save(render_to(sc, out / "_tiles" / "lineup.png"), out / "lineup.jpg")
 

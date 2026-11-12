@@ -36,7 +36,7 @@ HERO = {
     "outfit": {"default": "puffer", "options": list(OUTFITS)},
     "outfit_color": {"default": BRAND["purple"],
                      "swatches": [BRAND[k] for k in ("purple", "purple_mid", "purple_soft", "lilac", "ink")]},
-    "hair": {"default": "fringe", "options": ["fringe", "swept", "curly_top", "buzz"]},  # fringe: the owner's hair
+    "hair": {"default": "fringe", "options": ["fringe", "soft_fringe", "curtain", "swept", "curly_top", "buzz"]},
     "hair_color": {"default": "#15110F"},
     "glasses": {"default": "bold", "options": ["bold", "round", "rect", "none"]},  # bold: his black acetate frames
     "headphones": {"default": "neck", "options": ["on", "neck", "none"]},
@@ -51,12 +51,13 @@ DEFAULTS = {k: v["default"] for k, v in HERO.items()}
 
 # --- proportions (metres, seated; the desk top is at 0.74) ---------------------------------------------------
 HC_Z = 1.20  # head centre; the eyes sit 0.02 below it, at 1.18
-RX, RY, RZT, RZB = 0.152, 0.165, 0.182, 0.172  # head about 0.31 wide, 0.36 tall: an oval, taller than wide
+RX, RY, RZT, RZB = 0.152, 0.165, 0.190, 0.180  # head about 0.31 wide, 0.37 tall: an oval, taller than wide
 JAW, TAPER, CHIN = 0.0, 0.16, 0.80  # straight cheeks into defined jaw corners and a flat chin: oval-squarish (the owner's)
 SQUARE = 3.4  # superellipse power of the lower face's outline (2 = round)
-SMILE_REST = 0.2  # his resting face is a soft closed smile
-EYE_X, EYE_Z, EYE_R = 0.0575, -0.02, (0.012, 0.0052, 0.020)  # black ovals 0.024 x 0.040, 0.115 apart
-BROW_Z = 0.036  # just above the frame top (0.022), as in his photo, so the brows still act
+SMILE_REST = 0.10  # calm and serious at rest; the smile is saved for when he means it
+EYE_X, EYE_Z, EYE_R = 0.0570, -0.026, (0.0145, 0.0058, 0.0235)  # big glossy ovals 0.029 x 0.047: innocent,
+# readable at phone size; set a little low so the face keeps an open forehead
+BROW_Z = 0.034  # just above the frame top, as in his photo, so the brows still act
 NECK_Z = 1.035
 BODY_AT = (0.0, 0.03, 0.62)
 SHOULDER = (0.165, 0.0, 0.955)  # shoulders 0.46 wide over the sleeves
@@ -125,6 +126,45 @@ _BACK_CLOSE = [(0, 0.66, 0.004), (0, 0.86, 0.008), (0, 0.985, 0.007), (180, 0.93
 HAIR = {
     # The owner's hair: thick, black and textured, a heavy choppy fringe falling to the brows, volume on top, full
     # sides over the tops of the ears. Clumps run from the crown forward; tips land just above the brow line.
+    # A soft fringe swept gently to his left: big rounded locks, smooth-shaded, tips resting above the brows.
+    "soft_fringe": {"cap": 0.006, "band": 0.036, "thick": 0.40, "smooth": True, "ease": 0.55,
+                    "hairline": [(0, 26), (30, 23), (52, 15), (68, 4), (79, -3), (88, 10), (100, 10), (112, -14),
+                                 (180, -27)], "clumps": [
+        (-34, -16, 0.30, -0.955, (0.010, 0.016, 0.008), 0.060),
+        (-14, 8, 0.32, -0.968, (0.010, 0.017, 0.007), 0.064),
+        (4, 28, 0.30, -0.962, (0.010, 0.017, 0.007), 0.062),
+        (20, 50, 0.24, -0.93, (0.010, 0.016, 0.009), 0.058),
+        (-50, -46, 0.20, -0.86, (0.010, 0.014, 0.009), 0.054),
+        (-22, 10, 0.72, 0.00, (0.010, 0.016, 0.012), 0.066),  # top
+        (24, 2, 0.72, 0.06, (0.010, 0.015, 0.012), 0.066),
+        (-56, -96, -0.45, -0.36, (0.006, 0.012, 0.004), 0.050),  # sides: soft and close
+        (-58, -100, -0.02, 0.04, (0.006, 0.012, 0.004), 0.052),
+        (56, 96, -0.45, -0.36, (0.006, 0.012, 0.004), 0.050),
+        (58, 100, -0.02, 0.04, (0.006, 0.012, 0.004), 0.052),
+        (-40, -126, 0.62, 0.70, (0.006, 0.014, 0.004), 0.052),  # back
+        (40, 126, 0.62, 0.70, (0.006, 0.014, 0.004), 0.052),
+        _BACK_CLOSE,
+    ]},
+    # Curtains: a soft middle part, two rounded curtains framing an open forehead.
+    "curtain": {"cap": 0.006, "band": 0.036, "thick": 0.40, "smooth": True, "ease": 0.55,
+                "hairline": [(0, 30), (30, 24), (52, 15), (68, 4), (79, -3), (88, 10), (100, 10), (112, -14),
+                             (180, -27)], "clumps": [
+        (4, 26, 0.32, -0.962, (0.010, 0.017, 0.007), 0.052),
+        (6, 50, 0.26, -0.945, (0.010, 0.017, 0.008), 0.056),
+        (8, 74, 0.16, -0.86, (0.010, 0.015, 0.009), 0.056),
+        (-4, -26, 0.32, -0.962, (0.010, 0.017, 0.007), 0.052),
+        (-6, -50, 0.26, -0.945, (0.010, 0.017, 0.008), 0.056),
+        (-8, -74, 0.16, -0.86, (0.010, 0.015, 0.009), 0.056),
+        (-12, -4, 0.76, -0.20, (0.010, 0.015, 0.011), 0.054),  # top, either side of the part
+        (12, 4, 0.76, -0.20, (0.010, 0.015, 0.011), 0.054),
+        (-56, -96, -0.45, -0.36, (0.006, 0.012, 0.004), 0.050),  # sides: soft and close
+        (-58, -100, -0.02, 0.04, (0.006, 0.012, 0.004), 0.052),
+        (56, 96, -0.45, -0.36, (0.006, 0.012, 0.004), 0.050),
+        (58, 100, -0.02, 0.04, (0.006, 0.012, 0.004), 0.052),
+        (-40, -126, 0.62, 0.70, (0.006, 0.014, 0.004), 0.052),  # back
+        (40, 126, 0.62, 0.70, (0.006, 0.014, 0.004), 0.052),
+        _BACK_CLOSE,
+    ]},
     "fringe": {"cap": 0.006, "band": 0.036, "thick": 0.34, "hairline": [(0, 22), (30, 20), (52, 14), (68, 4), (79, -3), (88, 10),
                                                          (100, 10), (112, -14), (180, -27)], "clumps": [
         (-6, -48, 0.22, -0.90, (0.010, 0.020, 0.010), 0.050),  # fringe: pieces of uneven width, tips turned apart
@@ -489,7 +529,8 @@ def build(**dials):
         piv = empty(f"Eye{tag}", ep, coll, hgeo)
         piv.rotation_euler = erot
         eye = ball(f"AV_Eye{tag}", EYE_R, coll, M["eye"], parent=piv, segs=24)
-        ball(f"AV_EyeGlint{tag}", (0.24, 0.42, 0.15), coll, M["glint"], (0.30, -0.86, 0.36), parent=eye, segs=12)
+        ball(f"AV_EyeGlint{tag}", (0.27, 0.42, 0.17), coll, M["glint"], (0.30, -0.86, 0.38), parent=eye, segs=12)
+        ball(f"AV_EyeGlint2{tag}", (0.11, 0.42, 0.07), coll, M["glint"], (-0.30, -0.88, -0.42), parent=eye, segs=10)
         ev = face({"w": f"eyeWide{sname}", "o": f"eyeLookOut{sname}", "i": f"eyeLookIn{sname}",
                    "u": f"eyeLookUp{sname}", "d": f"eyeLookDown{sname}"})
         drive(eye, "location", f"{sx}*0.006*(o-i)", ev, 0)
@@ -519,11 +560,11 @@ def build(**dials):
         bp, brot = on_face(sx * (EYE_X + 0.002), BROW_Z, 0.0005)
         bpiv = empty(f"Brow{tag}", bp, coll, hgeo)
         bpiv.rotation_euler = brot
-        brow = rbox(f"AV_Brow{tag}", (0.048, 0.009, 0.0125), coll, M["brow"], 0.004, parent=bpiv)
+        brow = rbox(f"AV_Brow{tag}", (0.046, 0.009, 0.0115), coll, M["brow"], 0.0045, parent=bpiv)
         bv = face({"u": "browInnerUp", "d": f"browDown{sname}", "o": f"browOuterUp{sname}"})
         drive(brow, "location", f"{-sx}*0.004*d", bv, 0)
         drive(brow, "location", "0.010*u+0.013*o-0.008*d", bv, 2)
-        drive(brow, "rotation_euler", f"{sx}*(-0.02+0.42*u-0.46*d-0.16*o)", bv, 1)  # straight at rest
+        drive(brow, "rotation_euler", f"{sx}*(0.035+0.42*u-0.46*d-0.16*o)", bv, 1)  # inner ends a touch high: earnest
         # ears
         ear = ball(f"AV_Ear{tag}", (0.011, 0.022, 0.030), coll, M["blush"], (sx * (RX - 0.002), 0.012, -0.022),
                    parent=hgeo, segs=16)
@@ -553,22 +594,28 @@ def build(**dials):
         for r in range(rows - 1):
             cap_f.append((i * rows + r, j * rows + r, j * rows + r + 1, i * rows + r + 1))
         cap_f.append((i * rows + rows - 1, j * rows + rows - 1, len(cap_v) - 1))
-    cap = mesh("AV_HairCap", cap_v, cap_f, coll, M["hair"], smooth=False, parent=hgeo)
+    soft = bool(preset.get("smooth"))  # soft presets: smooth, rounded locks instead of faceted clumps
+    cap = mesh("AV_HairCap", cap_v, cap_f, coll, M["hair"], smooth=soft, parent=hgeo)
     sol = cap.modifiers.new("Solid", "SOLIDIFY")
     sol.thickness, sol.offset = preset["cap"] + 0.004, -1.0
 
-    def clump(name, path, width, k=5):
+    def clump(name, path, width, k=8 if soft else 5):
         pts = [hpt(d, lift) for d, lift in path]
         rings = []
         for i, (d, _) in enumerate(path):
             s = i / (len(path) - 1)
-            w = width * float(np.interp(s, [0, 0.15, 0.45, 0.8, 1], [0.55, 0.9, 1.0, 0.62, 0.07]))
+            prof = [0.6, 0.95, 1.0, 0.92, 0.38] if soft else [0.55, 0.9, 1.0, 0.62, 0.07]  # soft locks: rounded tips
+            w = width * float(np.interp(s, [0, 0.15, 0.45, 0.8, 1], prof))
             th = preset.get("thick", 0.44) * w  # flatter clumps keep a short cut close to the head
             _, sd, up = geo.frame(pts, i, d)
             c = pts[i] + up * th * 0.3
             rings.append([c + sd * (w * math.cos(2 * math.pi * j / k + math.pi / 2))
                           + up * (th * math.sin(2 * math.pi * j / k + math.pi / 2)) for j in range(k)])
-        return loft(name, rings, coll, M["hair"], smooth=False, parent=hgeo)
+        o = loft(name, rings, coll, M["hair"], smooth=soft, parent=hgeo)
+        if soft:
+            sub = o.modifiers.new("Subd", "SUBSURF")
+            sub.levels = sub.render_levels = 1
+        return o
 
     for ci, spec in enumerate(preset.get("clumps", [])):
         if isinstance(spec, list):
@@ -576,8 +623,9 @@ def build(**dials):
         else:
             th0, th1, f0, f1, (l0, lm, l1), width = spec
             wob = (0.012 if D["hair"] == "fringe" else 0.004) * math.sin(ci * 12.9898)  # irregular, same every build
-            path = [(hdir(th0 + (th1 - th0) * s, f0 + (f1 - f0) * s + wob * math.sin(math.pi * s)),
-                     l0 + (l1 - l0) * s + lm * math.sin(math.pi * s) ** 0.8) for s in (i / 7 for i in range(8))]
+            ease = preset.get("ease", 1.0)  # < 1: the lock crosses the crown fast, then hangs down the forehead
+            path = [(hdir(th0 + (th1 - th0) * s, f0 + (f1 - f0) * s ** ease + wob * math.sin(math.pi * s)),
+                     l0 + (l1 - l0) * s + lm * math.sin(math.pi * s) ** 0.8) for s in (i / 9 for i in range(10))]
         clump(f"AV_Hair{ci:02d}", path, spec[5] if not isinstance(spec, list) else 0.036)
     for ci, (th, f) in enumerate(preset.get("curls", [])):
         r = 0.050 + 0.008 * math.sin(ci * 7.3)
