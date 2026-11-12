@@ -16,8 +16,8 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 0 | Tests | done | 222f99c | `tests/test_shots_av.py`; full suite 152 pass after the gate change |
 | 1 | Hero geometry, face, rig (`blender/shotsav/hero.py`, `geo.py`, `build_shotsav.py`) | done | 222f99c | See "P1 hero" below |
 | 1 | Evidence sheets (`blender/shotsav/sheets.py`) | done | 222f99c | `turnaround.jpg`, `expressions.jpg`, `mouth_shapes.jpg`, `purple_check.jpg` + `.json`, `outfits_poses.jpg`, `options_skin_hair.jpg` |
-| 1 | Gate P1: skin, hair, glasses | **passed** | gate commit | Glasses: round default. Skin and hair: **all kept as viewer choices** (see Decisions). Rubric approved |
-| 1 | Skin, hair and stubble as per-project choices | done | gate commit | `skin` (6 tones), `hair` (3 presets), `stubble` (0-1) on the hero in `performance.json`; `shots_av.ensure_hero(options)` builds the picked combination on demand into `assets/build/shotsav/av_hero__<outfit>__<skin>__<hair>__<glasses>__<headphones>__<colour>__<stubble>.blend` and reuses it after (one build checked: hoodie, deep, curly_top) |
+| 1 | Gate P1: skin, hair, glasses | **passed** | 0c77508 | Glasses: round default. Skin and hair: **all kept as viewer choices** (see Decisions). Rubric approved |
+| 1 | Skin, hair and stubble as per-project choices | done | 0c77508 | `skin` (6 tones), `hair` (3 presets), `stubble` (0-1) on the hero in `performance.json`; `shots_av.ensure_hero(options)` builds the picked combination on demand into `assets/build/shotsav/av_hero__<outfit>__<skin>__<hair>__<glasses>__<headphones>__<colour>__<stubble>.blend` and reuses it after (one build checked: hoodie, deep, curly_top) |
 | 2-8 | Buddies, rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | Out of scope for this session |
 
 ## Decisions
