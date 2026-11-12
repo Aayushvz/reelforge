@@ -27,10 +27,10 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2 | Gate P2: brand literalness | **passed** | 1fd68c9 | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
 | 3 | Six rooms (`blender/shotsav/rooms.py`), room builds, schema `AV_ROOMS`, engine `room_blend()`, tests | done | 116b164 | `p3/rooms.jpg` (a wide and a hero close-up per room, hero and the Claude robot in place), `p3/rooms.json` |
 | 3 | Gate P3: the 12 room stills | **passed** | — | Owner approved, 2026-11-13 |
-| 4 | Five set-ups in `camera_rig.FRAMING` + `pull_truck` | done | P4 commit | sign conversion recorded in the table's comment; `tests/test_director_av.py` checks it |
-| 4 | `plan_shots_av` (reference + signature grammars), rack focus | done | P4 commit | 20-line fixture: 20 shots, same kinds in order, cuts within 2 frames, split 46/37/17 within 3 points |
-| 4 | Engine render + acting (hero blink on cuts, think-to-rest pose change, buddy BuddyCtrl from loudness and `pick_action`), `reelforge animatic` | done | P4 commit | `samples/shots-av-fixture` |
-| 4 | **Match pass** | **done, all within tolerance** | P4 commit | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
+| 4 | Five set-ups in `camera_rig.FRAMING` + `pull_truck` | done | 776c0f3 | sign conversion recorded in the table's comment; `tests/test_director_av.py` checks it |
+| 4 | `plan_shots_av` (reference + signature grammars), rack focus | done | 776c0f3 | 20-line fixture: 20 shots, same kinds in order, cuts within 2 frames, split 46/37/17 within 3 points |
+| 4 | Engine render + acting (hero blink on cuts, think-to-rest pose change, buddy BuddyCtrl from loudness and `pick_action`), `reelforge animatic` | done | 776c0f3 | `samples/shots-av-fixture` |
+| 4 | **Match pass** | **done, all within tolerance** | 776c0f3 | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
 | 4 | Silent animatic (draft) | rendering | — | `samples/shots-av-fixture/out/animatic.mp4` |
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
 | 5-8 | Captions and sound, editor page, benchmark, docs | not started | — | |
