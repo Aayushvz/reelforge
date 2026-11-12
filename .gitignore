@@ -19,3 +19,6 @@ editor/*.tsbuildinfo
 docs/production/**/face_*.png
 !docs/production/**/face_sheet.png
 docs/production/**/turn_*.png
+
+# shots-av sheet tiles: regenerate with blender/shotsav/sheets.py; only the composite sheets are kept
+docs/production/shots-av/**/_tiles/

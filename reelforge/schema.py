@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -12,11 +13,24 @@ RATIOS: dict[str, tuple[int, int]] = {
 }
 REQUIRED_LINE_KEYS = ("id", "speaker", "text", "emotion", "intensity", "mood")
 MAX_CHARACTERS = 2  # one per mark (Mark_A, Mark_B)
-LOOKS = ("classic", "cinema")  # classic = the original Eevee look; cinema = Cycles faces + the camera rig
+LOOKS = ("classic", "cinema", "shotsav")  # classic = the original Eevee look; cinema = Cycles faces + the
+# camera rig; shotsav = the low-poly desk two-hander of the shots-av style
 QUALITIES = ("preview", "standard", "cinema")
 CAMERA_MOVES = ("static", "push_in", "pull_out", "orbit", "truck", "drift", "crane_down", "crane_up",
                 "slow_zoom", "whip_pan")
 SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu")
+# --- the shots-av style (docs/prompts/03-shots-av-animation.md): one hero and one desk buddy ---
+AV_STYLE = "shots-av"
+AV_HERO = "av_hero"
+AV_BUDDIES = ("buddy_claude", "buddy_chatgpt", "buddy_figma", "buddy_nova")
+AV_OUTFITS = ("puffer", "hoodie", "overshirt")
+AV_GLASSES = ("round", "rect", "none")
+AV_HEADPHONES = ("on", "neck", "none")
+AV_GRAMMARS = ("signature", "reference")  # signature (default) = the reference grammar plus our upgrades
+AV_ACTIONS = ("hop", "tilt", "dry", "happy", "think", "shrink", "nod", "lookaway")  # buddy reaction clips
+AV_PURPLE = "#7C3AED"  # Aayush Visuals brand purple: the default jacket
+AV_ROOM = "av_studio_night"
+_HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 class PerformanceError(ValueError):
@@ -31,6 +45,7 @@ class Character:
     highlight_color: str
     model: str = "kai"  # cast member the engine renders
     outfit: int = 0  # index into that member's wardrobe
+    options: dict = field(default_factory=dict)  # shots-av hero: outfit (name), outfit_color, glasses, headphones
 
 
 @dataclass(frozen=True)
@@ -43,6 +58,8 @@ class Line:
     mood: str
     pause_after: float = 0.3
     punchline: bool = False
+    beat: bool = False  # shots-av: force a wide on this line
+    action: str = ""  # shots-av: a buddy reaction clip (AV_ACTIONS); empty = picked from the line
 
 
 @dataclass(frozen=True)
@@ -74,23 +91,41 @@ def parse_performance(data: dict) -> Performance:
     if ratio not in RATIOS:
         errors.append(f"ratio must be one of {list(RATIOS)}, got {ratio}")
 
+    style = data.get("style", "blender3d")
+    av = style == AV_STYLE
     chars: dict[str, Character] = {}
     for name, c in (data.get("characters") or {}).items():
+        if av:  # voices come from the web app, so voice_id is optional; the hero's wardrobe is named, not indexed
+            chars[name] = Character(name, c.get("voice_id", ""), c.get("caption_color", "#FFFFFF"),
+                                    c.get("highlight_color", "#FFD23F"), c.get("model", ""), 0,
+                                    _av_options(name, c, errors))
+            continue
         if "voice_id" not in c:
             errors.append(f"character {name}: missing voice_id")
             continue
+        try:
+            outfit = int(c.get("outfit", 0))
+        except (TypeError, ValueError):
+            errors.append(f"character {name}: outfit must be a wardrobe index, got {c.get('outfit')!r}")
+            continue
         chars[name] = Character(name, c["voice_id"], c.get("caption_color", "#FFFFFF"),
-                                c.get("highlight_color", "#FFD23F"), c.get("model", "kai"),
-                                int(c.get("outfit", 0)))
+                                c.get("highlight_color", "#FFD23F"), c.get("model", "kai"), outfit)
     if not chars:
         errors.append("at least one character required")
     if len(chars) > MAX_CHARACTERS:
         errors.append(f"at most {MAX_CHARACTERS} characters (one per mark), got {len(chars)}")
+    if av:
+        models = sorted(c.model for c in chars.values())
+        if len(models) != 2 or models[0] != AV_HERO or models[1] not in AV_BUDDIES:
+            errors.append(f"shots-av needs exactly one hero (model {AV_HERO!r}) and one buddy "
+                          f"(model one of {AV_BUDDIES}), got models {models}")
 
     lines: list[Line] = []
     seen: set[str] = set()
     for i, raw in enumerate(data.get("lines") or []):
         where = f"lines[{i}]"
+        if av and isinstance(raw, dict):  # a chat-style script: only speaker and text are required
+            raw = {"id": f"l{i + 1:02d}", "emotion": "neutral", "intensity": 0.5, "mood": "calm", **raw}
         missing = [k for k in REQUIRED_LINE_KEYS if k not in raw]
         if missing:
             errors.append(f"{where}: missing {missing}")
@@ -113,11 +148,18 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"{where}: intensity must be 0..1")
         if pause < 0:
             errors.append(f"{where}: pause_after must be >= 0")
+        beat, action = raw.get("beat", False), raw.get("action", "")
+        if not isinstance(beat, bool):
+            errors.append(f"{where}: beat must be true or false")
+        if action not in ("", *AV_ACTIONS):
+            errors.append(f"{where}: action must be empty or one of {AV_ACTIONS}")
+        elif action and av and raw["speaker"] in chars and chars[raw["speaker"]].model == AV_HERO:
+            errors.append(f"{where}: action is a buddy clip; the hero's line cannot carry one")
         lines.append(Line(raw["id"], raw["speaker"], raw["text"], raw["emotion"], intensity,
-                          raw["mood"], pause, bool(raw.get("punchline", False))))
+                          raw["mood"], pause, bool(raw.get("punchline", False)), beat is True, action))
     if not lines:
         errors.append("at least one line required")
-    look, quality = data.get("look", "classic"), data.get("quality", "standard")
+    look, quality = data.get("look", "shotsav" if av else "classic"), data.get("quality", "standard")
     if look not in LOOKS:
         errors.append(f"look must be one of {LOOKS}, got {look}")
     if quality not in QUALITIES:
@@ -129,6 +171,10 @@ def parse_performance(data: dict) -> Performance:
     handheld = camera.get("handheld", 0.15)
     if isinstance(handheld, bool) or not isinstance(handheld, (int, float)) or not 0.0 <= handheld <= 1.0:
         errors.append("camera.handheld must be a number 0..1")
+    if "grammar" in camera and camera["grammar"] not in AV_GRAMMARS:
+        errors.append(f"camera.grammar must be one of {AV_GRAMMARS}")
+    if av and "seed" in camera and (isinstance(camera["seed"], bool) or not isinstance(camera["seed"], int)):
+        errors.append("camera.seed must be a whole number")
     overrides = camera.get("overrides") or {}
     for key, o in (overrides.items() if isinstance(overrides, dict) else []):
         where = f"camera.overrides[{key}]"
@@ -145,6 +191,20 @@ def parse_performance(data: dict) -> Performance:
         errors.append("look_params values must be numbers")
     if errors:
         raise PerformanceError("; ".join(errors))
-    return Performance(fps, ratio, data.get("environment", "night_city"), chars, lines,
-                       data.get("style", "blender3d"), data.get("lighting", ""),
+    return Performance(fps, ratio, data.get("environment", AV_ROOM if av else "night_city"), chars, lines,
+                       style, data.get("lighting", ""),
                        bool(data.get("ambience", True)), look, quality, camera, look_params)
+
+
+def _av_options(name: str, c: dict, errors: list[str]) -> dict:
+    """The shots-av hero's named wardrobe and accessories; a buddy has none."""
+    if c.get("model") != AV_HERO:
+        return {}
+    opts = {"outfit": c.get("outfit", AV_OUTFITS[0]), "outfit_color": c.get("outfit_color", AV_PURPLE),
+            "glasses": c.get("glasses", AV_GLASSES[0]), "headphones": c.get("headphones", "neck")}
+    for key, allowed in (("outfit", AV_OUTFITS), ("glasses", AV_GLASSES), ("headphones", AV_HEADPHONES)):
+        if opts[key] not in allowed:
+            errors.append(f"character {name}: {key} must be one of {allowed}, got {opts[key]!r}")
+    if not isinstance(opts["outfit_color"], str) or not _HEX.fullmatch(opts["outfit_color"]):
+        errors.append(f"character {name}: outfit_color must be a hex colour like {AV_PURPLE}")
+    return opts
