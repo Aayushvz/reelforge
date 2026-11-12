@@ -34,7 +34,9 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | Silent animatic (draft, 540x960, 16 samples) | done | 737579e | `p4/animatic_silent.mp4` (48.7 s), `p4/animatic_strip.jpg`. **Render time 9 min 18 s for 48.7 s (0.36 s/frame)**: over the prompt's 6-minute draft budget; see notes |
 | 4 | Gate P4: match pass and animatic | **passed** | — | Owner approved, 2026-11-13 |
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
-| 5 | Captions, sound, grade (spec below) | in progress | — | Started 2026-11-13 |
+| 5 | `shotsav_top` captions, room beds + buddy blip + keyboard foley + owner music, `shotsav_dark/light` grades, finish | done | b8abc33, cae3920 | `tests/test_shotsav_finish.py` (14 tests) |
+| 5 | Evidence clips (placeholder voices) | done | P5 commit | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
+| 5 | **Gate P5: owner reviews the two clips** | **waiting on owner** | — | Also: describe the music and voices you want (the reference was measured, not listened to) |
 | 6-8 | Editor page, benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
@@ -112,6 +114,22 @@ Animatic notes (honest): the cut list, blinks on hero cuts, the pose change and 
 8. Engine: `shots_av.render()` builds the plan (hero blend from `ensure_hero`, buddy and room blends) and renders through `render_plan.py`; `cli.run` routes shots-av to `plan_shots_av` and holds 0.9 s after the last word. `shots_av.animatic()` renders silent previews from estimated timing (no voices needed).
 9. Evidence: the match pass (each set-up as a still in `av_studio_night`, measured subject height, eye line and centre against the reference, tolerances 0.03 H / 0.03 H / 0.05 W); the 20-line fixture test; a silent animatic.
 10. Tests: av framing maths, the fixture (20 shots, same kinds in order, cuts within 2 frames, screen-time split within 3 points of 46 / 37 / 17), both grammars, determinism.
+
+## P5 measurements
+| Clip | Size, fps | Video bitrate | Loudness | True peak | Colour tags |
+|---|---|---|---|---|---|
+| `p5/clip_dark_av_studio_night.mp4` | 1080x1920, 30 | 10.7 Mbps | -14.4 LUFS | -1.0 dBFS | bt709 |
+| `p5/clip_light_av_studio_morning.mp4` | 1080x1920, 30 | 10.5 Mbps | -14.4 LUFS | -1.1 dBFS | bt709 |
+
+Targets: 10-12 Mbps, -14 LUFS (within 0.5), bt709. The grade keeps `#7C3AED`'s hue within 3 degrees and never clips (test); the vignette darkens corners 11% (cap 12%, measured).
+
+Honest notes:
+- **A bug caught on review:** the first night clip had pink and olive blotches on the face. The halation mask thresholded each colour channel separately, and ffmpeg's 16-bit `screen` blend shifts one channel even over black. Fixed (luma mask, additive blend; cae3920) with a skin test, and both clips were re-finished from their frames.
+- **Placeholder voices** (Windows David and Zira); real lip sync comes through Whisper alignment, so mouths do sync, but the voices are robotic. Real takes come from the owner's ElevenLabs web app at P7.
+- **No music** in these clips: none was supplied. Drop `music.mp3` (or `.wav`) into a project folder and it mixes in at -24 LUFS under the speech.
+- **The keyboard foley** plays only in the typing pose after the first third; in a 13 s clip that is about 4 s.
+- **Render time: about 19 minutes per 13.5 s at final quality** (2.6 s/frame at 1080x1920, 64 samples) on the RTX 4060. A 48 s reel would take about 70 minutes, over the prompt's 30-minute final budget. P8 benchmarks this properly; haze resolution and shadow rays are the first levers.
+- **Not built:** the animated monitor (bubbles per line), screen flicker on the chest, and background life. They need their own pass.
 
 ## P5 spec (captions, sound, grade)
 1. Caption template `shotsav_top` (`reelforge/captions.py::build_ass_shotsav`): top centre, block at 0.08-0.12 H, Geist Bold 46 px at 1080 wide, white, at most two lines of 22 characters (longer lines become successive captions), the whole line at once; in 4 frames after the cut, out 3 frames before the next cut.
