@@ -28,6 +28,8 @@ class Shot:
     seed: int = 0
     az_pick: float = 0.5  # where inside the kind's azimuth range the camera stands
     ease: float = 0.35  # 0 = constant speed (cut into a travelling move), 1 = starts and lands at rest
+    rack: dict = field(default_factory=dict)  # shots-av: {"at": frame in shot, "frames": n, "from": name, "to": name}
+    speaker: str = ""  # who is talking, when it is not the subject (shots-av wides); empty = the subject
 
 
 def plan_shots(placed: list[Placed], fps: int, n_frames: int) -> list[Shot]:
@@ -184,3 +186,133 @@ def plan_shots_v2(placed: list[Placed], fps: int, n_frames: int, speakers: list[
                            subject=o.get("subject", s.subject), move=o.get("move", s.move), move_params=params,
                            fstop=float(o.get("fstop", s.fstop)), handheld=float(o.get("handheld", s.handheld)))
     return shots
+
+
+# --- the Shots-AV director (docs/prompts/03-shots-av-animation.md 5.2) -------------------------------------------
+# Hard cuts on the line, every shot moving, shot/reverse shot on one side of the desk, one wide every 6-7 shots.
+AV_LENSES = {"av_hero_34": 85, "av_hero_front": 85, "av_buddy": 100, "av_wide_34": 50, "av_wide_front": 50}
+AV_HERO_KINDS = ("av_hero_34", "av_hero_front")
+AV_WIDES = ("av_wide_34", "av_wide_front")
+AV_MIN_S, AV_MAX_S, AV_LAST_MIN_S = 1.2, 5.0, 4.5
+AV_CUT_LEAD = 3
+AV_REACTION_S = (1.0, 1.2, 1.4)
+AV_CONCESSIONS = ("fine", "okay", "ok", "true", "alright", "sure", "yeah", "fair", "right", "deal")
+AV_GRAMMARS = ("signature", "reference")
+
+
+def _words(text: str) -> list[str]:
+    return [w for w in text.replace("\u2026", " ").replace("...", " ").split() if w.strip(".,!?;:")]
+
+
+def is_turn(line, prev_hero_line) -> bool:
+    """A beat that turns the hero's angle (5.2 rule 5): a question, a concession, a punchline, or a change of
+    emotion or mood from his previous line."""
+    t = line.text.strip()
+    words = _words(t)
+    first = words[0].strip(".,!?;:").lower() if words else ""
+    concession = t.startswith(("...", "\u2026")) or first in AV_CONCESSIONS
+    changed = prev_hero_line is not None and (line.emotion != prev_hero_line.emotion
+                                              or line.mood != prev_hero_line.mood)
+    return "?" in t or concession or line.punchline or changed
+
+
+def _av_move(kind: str, dur: float, last: bool) -> tuple[str, dict]:
+    """5.2 rule 7: linear moves at fixed rates, so every cut lands in motion."""
+    if last:
+        return "pull_out", {"amount": 0.25}
+    if dur < 1.4:
+        return "drift", {"metres": 0.004, "degrees": 0.15}  # near static (about 0.5%)
+    if kind in AV_HERO_KINDS:
+        return "push_in", {"amount": round(min(0.06, 0.016 * dur), 4)}
+    if kind == "av_buddy":
+        return "pull_truck", {"amount": round(min(0.12, 0.028 * dur), 4), "metres": 0.004}
+    return "push_in", {"amount": round(min(0.08, 0.015 * dur), 4)}
+
+
+def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, buddy: str, seed: int = 0,
+                  grammar: str = "signature", camera: dict | None = None) -> list[Shot]:
+    """Shots for the shots-av style. `hero` and `buddy` are the speaker names. grammar "reference" reproduces the
+    reference reel's rules exactly; "signature" (default) adds a gentle ease-in, a little handheld and one rack
+    focus. camera: {"overrides": {"<shot index>": {kind, move, fstop}}}."""
+    if grammar not in AV_GRAMMARS:
+        raise ValueError(f"grammar must be one of {AV_GRAMMARS}")
+    camera = camera or {}
+    total = n_frames / fps
+    sig = grammar == "signature"
+    raw = []  # [start, end, kind, subject, line, reaction]
+    angle, prev_hero, singles, wides_done = "av_hero_34", None, 0, 0
+    for i, p in enumerate(placed):
+        line, last = p.line, i == len(placed) - 1
+        start = 0 if i == 0 else max(0, int(round(p.start * fps)) - AV_CUT_LEAD)
+        end = n_frames if last else int(round(placed[i + 1].start * fps)) - AV_CUT_LEAD
+        is_hero = line.speaker == hero
+        short_hero = is_hero and len(_words(line.text)) <= 3 and singles >= 4
+        if last:
+            kind = "av_wide_front"
+        elif line.beat or short_hero:
+            kind = AV_WIDES[wides_done % 2]
+            wides_done += 1
+        elif is_hero:
+            if p.start >= total / 3 and is_turn(line, prev_hero):
+                angle = "av_hero_front" if angle == "av_hero_34" else "av_hero_34"
+            kind = angle
+        else:
+            kind = "av_buddy"
+        if is_hero:
+            prev_hero = line
+        singles = 0 if kind in AV_WIDES else singles + 1
+        subject = buddy if kind == "av_buddy" else hero
+        length = end - start
+        if not last and kind not in AV_WIDES and length > AV_MAX_S * fps:  # rule 6: split by a listener reaction
+            r = int(_pick(seed, i, "react", AV_REACTION_S) * fps)
+            mid = start + (length - r) // 2
+            other_kind = "av_buddy" if is_hero else angle
+            other = hero if subject == buddy else buddy
+            raw += [[start, mid, kind, subject, line, False], [mid, mid + r, other_kind, other, line, True],
+                    [mid + r, end, kind, subject, line, False]]
+        else:
+            raw.append([start, end, kind, subject, line, False])
+    merged = []  # rule 6: nothing under AV_MIN_S; fold a short shot into the one before it
+    for k, r in enumerate(raw):
+        if merged and r[1] - r[0] < AV_MIN_S * fps and k < len(raw) - 1:
+            merged[-1][1] = r[1]
+        else:
+            merged.append(r)
+    while len(merged) > 1 and merged[-1][1] - merged[-1][0] < AV_LAST_MIN_S * fps:  # the closing wide is long
+        need = merged[-1][1] - int(AV_LAST_MIN_S * fps)
+        if need - merged[-2][0] < AV_MIN_S * fps:
+            merged[-1][0] = merged.pop(-2)[0]
+        else:
+            merged[-2][1] = merged[-1][0] = need
+    rack_done = not sig
+    shots: list[Shot] = []
+    for i, (a, b, kind, subject, line, reaction) in enumerate(merged):
+        last = i == len(merged) - 1
+        move, params = ("static", {}) if reaction else _av_move(kind, (b - a) / fps, last)
+        rack = {}
+        if not rack_done and kind in AV_WIDES and line.speaker == buddy:  # one rack focus: hero -> buddy
+            line_start = next((int(round(p.start * fps)) for p in placed if p.line is line), a)
+            rack = {"at": max(0, line_start - a), "frames": 10, "from": hero, "to": buddy}
+            rack_done = True
+        shots.append(Shot(a, b, kind, float(AV_LENSES[kind]), subject, 0.0, move, params, 0.0,
+                          0.04 if sig else 0.0, (seed * 7919 + i * 104729) & 0x7FFFFFFF,
+                          round(_hash(seed, i, "az") / 0xFFFFFFFF, 3), 0.15 if sig else 0.0, rack,
+                          line.speaker))
+    for key, o in (camera.get("overrides") or {}).items():
+        i = int(key)
+        if 0 <= i < len(shots):
+            s = shots[i]
+            kind = o.get("kind", s.kind)
+            new_move = o.get("move", s.move)
+            shots[i] = replace(s, kind=kind, lens=float(AV_LENSES.get(kind, s.lens)), move=new_move,
+                               move_params=s.move_params if new_move == s.move else {},
+                               fstop=float(o.get("fstop", s.fstop)))
+    return shots
+
+
+def screen_time(shots: list[Shot]) -> dict[str, float]:
+    """Share of the runtime per group: hero close-ups, buddy singles, wides (the reference: 37 / 46 / 17)."""
+    total = sum(s.end_frame - s.start_frame for s in shots) or 1
+    group = {"hero": AV_HERO_KINDS, "buddy": ("av_buddy",), "wide": AV_WIDES}
+    return {g: round(sum(s.end_frame - s.start_frame for s in shots if s.kind in k) / total, 4)
+            for g, k in group.items()}

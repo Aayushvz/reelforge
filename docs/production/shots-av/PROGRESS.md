@@ -26,8 +26,14 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 1 | Innocence pass + two soft hair designs | done | da4dd8b | `p1/hair_options.jpg`, `p1/expressions.jpg`. Hair: all six kept as editor options, default `fringe` (owner, 2026-11-12) |
 | 2 | Gate P2: brand literalness | **passed** | 1fd68c9 | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
 | 3 | Six rooms (`blender/shotsav/rooms.py`), room builds, schema `AV_ROOMS`, engine `room_blend()`, tests | done | 116b164 | `p3/rooms.jpg` (a wide and a hero close-up per room, hero and the Claude robot in place), `p3/rooms.json` |
-| 3 | **Gate P3: owner reviews the 12 stills** | **waiting on owner** | — | |
-| 4-8 | Camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
+| 3 | Gate P3: the 12 room stills | **passed** | — | Owner approved, 2026-11-13 |
+| 4 | Five set-ups in `camera_rig.FRAMING` + `pull_truck` | done | P4 commit | sign conversion recorded in the table's comment; `tests/test_director_av.py` checks it |
+| 4 | `plan_shots_av` (reference + signature grammars), rack focus | done | P4 commit | 20-line fixture: 20 shots, same kinds in order, cuts within 2 frames, split 46/37/17 within 3 points |
+| 4 | Engine render + acting (hero blink on cuts, think-to-rest pose change, buddy BuddyCtrl from loudness and `pick_action`), `reelforge animatic` | done | P4 commit | `samples/shots-av-fixture` |
+| 4 | **Match pass** | **done, all within tolerance** | P4 commit | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
+| 4 | Silent animatic (draft) | rendering | — | `samples/shots-av-fixture/out/animatic.mp4` |
+| 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
+| 5-8 | Captions and sound, editor page, benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
@@ -70,9 +76,47 @@ Honest notes:
 9. Tests: room table matches the schema's environments, every room has the contract.
 10. Gate P3: the owner reviews the 12 stills.
 
+## P4 match pass (`av_studio_night`, `samples/shots-av-fixture`, reference grammar)
+| Set-up | Measure | Reference | Ours | Delta | Tolerance | Pass |
+|---|---|---|---|---|---|---|
+| A av_hero_34 | height (H) | 0.46 | 0.439 | -0.021 | 0.03 | yes |
+| A av_hero_34 | eyes (H) | 0.52 | 0.537 | +0.017 | 0.03 | yes |
+| A av_hero_34 | top (H) | 0.23 | 0.239 | +0.009 | 0.03 | yes |
+| B av_buddy | height (H) | 0.38 | 0.373 | -0.007 | 0.03 | yes |
+| B av_buddy | eyes (H) | 0.62 | 0.631 | +0.011 | 0.03 | yes |
+| B av_buddy | centre x (W) | 0.50 | 0.488 | -0.012 | 0.05 | yes |
+| C av_wide_34 | height (H) | 0.25 | 0.248 | -0.002 | 0.03 | yes |
+| C av_wide_34 | eyes (H) | 0.36 | 0.361 | +0.001 | 0.03 | yes |
+| D av_hero_front | height (H) | 0.46 | 0.432 | -0.028 | 0.03 | yes |
+| D av_hero_front | eyes (H) | 0.54 | 0.545 | +0.005 | 0.03 | yes |
+| E av_wide_front | height (H) | 0.25 | 0.244 | -0.006 | 0.03 | yes |
+| E av_wide_front | eyes (H) | 0.35 | 0.350 | +0.000 | 0.03 | yes |
+| E av_wide_front | top (H) | 0.22 | 0.193 | -0.027 | 0.03 | yes |
+| E av_wide_front | width (W) | 0.40 | 0.353 | -0.047 | 0.05 | yes |
+| C av_wide_34 | buddy centre (W) | 0.10-0.30 | 0.222 | - | inside | yes |
+
+Honest notes: every value is inside tolerance, but three sit near the edge: D's head height (-0.028), E's hair top (-0.027) and E's head width (-0.047, our oval face is narrower than the reference's long-haired head). The buddy's eyes match (0.63 vs 0.62) while its body sits higher in frame than the reference's (centre 0.61 vs 0.69), because our robot carries its eyes lower on a taller body with an antenna. Bokeh is round-heptagonal (7 blades), not the reference's squares.
+
+## P4 spec (camera, director, acting)
+1. `camera_rig.FRAMING` gains `av_hero_34`, `av_hero_front`, `av_buddy`, `av_wide_34`, `av_wide_front` (prompt 5.1), plus a `pull_truck` move. Sign conversion: 5.1 measures azimuth "positive toward the monitor"; the rig measures it toward the other speaker. With the buddy on the hero's right, hero set-ups store the negated range (e.g. `av_hero_34` = -34..-28 so the camera lands +28..+34 on the monitor side); `av_buddy` keeps -8..-2.
+2. Framing uses the hero's head **with hair** (`FaceAnchor["frame_height"]`, measured at build) because the reference's 0.46 H includes hair. Wides shift their aim toward the buddy so it lands lower left.
+3. `reelforge/direct.py::plan_shots_av` (rules 1-8 of 5.2): one shot per line, cut 3 frames early, no establishing shot, wides on `beat` or a short hero line after 4+ singles (34 then front), last shot `av_wide_front` pulling out 25% for at least 4.5 s, hero angle A for the first third then toggling on questions, concessions, punchlines and emotion changes, 1.2-5.0 s with listener reactions splitting long lines, linear moves at the given rates, deterministic from the seed.
+4. Grammars: `reference` exactly; `signature` adds a gentle ease-in, handheld 0.04 and one rack focus (inside the first wide where the buddy speaks, 10 frames).
+5. Connected move (the 0.5 s arc from `av_hero_34` to `av_buddy`): **deferred** (see Decisions).
+6. Acting: hero blinks on the first frames after a cut to his close-up; eyes on the buddy while listening; one pose change (think -> rest) across a cut. Buddy: `BuddyCtrl` tracks from `reelforge/buddy.py` (talk squash and waveform from the dialogue's loudness, reaction clips from `pick_action`).
+7. `render_plan.py` gains: the av distance limits, `frame_height` framing, per-frame custom-prop tracks for characters (`props`), a rack focus, and a measurement dump in stills mode.
+8. Engine: `shots_av.render()` builds the plan (hero blend from `ensure_hero`, buddy and room blends) and renders through `render_plan.py`; `cli.run` routes shots-av to `plan_shots_av` and holds 0.9 s after the last word. `shots_av.animatic()` renders silent previews from estimated timing (no voices needed).
+9. Evidence: the match pass (each set-up as a still in `av_studio_night`, measured subject height, eye line and centre against the reference, tolerances 0.03 H / 0.03 H / 0.05 W); the 20-line fixture test; a silent animatic.
+10. Tests: av framing maths, the fixture (20 shots, same kinds in order, cuts within 2 frames, screen-time split within 3 points of 46 / 37 / 17), both grammars, determinism.
+
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-13 | **The connected move is deferred**; the signature grammar keeps the rack focus only | Prompt 11 allows dropping it if it cannot be made clean. It has to hide a 2.6x scale change (hero head to buddy body) in 0.5 s; doing it well needs its own camera path and a look at it in motion. Revisit after P5 with the owner |
+| 2026-11-13 | Framing measures the hero's head **with hair** (`FaceAnchor["frame_height"]`, set at build) for the av set-ups | The reference's 0.46 H includes hair; the skull alone would make every close-up 15% too big |
+| 2026-11-13 | The match pass is measured by projection (every vertex of the head and hair, or the buddy's body, through the shot camera), not by eye | Exact and repeatable; `render_plan.py` writes `measure.json` beside the stills when the plan asks |
+| 2026-11-13 | The 20-line fixture uses our own placeholder lines on the reference's timing | The reference's script is someone else's work; the real benchmark script is written with the owner at P7 |
+| 2026-11-13 | Gate P3 passed: the six rooms approved as rendered | Owner: "Approve, start P4" |
 | 2026-11-12 | **Gate P2 passed: brand literalness stays at the current robots' level.** Viewers must be able to tell which product each buddy is (colour, shell, signature accessory), and the robots in `p2/` reach that. No logo is traced on the buddies. Real logos elsewhere (for example on the monitor in P3) were not asked for: default none, ask again at P3 if a shot needs one | Owner: "viewers should be able to understand that they are what they are, this much is fine" |
 | 2026-11-12 | **All hair designs stay viewer choices in the editor** (fringe, soft_fringe, curtain, swept, curly_top, buzz); `fringe` stays the default as the closest to the owner's own hair. P6's Hero section shows them as a picker; `ensure_hero()` builds whichever is picked | Owner: "keep all the hairs as an option in editor" |
 | 2026-11-12 | **Innocent yet serious**: bigger glossy eyes (0.029 by 0.047) with two catchlights, set a little lower for an open forehead; brows rest with the inner ends a touch high (earnest, not stern); the resting smile cut to 0.10 (calm, serious); face height up to 0.37. Two new soft hair designs, `soft_fringe` and `curtain` (smooth rounded locks that hang onto the forehead), beside `fringe`; `p1/hair_options.jpg` compares them. **Owner to pick the default hair** | Owner: "something users can relate with and share; innocent yet serious; shows emotions and innocence; try some other hair design; increase the height of the face a little" |

@@ -20,7 +20,19 @@ FRAMING = {
     "medium":  {"lens": 60, "head": 0.38, "eyes": 0.38, "fstop": 3.2, "az": (-8, 2),   "el": 2.0},
     "closeup": {"lens": 85, "head": 0.55, "eyes": 0.42, "fstop": 3.2, "az": (-8, 2),   "el": 1.5},
     "ecu":     {"lens": 110, "head": 0.78, "eyes": 0.42, "fstop": 4.0, "az": (-6, 2),  "el": 0.5},
+    # Shots-AV (docs/prompts/03-shots-av-animation.md 5.1): the desk two-hander's five set-ups. Prompt 5.1 gives
+    # azimuth "positive toward the monitor" (the hero's left); this table measures it toward the other speaker.
+    # With the buddy on the hero's right, the hero set-ups are negated (av_hero_34: 5.1 says +28..+34, here
+    # -34..-28, and the rig's side = -1 for the hero lands the camera on +X, the monitor side). The buddy's
+    # other speaker (the hero) is on its +X, so av_buddy keeps 5.1's -8..-2. "head" is the share of frame height
+    # of the subject's framing height (the hero's head with hair; the buddy's whole body).
+    "av_hero_34":    {"lens": 85, "head": 0.46, "eyes": 0.52, "fstop": 1.8, "az": (-34, -28), "el": 4.0},
+    "av_hero_front": {"lens": 85, "head": 0.46, "eyes": 0.54, "fstop": 2.0, "az": (-3, 3),    "el": -4.0},
+    "av_buddy":      {"lens": 100, "head": 0.38, "eyes": 0.62, "fstop": 2.0, "az": (-8, -2),  "el": 4.0},
+    "av_wide_34":    {"lens": 50, "head": 0.25, "eyes": 0.36, "fstop": 2.8, "az": (-18, -12), "el": 8.0},
+    "av_wide_front": {"lens": 50, "head": 0.25, "eyes": 0.35, "fstop": 2.8, "az": (-3, 3),    "el": 6.0},
 }
+AV_KINDS = ("av_hero_34", "av_hero_front", "av_buddy", "av_wide_34", "av_wide_front")
 SAFE_TOP, SAFE_BOTTOM = 0.14, 0.20  # 9:16 platform UI / caption bands to keep faces out of
 
 # move -> default parameters (fractions of subject distance, degrees, metres)
@@ -35,6 +47,7 @@ MOVES = {
     "crane_up":   {"metres": 0.30},
     "slow_zoom":  {"amount": 0.12},
     "whip_pan":   {"degrees": 55.0},
+    "pull_truck": {"amount": 0.12, "metres": 0.004},  # Shots-AV buddy singles: pull out while trucking sideways
 }
 
 
@@ -114,6 +127,9 @@ def pose(base, move, u, params=None, ease_strength=0.35):
         dist = base["dist"] * (1.0 + p["amount"] * k * (0.5 - e))
     elif move == "pull_out":
         dist = base["dist"] * (1.0 + p["amount"] * k * c)
+    elif move == "pull_truck":
+        dist = base["dist"] * (1.0 + p["amount"] * k * c)
+        aim[0] += p["metres"] * k * c * (1.0 if base["az"] >= 0 else -1.0)
     elif move == "orbit":
         az += math.radians(p["degrees"]) * k * c * (1.0 if base["az"] >= 0 else -1.0)
     elif move == "truck":

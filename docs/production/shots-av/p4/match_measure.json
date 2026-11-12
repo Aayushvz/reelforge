@@ -1,0 +1,562 @@
+[
+ {
+  "shot": 0,
+  "kind": "av_hero_34",
+  "chars": {
+   "me": {
+    "top": 0.2395,
+    "bottom": 0.6784,
+    "height": 0.4389,
+    "left": 0.303,
+    "right": 0.9556,
+    "centre_x": 0.6293,
+    "centre_y": 0.459,
+    "eyes": 0.5372,
+    "width": 0.6526
+   },
+   "claude": {
+    "top": 0.8293,
+    "bottom": 1.0016,
+    "height": 0.1723,
+    "left": -0.3195,
+    "right": -0.0714,
+    "centre_x": -0.1955,
+    "centre_y": 0.9155,
+    "eyes": 0.9284,
+    "width": 0.2481
+   }
+  }
+ },
+ {
+  "shot": 1,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.6929,
+    "bottom": 0.1483,
+    "height": 0.8411,
+    "left": 0.7707,
+    "right": 1.9713,
+    "centre_x": 1.371,
+    "centre_y": -0.2723,
+    "eyes": -0.2018,
+    "width": 1.2006
+   },
+   "claude": {
+    "top": 0.4249,
+    "bottom": 0.7983,
+    "height": 0.3733,
+    "left": 0.1965,
+    "right": 0.7796,
+    "centre_x": 0.4881,
+    "centre_y": 0.6116,
+    "eyes": 0.6308,
+    "width": 0.5831
+   }
+  }
+ },
+ {
+  "shot": 2,
+  "kind": "av_hero_34",
+  "chars": {
+   "me": {
+    "top": 0.2325,
+    "bottom": 0.6742,
+    "height": 0.4416,
+    "left": 0.2997,
+    "right": 0.9531,
+    "centre_x": 0.6264,
+    "centre_y": 0.4533,
+    "eyes": 0.5302,
+    "width": 0.6535
+   },
+   "claude": {
+    "top": 0.83,
+    "bottom": 0.9993,
+    "height": 0.1693,
+    "left": -0.3183,
+    "right": -0.0699,
+    "centre_x": -0.1941,
+    "centre_y": 0.9147,
+    "eyes": 0.9265,
+    "width": 0.2484
+   }
+  }
+ },
+ {
+  "shot": 3,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.6923,
+    "bottom": 0.1475,
+    "height": 0.8398,
+    "left": 0.7485,
+    "right": 1.9435,
+    "centre_x": 1.346,
+    "centre_y": -0.2724,
+    "eyes": -0.1949,
+    "width": 1.1951
+   },
+   "claude": {
+    "top": 0.4374,
+    "bottom": 0.798,
+    "height": 0.3606,
+    "left": 0.1849,
+    "right": 0.7777,
+    "centre_x": 0.4813,
+    "centre_y": 0.6177,
+    "eyes": 0.6405,
+    "width": 0.5928
+   }
+  }
+ },
+ {
+  "shot": 4,
+  "kind": "av_hero_34",
+  "chars": {
+   "me": {
+    "top": 0.2383,
+    "bottom": 0.6746,
+    "height": 0.4362,
+    "left": 0.3225,
+    "right": 0.972,
+    "centre_x": 0.6473,
+    "centre_y": 0.4565,
+    "eyes": 0.526,
+    "width": 0.6496
+   },
+   "claude": {
+    "top": 0.8265,
+    "bottom": 0.9969,
+    "height": 0.1704,
+    "left": -0.3179,
+    "right": -0.0702,
+    "centre_x": -0.1941,
+    "centre_y": 0.9117,
+    "eyes": 0.9232,
+    "width": 0.2478
+   }
+  }
+ },
+ {
+  "shot": 5,
+  "kind": "av_wide_34",
+  "chars": {
+   "me": {
+    "top": 0.1978,
+    "bottom": 0.4454,
+    "height": 0.2476,
+    "left": 0.4493,
+    "right": 0.8107,
+    "centre_x": 0.63,
+    "centre_y": 0.3216,
+    "eyes": 0.3608,
+    "width": 0.3614
+   },
+   "claude": {
+    "top": 0.5449,
+    "bottom": 0.6388,
+    "height": 0.094,
+    "left": 0.1512,
+    "right": 0.2933,
+    "centre_x": 0.2222,
+    "centre_y": 0.5918,
+    "eyes": 0.5988,
+    "width": 0.1421
+   }
+  }
+ },
+ {
+  "shot": 6,
+  "kind": "av_hero_34",
+  "chars": {
+   "me": {
+    "top": 0.2364,
+    "bottom": 0.6761,
+    "height": 0.4398,
+    "left": 0.329,
+    "right": 0.9801,
+    "centre_x": 0.6546,
+    "centre_y": 0.4563,
+    "eyes": 0.5258,
+    "width": 0.6511
+   },
+   "claude": {
+    "top": 0.827,
+    "bottom": 0.9962,
+    "height": 0.1692,
+    "left": -0.3158,
+    "right": -0.0684,
+    "centre_x": -0.1921,
+    "centre_y": 0.9116,
+    "eyes": 0.9219,
+    "width": 0.2474
+   }
+  }
+ },
+ {
+  "shot": 7,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.6978,
+    "bottom": 0.1463,
+    "height": 0.8441,
+    "left": 0.7277,
+    "right": 1.9241,
+    "centre_x": 1.3259,
+    "centre_y": -0.2757,
+    "eyes": -0.1964,
+    "width": 1.1964
+   },
+   "claude": {
+    "top": 0.4315,
+    "bottom": 0.7982,
+    "height": 0.3667,
+    "left": 0.1845,
+    "right": 0.7763,
+    "centre_x": 0.4804,
+    "centre_y": 0.6148,
+    "eyes": 0.6401,
+    "width": 0.5918
+   }
+  }
+ },
+ {
+  "shot": 8,
+  "kind": "av_hero_front",
+  "chars": {
+   "me": {
+    "top": 0.2777,
+    "bottom": 0.7102,
+    "height": 0.4325,
+    "left": 0.1661,
+    "right": 0.7999,
+    "centre_x": 0.483,
+    "centre_y": 0.494,
+    "eyes": 0.5452,
+    "width": 0.6339
+   },
+   "claude": {
+    "top": 0.8715,
+    "bottom": 1.0625,
+    "height": 0.191,
+    "left": -0.2738,
+    "right": 0.0117,
+    "centre_x": -0.1311,
+    "centre_y": 0.967,
+    "eyes": 0.9742,
+    "width": 0.2855
+   }
+  }
+ },
+ {
+  "shot": 9,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.7259,
+    "bottom": 0.1438,
+    "height": 0.8697,
+    "left": 0.8388,
+    "right": 2.0732,
+    "centre_x": 1.456,
+    "centre_y": -0.291,
+    "eyes": -0.2013,
+    "width": 1.2344
+   },
+   "claude": {
+    "top": 0.43,
+    "bottom": 0.7985,
+    "height": 0.3685,
+    "left": 0.2018,
+    "right": 0.7876,
+    "centre_x": 0.4947,
+    "centre_y": 0.6143,
+    "eyes": 0.6459,
+    "width": 0.5858
+   }
+  }
+ },
+ {
+  "shot": 10,
+  "kind": "av_hero_front",
+  "chars": {
+   "me": {
+    "top": 0.277,
+    "bottom": 0.712,
+    "height": 0.4351,
+    "left": 0.1935,
+    "right": 0.8333,
+    "centre_x": 0.5134,
+    "centre_y": 0.4945,
+    "eyes": 0.5589,
+    "width": 0.6398
+   },
+   "claude": {
+    "top": 0.8671,
+    "bottom": 1.0571,
+    "height": 0.1901,
+    "left": -0.3012,
+    "right": -0.0213,
+    "centre_x": -0.1612,
+    "centre_y": 0.9621,
+    "eyes": 0.9709,
+    "width": 0.28
+   }
+  }
+ },
+ {
+  "shot": 11,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.6938,
+    "bottom": 0.1529,
+    "height": 0.8468,
+    "left": 0.7228,
+    "right": 1.9313,
+    "centre_x": 1.3271,
+    "centre_y": -0.2704,
+    "eyes": -0.1803,
+    "width": 1.2086
+   },
+   "claude": {
+    "top": 0.4273,
+    "bottom": 0.7985,
+    "height": 0.3712,
+    "left": 0.1856,
+    "right": 0.7717,
+    "centre_x": 0.4786,
+    "centre_y": 0.6129,
+    "eyes": 0.6362,
+    "width": 0.5862
+   }
+  }
+ },
+ {
+  "shot": 12,
+  "kind": "av_wide_front",
+  "chars": {
+   "me": {
+    "top": 0.1929,
+    "bottom": 0.4373,
+    "height": 0.2444,
+    "left": 0.419,
+    "right": 0.7721,
+    "centre_x": 0.5956,
+    "centre_y": 0.3151,
+    "eyes": 0.3504,
+    "width": 0.3532
+   },
+   "claude": {
+    "top": 0.5319,
+    "bottom": 0.6296,
+    "height": 0.0977,
+    "left": 0.1724,
+    "right": 0.3203,
+    "centre_x": 0.2463,
+    "centre_y": 0.5807,
+    "eyes": 0.5857,
+    "width": 0.148
+   }
+  }
+ },
+ {
+  "shot": 13,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.6902,
+    "bottom": 0.1477,
+    "height": 0.838,
+    "left": 0.7205,
+    "right": 1.9111,
+    "centre_x": 1.3158,
+    "centre_y": -0.2713,
+    "eyes": -0.1935,
+    "width": 1.1906
+   },
+   "claude": {
+    "top": 0.4351,
+    "bottom": 0.8083,
+    "height": 0.3732,
+    "left": 0.2278,
+    "right": 0.8114,
+    "centre_x": 0.5196,
+    "centre_y": 0.6217,
+    "eyes": 0.6415,
+    "width": 0.5837
+   }
+  }
+ },
+ {
+  "shot": 14,
+  "kind": "av_hero_34",
+  "chars": {
+   "me": {
+    "top": 0.2388,
+    "bottom": 0.6763,
+    "height": 0.4375,
+    "left": 0.3206,
+    "right": 0.972,
+    "centre_x": 0.6463,
+    "centre_y": 0.4575,
+    "eyes": 0.5283,
+    "width": 0.6514
+   },
+   "claude": {
+    "top": 0.8248,
+    "bottom": 0.9957,
+    "height": 0.1708,
+    "left": -0.3168,
+    "right": -0.0696,
+    "centre_x": -0.1932,
+    "centre_y": 0.9103,
+    "eyes": 0.9214,
+    "width": 0.2472
+   }
+  }
+ },
+ {
+  "shot": 15,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.6775,
+    "bottom": 0.1518,
+    "height": 0.8292,
+    "left": 0.766,
+    "right": 1.9556,
+    "centre_x": 1.3608,
+    "centre_y": -0.2629,
+    "eyes": -0.2011,
+    "width": 1.1896
+   },
+   "claude": {
+    "top": 0.4254,
+    "bottom": 0.7984,
+    "height": 0.3731,
+    "left": 0.1925,
+    "right": 0.7777,
+    "centre_x": 0.4851,
+    "centre_y": 0.6119,
+    "eyes": 0.6308,
+    "width": 0.5852
+   }
+  }
+ },
+ {
+  "shot": 16,
+  "kind": "av_hero_front",
+  "chars": {
+   "me": {
+    "top": 0.2748,
+    "bottom": 0.7114,
+    "height": 0.4366,
+    "left": 0.1831,
+    "right": 0.8246,
+    "centre_x": 0.5038,
+    "centre_y": 0.4931,
+    "eyes": 0.5658,
+    "width": 0.6415
+   },
+   "claude": {
+    "top": 0.8703,
+    "bottom": 1.0571,
+    "height": 0.1868,
+    "left": -0.3022,
+    "right": -0.0214,
+    "centre_x": -0.1618,
+    "centre_y": 0.9637,
+    "eyes": 0.972,
+    "width": 0.2808
+   }
+  }
+ },
+ {
+  "shot": 17,
+  "kind": "av_buddy",
+  "chars": {
+   "me": {
+    "top": -0.7026,
+    "bottom": 0.1452,
+    "height": 0.8478,
+    "left": 0.8519,
+    "right": 2.067,
+    "centre_x": 1.4594,
+    "centre_y": -0.2787,
+    "eyes": -0.2127,
+    "width": 1.2151
+   },
+   "claude": {
+    "top": 0.4353,
+    "bottom": 0.7987,
+    "height": 0.3633,
+    "left": 0.2029,
+    "right": 0.7935,
+    "centre_x": 0.4982,
+    "centre_y": 0.617,
+    "eyes": 0.6344,
+    "width": 0.5906
+   }
+  }
+ },
+ {
+  "shot": 18,
+  "kind": "av_hero_34",
+  "chars": {
+   "me": {
+    "top": 0.236,
+    "bottom": 0.6772,
+    "height": 0.4413,
+    "left": 0.3105,
+    "right": 0.9646,
+    "centre_x": 0.6376,
+    "centre_y": 0.4566,
+    "eyes": 0.5345,
+    "width": 0.6541
+   },
+   "claude": {
+    "top": 0.8294,
+    "bottom": 0.9987,
+    "height": 0.1693,
+    "left": -0.3216,
+    "right": -0.0728,
+    "centre_x": -0.1972,
+    "centre_y": 0.914,
+    "eyes": 0.9298,
+    "width": 0.2488
+   }
+  }
+ },
+ {
+  "shot": 19,
+  "kind": "av_wide_front",
+  "chars": {
+   "me": {
+    "top": 0.1959,
+    "bottom": 0.4378,
+    "height": 0.2419,
+    "left": 0.4132,
+    "right": 0.7653,
+    "centre_x": 0.5892,
+    "centre_y": 0.3169,
+    "eyes": 0.3526,
+    "width": 0.3521
+   },
+   "claude": {
+    "top": 0.5331,
+    "bottom": 0.63,
+    "height": 0.0969,
+    "left": 0.1722,
+    "right": 0.321,
+    "centre_x": 0.2466,
+    "centre_y": 0.5816,
+    "eyes": 0.5887,
+    "width": 0.1487
+   }
+  }
+ }
+]

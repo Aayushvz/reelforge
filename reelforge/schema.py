@@ -16,9 +16,10 @@ MAX_CHARACTERS = 2  # one per mark (Mark_A, Mark_B)
 LOOKS = ("classic", "cinema", "shotsav")  # classic = the original Eevee look; cinema = Cycles faces + the
 # camera rig; shotsav = the low-poly desk two-hander of the shots-av style
 QUALITIES = ("preview", "standard", "cinema")
-CAMERA_MOVES = ("static", "push_in", "pull_out", "orbit", "truck", "drift", "crane_down", "crane_up",
+CAMERA_MOVES = ("static", "push_in", "pull_out", "pull_truck", "orbit", "truck", "drift", "crane_down", "crane_up",
                 "slow_zoom", "whip_pan")
-SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu")
+SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu",
+              "av_hero_34", "av_hero_front", "av_buddy", "av_wide_34", "av_wide_front")  # av_*: the shots-av set-ups
 # --- the shots-av style (docs/prompts/03-shots-av-animation.md): one hero and one desk buddy ---
 AV_STYLE = "shots-av"
 AV_HERO = "av_hero"

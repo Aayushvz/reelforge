@@ -923,6 +923,12 @@ def build(**dials):
         drive(th_a, "rotation_euler", pose_expr([p["thumb"][1] for p in solved]), sel, 0)
         drive(th_b, "rotation_euler", pose_expr([p["thumb"][2] for p in solved]), sel, 0)
 
+    # --- framing height with hair (the reference's head size includes hair) --------------------------------
+    bpy.context.view_layer.update()
+    hair_top = max(((o.matrix_world @ Vector(c)).z for o in coll.objects
+                    if o.name.startswith(("AV_Hair", "AV_Curl")) for c in o.bound_box), default=HC_Z + RZT)
+    fa["frame_height"] = round(hair_top - (HC_Z - RZB), 4)
+
     # --- lap and legs (never framed, but the side view should not show a floating torso) -----------------
     ball("AV_Hips", (0.165, 0.125, 0.085), coll, M["ink"], (0, 0.025, 0.60), parent=root, ico=2, smooth=False)
     for sx in (1, -1):

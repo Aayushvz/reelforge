@@ -11,7 +11,7 @@ from pathlib import Path
 from .a2f import frames_to_tracks
 from .ambience import add_ambience
 from .captions import build_ass
-from .direct import mood_keys, plan_shots, plan_shots_v2
+from .direct import mood_keys, plan_shots, plan_shots_av, plan_shots_v2
 from .engines import DEFAULT, ENGINES, get_engine
 from .face import build_faces
 from .finish import finish
@@ -39,6 +39,10 @@ def build_parser() -> argparse.ArgumentParser:
     bn.add_argument("--quality", choices=list(QUALITIES), default="standard")
     bn.add_argument("--room", help="only this room")
     bn.add_argument("--out", type=Path, default=REPO / "samples" / "_bench" / "out")
+    an = sub.add_parser("animatic", help="shots-av: a silent preview from estimated timing (no voices needed)")
+    an.add_argument("project", type=Path)
+    an.add_argument("--stage", choices=["stills", "full"], default="full")
+    an.add_argument("--final", action="store_true", help="full resolution and samples instead of draft")
     v = sub.add_parser("voices", help="generate missing ElevenLabs takes (one JSON status line each)")
     v.add_argument("project", type=Path)
     v.add_argument("--line", action="append", default=[], help="only these line ids")
@@ -105,6 +109,8 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
             print(f"voice {l.id}: ElevenLabs API")
     durations = {i: probe_duration(v.audio_path) for i, v in voiced.items()}
     placed, total = place_lines(perf.lines, voiced, durations)
+    if engine.ID == "shots-av":  # the closing wide holds 0.9 s after the final word
+        total = max(total, placed[-1].start + placed[-1].duration + 0.9)
     n_frames = math.ceil(total * perf.fps)
     mix_dialogue(placed, total, out / "dialogue.wav")
     if perf.ambience:
@@ -122,7 +128,12 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
             overrides[p.line.id] = frames_to_tracks(data["frames"], perf.fps,
                                                     math.ceil(p.duration * perf.fps) + 2)
     faces = build_faces(perf, placed, perf.fps, n_frames, lipsync_override=overrides)
-    if perf.look == "classic":
+    if engine.ID == "shots-av":
+        hero, buddy = engine.cast(perf)
+        seed = int(perf.camera.get("seed", int(hashlib.sha1(project.name.encode()).hexdigest()[:6], 16)))
+        shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, seed, perf.camera.get("grammar", "signature"),
+                              perf.camera)
+    elif perf.look == "classic":
         shots = plan_shots(placed, perf.fps, n_frames)
     else:  # seeded by the project so the editor preview and the render agree
         seed = int(perf.camera.get("seed", int(hashlib.sha1(project.name.encode()).hexdigest()[:6], 16)))
@@ -130,7 +141,10 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     moods = mood_keys(placed, perf.fps)
     w, h = RATIOS[perf.ratio]
     (out / "captions.ass").write_text(build_ass(placed, perf, w, h), encoding="utf-8")
-    engine.render(perf, n_frames, faces, shots, moods, out, stage, draft)
+    if getattr(engine, "WANTS_PLACED", False):
+        engine.render(perf, n_frames, faces, shots, moods, out, stage, draft, placed=placed)
+    else:
+        engine.render(perf, n_frames, faces, shots, moods, out, stage, draft)
     if stage == "stills":
         print(f"stills: {out / 'stills'}")
         return None
@@ -146,6 +160,9 @@ def main(argv: list[str] | None = None) -> None:
     elif ns.cmd == "bench":
         from .bench import bench
         bench(ns.look, ns.quality, ns.out, only=ns.room)
+    elif ns.cmd == "animatic":
+        from .engines import shots_av
+        shots_av.animatic(ns.project, draft=not ns.final, stage=ns.stage)
     elif ns.cmd == "voices":
         raise SystemExit(voices(ns.project, ns.line, ns.force))
     else:

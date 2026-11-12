@@ -54,7 +54,12 @@ for char in plan["characters"]:
                         "head_k": head_k, "face": char["face"], "body": objs.get("Body"),
                         "objects": list(coll.objects), "head_h": 0.43 * head_k,
                         "min_head": float(objs["FaceAnchor"].get("min_head", 0.0)) if "FaceAnchor" in objs else 0.0,
-                        "elbows": {k: objs[k] for k in ("ElbowL", "ElbowR") if k in objs}}
+                        "elbows": {k: objs[k] for k in ("ElbowL", "ElbowR") if k in objs},
+                        # shots-av: the framing height includes hair (the reference measures head with hair)
+                        "frame_h": float(objs["FaceAnchor"].get("frame_height", 0.43 * head_k))
+                        if "FaceAnchor" in objs else 0.43 * head_k,
+                        "objs": objs, "props": char.get("props", {}), "stepped": set(char.get("stepped", [])),
+                        "measure": char.get("measure", "")}
 
 
 def key_track(obj, prop, values, eps=0.002):
@@ -80,8 +85,22 @@ def key_track(obj, prop, values, eps=0.002):
 def speaker_at(f):
     for sh in plan["shots"]:
         if sh["start_frame"] <= f < sh["end_frame"]:
-            return sh["subject"]
+            return sh.get("speaker") or sh["subject"]
     return None
+
+
+for name, c in CH.items():  # custom-prop tracks from the engine (shots-av: PoseCtrl, BuddyCtrl), one value a frame
+    for obj_name, tracks in c["props"].items():
+        obj = c["objs"].get(obj_name)
+        if obj is None:
+            continue
+        for prop, values in tracks.items():
+            key_track(obj, prop, values)
+            if prop in c["stepped"] and obj.animation_data and obj.animation_data.action:
+                for fc in obj.animation_data.action.fcurves:
+                    if fc.data_path == f'["{prop}"]':
+                        for k in fc.keyframe_points:
+                            k.interpolation = "CONSTANT"
 
 
 for name, c in CH.items():
@@ -212,7 +231,8 @@ def classic_camera(i, s):
     return cam, a, b
 
 
-MAX_DIST = {"wide": 2.6, "two": 2.6, "medium": 2.4, "closeup": 2.2, "ecu": 2.0}  # stay inside the rooms
+MAX_DIST = {"wide": 2.6, "two": 2.6, "medium": 2.4, "closeup": 2.2, "ecu": 2.0,  # stay inside the rooms
+            "av_hero_34": 4.0, "av_hero_front": 4.0, "av_buddy": 4.0, "av_wide_34": 4.0, "av_wide_front": 4.0}
 
 
 def rig_camera(i, s):
@@ -229,10 +249,14 @@ def rig_camera(i, s):
     else:
         side = 1.0 if s.get("seed", 0) % 2 else -1.0
     room = 0.05 * side if others and kind in ("closeup", "medium", "wide") else 0.0
+    if others and kind in ("av_wide_34", "av_wide_front"):  # the buddy lands lower left, the monitor cut at the right
+        room = 0.09 * side
+    av = kind in rig.AV_KINDS
+    height = subj["frame_h"] if av else subj["head_h"]
     if kind == "two":  # look down the line of both speakers: listener near and soft, speaker sharp
         eye = Vector(rig.two_shot_aim(tuple(eye), tuple(others[0]["focus"].matrix_world.translation)))
-    base = rig.base_pose(kind, tuple(eye), subj["head_h"], w, h, side, s.get("az_pick", 0.5), room,
-                         s.get("lens") or None, 0.0 if kind == "two" else subj["min_head"])
+    base = rig.base_pose(kind, tuple(eye), height, w, h, side, s.get("az_pick", 0.5), room,
+                         s.get("lens") or None, 0.0 if kind == "two" or av else subj["min_head"])
     base["dist"] = min(base["dist"], MAX_DIST[kind])
     cd = bpy.data.cameras.new(f"Cam{i}")
     cd.lens = base["lens"]
@@ -255,6 +279,15 @@ def rig_camera(i, s):
         prev = cam.rotation_euler.copy()
         cam.keyframe_insert("location", frame=f)
         cam.keyframe_insert("rotation_euler", frame=f)
+        rack = s.get("rack") or {}
+        if rack and rack.get("from") in CH and rack.get("to") in CH:  # pull focus from one character to the other
+            fwd = q @ Vector((0.0, 0.0, -1.0))
+            d0 = (CH[rack["from"]]["focus"].matrix_world.translation - cam.location).dot(fwd)
+            d1 = (CH[rack["to"]]["focus"].matrix_world.translation - cam.location).dot(fwd)
+            t = rig.smoothstep((f - a - rack.get("at", 0)) / max(1, rack.get("frames", 10)))
+            cd.dof.focus_object = None
+            cd.dof.focus_distance = d0 + (d1 - d0) * t
+            cd.dof.keyframe_insert("focus_distance", frame=f)
         if move == "slow_zoom":
             cd.lens = p["lens"]
             cd.keyframe_insert("lens", frame=f)
@@ -266,6 +299,41 @@ for i, s in enumerate(plan["shots"]):
     marker = sc.timeline_markers.new(f"S{i}", frame=a)
     marker.camera = cam
     cams.append((cam, a, b))
+
+MEASURE = []
+
+
+def measure_shot(i, cam):
+    """Frame fractions (origin top-left) of each character's measured part and eyes, for the match pass."""
+    from bpy_extras.object_utils import world_to_camera_view
+    bpy.context.view_layer.update()
+    out = {"shot": i, "kind": plan["shots"][i]["kind"], "chars": {}}
+    for name, c in CH.items():
+        part = c["measure"]
+        if not part:
+            continue
+        pts = []
+        for o in c["objects"]:
+            if o.type != "MESH" or (part == "head" and not o.name.split(":")[-1].startswith(("AV_Head", "AV_Hair",
+                                                                                              "AV_Ear", "AV_Curl"))):
+                continue
+            if part == "body" and "Shadow" in o.name:
+                continue
+            ev = o.evaluated_get(bpy.context.evaluated_depsgraph_get())
+            for v in ev.to_mesh().vertices:
+                pts.append(world_to_camera_view(sc, cam, o.matrix_world @ v.co))
+            ev.to_mesh_clear()
+        if not pts:
+            continue
+        eye = world_to_camera_view(sc, cam, c["focus"].matrix_world.translation)
+        xs, ys = [p.x for p in pts], [1.0 - p.y for p in pts]
+        out["chars"][name] = {"top": round(min(ys), 4), "bottom": round(max(ys), 4),
+                              "height": round(max(ys) - min(ys), 4), "left": round(min(xs), 4),
+                              "right": round(max(xs), 4), "centre_x": round((min(xs) + max(xs)) / 2, 4),
+                              "centre_y": round((min(ys) + max(ys)) / 2, 4), "eyes": round(1.0 - eye.y, 4),
+                              "width": round(max(xs) - min(xs), 4)}
+    return out
+
 
 # --- render settings (owned by the look) ---------------------------------------
 LOOK.apply_scene(sc, plan, list(CH.values()))
@@ -286,6 +354,8 @@ elif mode == "stills":
         sc.frame_set((a + b) // 2)
         sc.render.filepath = str(Path(plan["out_stills"]) / f"shot_{i:02d}.png")
         bpy.ops.render.render(write_still=True)
+        if plan.get("measure"):
+            MEASURE.append(measure_shot(i, cam))
         print(f"STILL {i} {plan['shots'][i]['kind']} {engine} {time.time() - t0:.2f}s")
 else:
     Path(plan["out_frames"]).mkdir(parents=True, exist_ok=True)
@@ -301,4 +371,6 @@ else:
         sc.frame_start, sc.frame_end = 1, n
     else:
         bpy.ops.render.render(animation=True)
+if MEASURE:
+    (Path(plan["out_stills"]) / "measure.json").write_text(json.dumps(MEASURE, indent=1), encoding="utf-8")
 print("render_plan done")

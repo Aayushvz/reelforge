@@ -183,9 +183,21 @@ def test_shots_av_environment_must_be_one_of_the_rooms():
     _bad("environment must be one of", environment="night_city")
 
 
-def test_render_refuses_until_the_later_phases_exist(tmp_path):
-    with pytest.raises(SystemExit, match="cannot render yet"):
-        shots_av.render(None, 0, {}, [], [], tmp_path, "stills", True)
+def test_acting_tracks_and_animatic_timing():
+    from reelforge.direct import Shot
+    n, fps = 300, 30
+    faces = {"me": {"eyeBlinkLeft": [0.0] * n, "eyeBlinkRight": [0.0] * n}}
+    shots = [Shot(0, 90, "av_hero_34", 85, "me", 0.0), Shot(90, 150, "av_buddy", 100, "bot", 0.0),
+             Shot(150, 300, "av_hero_front", 85, "me", 0.0)]
+    props = shots_av.hero_acting(faces, shots, "me", n, fps)
+    assert faces["me"]["eyeBlinkLeft"][151] == 1.0 and faces["me"]["eyeBlinkLeft"][1] == 0.0  # a blink on the cut
+    hand = props["PoseCtrl"]["HandL"]
+    assert hand[0] == 1.0 and hand[-1] == 0.0 and sum(a != b for a, b in zip(hand, hand[1:])) == 1  # one change
+    assert hand.index(0.0) == 150  # ...and it lands on a cut
+    p = parse_performance(_av())
+    timing = shots_av.estimate_timing(p.lines)
+    assert all(b[0] >= a[0] + a[1] for a, b in zip(timing, timing[1:]))
+    assert shots_av.WANTS_PLACED and shots_av.cast(p) == ("me", "buddy")
 
 
 def test_look_stub_follows_the_look_contract():
