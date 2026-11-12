@@ -284,11 +284,13 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
             merged[-1][0] = merged.pop(-2)[0]
         else:
             merged[-2][1] = merged[-1][0] = need
-    rack_done = not sig
+    rack_done = not sig or camera.get("rack", True) is False
+    drift = float(camera.get("drift", 1.0))  # the editor's drift dial scales every move
     shots: list[Shot] = []
     for i, (a, b, kind, subject, line, reaction) in enumerate(merged):
         last = i == len(merged) - 1
         move, params = ("static", {}) if reaction else _av_move(kind, (b - a) / fps, last)
+        params = {k: (round(v * drift, 4) if k in ("amount", "metres", "degrees") else v) for k, v in params.items()}
         rack = {}
         if not rack_done and kind in AV_WIDES and line.speaker == buddy:  # one rack focus: hero -> buddy
             line_start = next((int(round(p.start * fps)) for p in placed if p.line is line), a)

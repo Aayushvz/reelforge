@@ -184,13 +184,16 @@ def av_events(placed: list[Placed], fps: int, total: float) -> list[tuple[float,
     return out
 
 
+AV_LOWER = 0.70  # "lower" captions start here: above the bottom platform band (0.78 H)
+
+
 def build_ass_shotsav(placed: list[Placed], perf: Performance, width: int, height: int, fps: int, total: float,
-                      tints: dict[str, str] | None = None, plate: bool = True) -> str:
+                      tints: dict[str, str] | None = None, plate: bool = True, position: str = "top") -> str:
     """The shotsav_top template: one caption line (or two) at a time, top centre, on a faint rounded ink plate,
     with a small dot in the speaker's colour."""
     fs = round(AV_FONT_PX * width / 1080)
     lh = round(fs * 1.18)
-    x, y = width // 2, round(height * AV_TOP)
+    x, y = width // 2, round(height * (AV_LOWER if position == "lower" else AV_TOP))
     pad_x, pad_y, radius, dot = round(fs * 0.55), round(fs * 0.28), round(10 * width / 1080), round(6 * width / 1080) + 4
     plate_c, plate_a = ass_alpha_color(AV_PLATE, AV_PLATE_ALPHA)
     rows = [av_header(width, height)]

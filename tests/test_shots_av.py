@@ -231,3 +231,27 @@ def test_hero_table_matches_the_schema_and_the_brand():
     assert hero["outfit_color"]["default"] == schema.AV_PURPLE
     assert len(t["MOUTH_SHAPES"]) == 8 and t["MOUTH_SHAPES"][0] == "rest"
     assert tuple(t["HAND_POSES"]) == ("rest", "fist_cheek", "point", "open", "type")
+
+
+def test_editor_options_in_the_schema():
+    p = parse_performance(_av(camera={"rack": False, "drift": 1.5}, captions={"position": "lower", "plate": False},
+                              sound={"foley": False}))
+    assert p.camera["rack"] is False and p.captions["position"] == "lower" and p.sound == {"foley": False}
+    assert parse_performance(_av()).captions == {} and parse_performance(_av()).sound == {}
+    _bad("camera.rack", camera={"rack": "no"})
+    _bad("camera.drift", camera={"drift": 3})
+    _bad("captions.position", captions={"position": "middle"})
+    _bad("sound.foley", sound={"foley": 1})
+
+
+def test_catalog_and_plan_for_the_editor(tmp_path):
+    cat = shots_av.catalog()
+    assert [b["model"] for b in cat["buddies"]] == list(schema.AV_BUDDIES)
+    assert [r["id"] for r in cat["rooms"]] == list(schema.AV_ROOMS)
+    assert cat["hero"]["hair"]["options"] == list(schema.AV_HAIRS) and cat["target"]["buddy"] == 0.46
+    assert set(cat["timing"]) >= {"preview_still_s", "draft_s_per_frame", "final_s_per_frame"}
+    (tmp_path / "performance.json").write_text(json.dumps(_av()), encoding="utf-8")
+    plan = shots_av.plan_for(tmp_path)
+    assert plan["shots"][-1]["kind"] == "av_wide_front"  # (a 3-line script folds into the 4.5 s closing wide)
+    assert plan["shots"][0]["start"] == 0 and plan["shots"][-1]["end"] == pytest.approx(plan["runtime"])
+    assert abs(sum(plan["split"].values()) - 1.0) < 1e-3 and plan["runtime"] > 0

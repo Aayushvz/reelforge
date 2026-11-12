@@ -347,7 +347,10 @@ if mode == "profile":  # where a frame's time goes before any pixel is rendered:
         print(f"EVAL frame {f} {time.time() - t0:.2f}s")
 elif mode == "stills":
     Path(plan["out_stills"]).mkdir(parents=True, exist_ok=True)
+    only = plan.get("only_shots")
     for i, (cam, a, b) in enumerate(cams):
+        if only is not None and i not in only:
+            continue
         t0 = time.time()
         engine = LOOK.shot_settings(sc, plan, plan["shots"][i])
         sc.camera = cam

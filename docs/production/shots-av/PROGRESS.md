@@ -36,8 +36,9 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
 | 5 | `shotsav_top` captions, room beds + buddy blip + keyboard foley + owner music, `shotsav_dark/light` grades, finish | done | b8abc33, cae3920 | `tests/test_shotsav_finish.py` (14 tests) |
 | 5 | Evidence clips (placeholder voices) | done | 37a6841 | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
-| 5 | **Gate P5: owner reviews the two clips** | **waiting on owner** | — | Also: describe the music and voices you want (the reference was measured, not listened to) |
-| 6-8 | Editor page, benchmark, docs | not started | — | |
+| 5 | Gate P5: the two clips | **passed** | — | Owner approved, 2026-11-13. Music and voice direction still to come from the owner |
+| 6 | Editor page "Shots-AV Animation" (spec below) | in progress | — | Started 2026-11-13 |
+| 7-8 | Benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
@@ -141,9 +142,19 @@ Honest notes:
 7. Tests: caption wrapping and timing, plate and dot drawing, bed per room, blip and key placement, purple through the grade (hue within 3 degrees, no clipped channel), vignette strength, the encoder settings.
 8. Evidence: a 10 s graded clip with captions and sound in `av_studio_night` (Claude) and in `av_studio_morning` (ChatGPT), with placeholder voices; measured loudness, bitrate and purple.
 
+## P6 spec (the editor page)
+1. Python (stdlib core): `reelforge shots-av catalog` (hero options, buddies, rooms read from the Blender tables, which assets are built, timing constants), `reelforge shots-av plan <project>` (estimated timing + `plan_shots_av` + screen-time split), `reelforge shots-av preview <project> --shot N` (one still through the real render path), `reelforge thumbnails --style shots-av` (buddy and room cards into `assets/build/shotsav/thumbs/`).
+2. Schema: optional `camera.rack` (bool) and `camera.drift` (0-2, scales every move), `captions` {position top|lower, plate, tint}, `sound` {foley}; the director and finish honour them.
+3. Server (`editor/server/api.ts`, its routing style): `GET /api/shotsav/catalog`, `GET /api/shotsav/thumbs/<file>` (rendered on demand), `POST /api/shotsav/build-assets` (a job with a live log), `POST /api/projects/:id/shotsav/plan`, `POST /api/projects/:id/shotsav/preview`, the existing run endpoint gains a silent-animatic mode; project summaries carry `style`.
+4. UI: route `/shots-av` (list + New with three original starter scripts) and `/shots-av/:id` (workspace), nav item under Create (`MessagesSquare`), `STYLES` entry, `StyleId` gains `shots-av`. Editor tokens unchanged: purple is the jacket, not a re-theme.
+5. Workspace: three columns (Script 360 px, Stage, Look 320 px), tabs under 1100 px. Script: chat-style rows (speaker toggle, text, emotion, Beat, buddy action), paste-a-script, a footer with lines, runtime and the shot mix against 37/46/17. Stage: 9:16 preview, shot strip (set-up icon, length, speaker colour; click to preview; menu overrides set-up, move, focus pull), Preview shot / Draft reel / Final render with time estimates. Look: Hero, Buddy, Room, Camera, Captions, Sound.
+6. States: empty project, assets not built, voices missing, render running, failed (last 20 log lines), done (player, path, Open folder). Keys: Enter adds a line, Tab switches speaker in a line, Ctrl+Enter previews the current shot; focus rings everywhere.
+7. Evidence: a walkthrough from a pasted script to a preview still and a silent draft, as screenshots.
+
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-13 | Gate P5 passed: the two graded clips approved | Owner: "Approve, start P6" |
 | 2026-11-13 | Gate P4 passed: set-ups, director, acting and the silent animatic approved | Owner: "Approve, start P5" |
 | 2026-11-13 | Captions use **Geist Bold** from `tools/fonts/Geist-Bold.ttf` (SIL OFL, 73 KB, fetched from Google Fonts; git-ignored like the rest of `tools/`); Segoe UI Bold if the file is missing | The prompt names Geist 700; the editor only loads it in the browser, and burned-in captions need the font file |
 | 2026-11-13 | P5 evidence clips use **placeholder Windows voices** (David for the hero, Zira for the buddy) | The real takes come from the owner's ElevenLabs web app (P7); placeholders are local, free and need no account. Whisper aligns them, so lip sync is real |

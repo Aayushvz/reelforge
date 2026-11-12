@@ -43,6 +43,18 @@ def build_parser() -> argparse.ArgumentParser:
     an.add_argument("project", type=Path)
     an.add_argument("--stage", choices=["stills", "full"], default="full")
     an.add_argument("--final", action="store_true", help="full resolution and samples instead of draft")
+    sa = sub.add_parser("shots-av", help="shots-av tools for the editor (JSON on stdout)")
+    sa_sub = sa.add_subparsers(dest="sa_cmd", required=True)
+    sa_sub.add_parser("catalog", help="hero options, buddies, rooms and what is built")
+    sp = sa_sub.add_parser("plan", help="the shot plan for a project's script (estimated timing)")
+    sp.add_argument("project", type=Path)
+    pv = sa_sub.add_parser("preview", help="render one shot's still")
+    pv.add_argument("project", type=Path)
+    pv.add_argument("--shot", type=int, required=True)
+    pv.add_argument("--final", action="store_true")
+    th = sub.add_parser("thumbnails", help="render asset thumbnails for the editor")
+    th.add_argument("--style", choices=["shots-av"], default="shots-av")
+    th.add_argument("--only", action="append", default=[], help="only these ids (buddy_claude, av_cafe_day, ...)")
     v = sub.add_parser("voices", help="generate missing ElevenLabs takes (one JSON status line each)")
     v.add_argument("project", type=Path)
     v.add_argument("--line", action="append", default=[], help="only these line ids")
@@ -141,10 +153,15 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     moods = mood_keys(placed, perf.fps)
     w, h = RATIOS[perf.ratio]
     if engine.ID == "shots-av":
-        (out / "captions.ass").write_text(build_ass_shotsav(placed, perf, w, h, perf.fps, total,
-                                                            engine.caption_tints(perf)), encoding="utf-8")
+        cap = perf.captions
+        tints = engine.caption_tints(perf) if cap.get("tint", True) else None
+        (out / "captions.ass").write_text(build_ass_shotsav(placed, perf, w, h, perf.fps, total, tints,
+                                                            cap.get("plate", True), cap.get("position", "top")),
+                                          encoding="utf-8")
         if perf.ambience:
             blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps)
+            if not perf.sound.get("foley", True):
+                blips, keys = [], []
             add_av_sound(out / "dialogue.wav", perf.environment, total, blips, keys, find_music(project), seed)
     else:
         (out / "captions.ass").write_text(build_ass(placed, perf, w, h), encoding="utf-8")
@@ -167,6 +184,18 @@ def main(argv: list[str] | None = None) -> None:
     elif ns.cmd == "bench":
         from .bench import bench
         bench(ns.look, ns.quality, ns.out, only=ns.room)
+    elif ns.cmd == "shots-av":
+        from .engines import shots_av
+        if ns.sa_cmd == "catalog":
+            out = shots_av.catalog()
+        elif ns.sa_cmd == "plan":
+            out = shots_av.plan_for(ns.project)
+        else:
+            out = {"still": str(shots_av.preview_still(ns.project, ns.shot, draft=not ns.final))}
+        print("SHOTSAV_JSON " + json.dumps(out), flush=True)
+    elif ns.cmd == "thumbnails":
+        from .engines import shots_av
+        print("SHOTSAV_JSON " + json.dumps({"made": shots_av.thumbnails(ns.only)}), flush=True)
     elif ns.cmd == "animatic":
         from .engines import shots_av
         shots_av.animatic(ns.project, draft=not ns.final, stage=ns.stage)

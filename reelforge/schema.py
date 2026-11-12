@@ -82,6 +82,8 @@ class Performance:
     quality: str = "standard"  # preview | standard | cinema (cinema look only; --draft forces preview)
     camera: dict = field(default_factory=dict)  # cinema look: {seed, handheld, overrides: {"<shot>": {...}}}
     look_params: dict = field(default_factory=dict)  # per-look number dials, e.g. {"skin_glow": 1.0}
+    captions: dict = field(default_factory=dict)  # shots-av: {"position": "top"|"lower", "plate": bool, "tint": bool}
+    sound: dict = field(default_factory=dict)  # shots-av: {"foley": bool}
 
 
 def load_performance(path: Path) -> Performance:
@@ -176,6 +178,21 @@ def parse_performance(data: dict) -> Performance:
     if not isinstance(camera, dict) or not isinstance(look_params, dict):
         errors.append("camera and look_params must be objects")
         camera, look_params = {}, {}
+    if "rack" in camera and not isinstance(camera["rack"], bool):
+        errors.append("camera.rack must be true or false")
+    drift = camera.get("drift", 1.0)
+    if isinstance(drift, bool) or not isinstance(drift, (int, float)) or not 0.0 <= drift <= 2.0:
+        errors.append("camera.drift must be a number 0..2")
+    captions, sound = data.get("captions") or {}, data.get("sound") or {}
+    if not isinstance(captions, dict) or not isinstance(sound, dict):
+        errors.append("captions and sound must be objects")
+        captions, sound = {}, {}
+    if captions.get("position", "top") not in ("top", "lower"):
+        errors.append("captions.position must be top or lower")
+    for key, val in (("captions.plate", captions.get("plate", True)), ("captions.tint", captions.get("tint", True)),
+                     ("sound.foley", sound.get("foley", True))):
+        if not isinstance(val, bool):
+            errors.append(f"{key} must be true or false")
     handheld = camera.get("handheld", 0.15)
     if isinstance(handheld, bool) or not isinstance(handheld, (int, float)) or not 0.0 <= handheld <= 1.0:
         errors.append("camera.handheld must be a number 0..1")
@@ -201,7 +218,7 @@ def parse_performance(data: dict) -> Performance:
         raise PerformanceError("; ".join(errors))
     return Performance(fps, ratio, data.get("environment", AV_ROOM if av else "night_city"), chars, lines,
                        style, data.get("lighting", ""),
-                       bool(data.get("ambience", True)), look, quality, camera, look_params)
+                       bool(data.get("ambience", True)), look, quality, camera, look_params, captions, sound)
 
 
 def _av_options(name: str, c: dict, errors: list[str]) -> dict:

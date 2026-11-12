@@ -161,3 +161,16 @@ def test_av_framing_lands_eyes_and_head_size_where_the_table_says(kind):
 
 def test_shot_rack_field_defaults_empty():
     assert Shot(0, 10, "wide", 40, "a", 0.0).rack == {}
+
+
+def test_editor_camera_options_rack_off_and_drift_scale():
+    placed, n = fixture()
+    base = plan_shots_av(placed, FPS, n, "me", "bot", grammar="signature")
+    off = plan_shots_av(placed, FPS, n, "me", "bot", grammar="signature", camera={"rack": False})
+    assert any(s.rack for s in base) and not any(s.rack for s in off)
+    half = plan_shots_av(placed, FPS, n, "me", "bot", grammar="reference", camera={"drift": 0.5})
+    full = plan_shots_av(placed, FPS, n, "me", "bot", grammar="reference")
+    for a, b in zip(half, full):
+        for k in ("amount", "metres", "degrees"):
+            if k in b.move_params:
+                assert a.move_params[k] == pytest.approx(b.move_params[k] * 0.5, abs=1e-4)

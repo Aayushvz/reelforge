@@ -198,7 +198,7 @@ def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope
 
 
 def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path,
-           stage: str, draft: bool, placed: list | None = None) -> None:
+           stage: str, draft: bool, placed: list | None = None, only: list | None = None) -> None:
     out = Path(out)
     env = None
     wav = out / "dialogue.wav"
@@ -210,6 +210,8 @@ def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path
     seed = int(perf.camera.get("seed", 0))
     plan = build_plan(perf, n_frames, faces, shots, moods, out, draft, placed or [], env, seed)
     plan["measure"] = stage == "stills"
+    if only is not None:
+        plan["only_shots"] = list(only)
     missing = [b for b in [plan["environment_blend"]] + [c["blend"] for c in plan["characters"]] if not Path(b).exists()]
     if missing:
         raise SystemExit(f"missing assets {missing}: run `reelforge build-assets --style shots-av`")
@@ -217,7 +219,7 @@ def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path
     plan_text = json.dumps(plan)
     plan_path.write_text(plan_text, encoding="utf-8")
     target = out / ("frames" if stage == "full" else "stills")
-    want = plan["n_frames"] if stage == "full" else len(plan["shots"])
+    want = plan["n_frames"] if stage == "full" else len(only if only is not None else plan["shots"])
     key = blender3d.render_key(plan_text, plan)
     key_file = out / f".render_key_{stage}"
     same = key_file.exists() and key_file.read_text() == key
@@ -247,6 +249,98 @@ def _fake_chars(text: str, start: float, duration: float):
     n = max(1, len(text))
     step = duration / n
     return [Char(ch, start + i * step, start + (i + 1) * step) for i, ch in enumerate(text)]
+
+
+def _estimated(project: Path):
+    """(perf, placed, n_frames, shots) from estimated timing (or timing.json): no voices needed."""
+    from ..direct import plan_shots_av
+    from ..schema import load_performance
+    from ..timeline import Placed
+    from ..voice import VoicedLine
+    project = Path(project).resolve()
+    perf = load_performance(project / "performance.json")
+    tfile = project / "timing.json"
+    timing = json.loads(tfile.read_text(encoding="utf-8")) if tfile.exists() else {}
+    placed = []
+    for l, (s0, d0) in zip(perf.lines, estimate_timing(perf.lines)):
+        s0, d0 = timing.get(l.id, (s0, d0))
+        placed.append(Placed(l, VoicedLine(l.id, project / "out" / "audio" / f"{l.id}.mp3",
+                                           _fake_chars(l.text, 0.0, d0)), s0, d0))
+    last = placed[-1]
+    n_frames = math.ceil((last.start + last.duration + 0.9) * perf.fps)
+    hero, buddy = cast(perf)
+    shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, int(perf.camera.get("seed", 0)),
+                          perf.camera.get("grammar", "signature"), perf.camera)
+    return perf, placed, n_frames, shots
+
+
+# Render-time estimates for the editor, measured on the RTX 4060 laptop (P4/P5): seconds.
+TIMING = {"preview_still_s": 15.0, "draft_s_per_frame": 0.38, "final_s_per_frame": 2.6, "scene_load_s": 12.0}
+
+
+def catalog() -> dict:
+    """Everything the editor's Look column shows, read from the Blender tables (so the UI never drifts)."""
+    h, b, r = hero_tables(), buddy_tables(), room_tables()
+    hero = {k: {kk: vv for kk, vv in v.items()} for k, v in h["HERO"].items()}
+    built = {"hero": any(ASSETS.glob("av_hero__*.blend")),
+             "buddies": {f"buddy_{k}": buddy_blend(f"buddy_{k}").exists() for k in b["BUDDIES"]},
+             "rooms": {k: room_blend(k).exists() for k in r["ROOMS"]}}
+    return {
+        "hero": hero, "skins": h["SKINS"], "outfits": {k: v["label"] for k, v in h["OUTFITS"].items()},
+        "brand": h["BRAND"],
+        "buddies": [{"model": f"buddy_{k}", "label": v["label"], "readsAs": v["reads_as"], "shell": v["shell"],
+                     "glow": v["glow"], "signature": v["signature"]} for k, v in b["BUDDIES"].items()],
+        "rooms": [{"id": k, "label": v["label"], "tone": v["tone"], "look": v["look"]} for k, v in r["ROOMS"].items()],
+        "actions": list(acting.CLIPS), "built": built,
+        "allBuilt": built["hero"] and all(built["buddies"].values()) and all(built["rooms"].values()),
+        "timing": TIMING, "target": {"hero": 0.37, "buddy": 0.46, "wide": 0.17},
+    }
+
+
+def plan_for(project: Path) -> dict:
+    from ..direct import screen_time
+    perf, placed, n_frames, shots = _estimated(project)
+    hero, buddy = cast(perf)
+    line_of = {}
+    for p in placed:
+        line_of[p.line.id] = p
+    out = []
+    for i, s in enumerate(shots):
+        lid = next((p.line.id for p in placed if int(round(p.start * perf.fps)) >= s.start_frame - 4
+                    and int(round(p.start * perf.fps)) < s.end_frame), "")
+        out.append({"index": i, "kind": s.kind, "start": s.start_frame / perf.fps, "end": s.end_frame / perf.fps,
+                    "subject": "hero" if s.subject == hero else "buddy",
+                    "speaker": "hero" if (s.speaker or s.subject) == hero else "buddy",
+                    "move": s.move, "rack": bool(s.rack), "line": lid})
+    return {"shots": out, "runtime": n_frames / perf.fps, "frames": n_frames, "split": screen_time(shots),
+            "target": {"hero": 0.37, "buddy": 0.46, "wide": 0.17}}
+
+
+def preview_still(project: Path, index: int, draft: bool = True) -> Path:
+    """One shot's still through the real render path, into <project>/out/preview/stills/shot_NN.png."""
+    from ..direct import mood_keys
+    from ..face import build_faces
+    perf, placed, n_frames, shots = _estimated(project)
+    if not 0 <= index < len(shots):
+        raise SystemExit(f"shot {index} does not exist (the plan has {len(shots)} shots)")
+    faces = build_faces(perf, placed, perf.fps, n_frames)
+    out = Path(project).resolve() / "out" / "preview"
+    out.mkdir(parents=True, exist_ok=True)
+    render(perf, n_frames, faces, shots, mood_keys(placed, perf.fps), out, "stills", draft, placed, only=[index])
+    return out / "stills" / f"shot_{index:02d}.png"
+
+
+THUMBS = ASSETS / "thumbs"
+
+
+def thumbnails(only: list | None = None) -> list[str]:
+    """Card images for the editor: one per buddy (a close single) and per room (a wide with the hero and Claude)."""
+    ids = [f"buddy_{k}" for k in buddy_tables()["BUDDIES"]] + list(room_tables()["ROOMS"])
+    ids = [i for i in ids if not only or i in only]
+    THUMBS.mkdir(parents=True, exist_ok=True)
+    if ids:
+        run_blender(blender3d.BLENDER_DIR / "shotsav" / "thumbs.py", [str(THUMBS), *ids])
+    return [str(THUMBS / f"{i}.jpg") for i in ids]
 
 
 def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:
