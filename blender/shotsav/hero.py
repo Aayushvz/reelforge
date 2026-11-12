@@ -485,7 +485,7 @@ def build(**dials):
              * np.exp(-np.maximum(0, np.abs(x) - 1.12 * w0) ** 2 / 0.003 ** 2)
              * (1 - 0.45 * np.exp(-(x / 0.005) ** 2)) * front)  # lighter at the philtrum
     chin = np.exp(-(x / 0.021) ** 2) * sm(zm - 0.009, zm - 0.022, z) * front  # the chin beard, below the lower lip
-    stub = {"light": np.maximum(np.maximum(tache, chin), 0.28 * band), "stubble": band,
+    stub = {"light": np.maximum(np.maximum(tache, chin), 0.10 * band), "stubble": band,  # jaw shadow kept faint: more reads as grime under coloured light
             "none": np.zeros_like(band)}[D["beard"]]
     mask = np.stack([blush, stub, np.zeros_like(x), np.ones_like(x)], 1)
     me.color_attributes.new("Mask", "FLOAT_COLOR", "POINT").data.foreach_set("color", mask.ravel())

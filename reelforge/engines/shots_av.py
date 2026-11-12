@@ -126,9 +126,40 @@ def hero_acting(faces: dict, shots: list, hero: str, n_frames: int, fps: int) ->
                     for side in ("eyeBlinkLeft", "eyeBlinkRight"):
                         tracks[side][f] = max(tracks[side][f], v)
             last = s.start_frame
-    switch = next((s.start_frame for s in shots if s.start_frame >= n_frames / 3), n_frames)
-    hand_l = [float(POSES["think"]) if f < switch else float(POSES["rest"]) for f in range(n_frames)]
-    return {"PoseCtrl": {"HandL": hand_l, "HandR": [0.0] * n_frames}}
+    switch = pose_switch(shots, n_frames)
+    hand_l = [float(POSES["think"]) if f < switch else float(POSES["type"]) for f in range(n_frames)]
+    hand_r = [float(POSES["rest"]) if f < switch else float(POSES["type"]) for f in range(n_frames)]
+    return {"PoseCtrl": {"HandL": hand_l, "HandR": hand_r}}
+
+
+def pose_switch(shots: list, n_frames: int) -> int:
+    """The frame of the one pose change (think -> type): the first cut after a third of the runtime."""
+    return next((s.start_frame for s in shots if s.start_frame >= n_frames / 3), n_frames)
+
+
+def sound_plan(placed: list, shots: list, hero: str, buddy: str, n_frames: int, fps: int):
+    """(buddy line starts, keyboard intervals) in seconds: a blip as each buddy line starts; key taps while the
+    hero is in his typing pose and not talking."""
+    blips = [p.start for p in placed if p.line.speaker == buddy]
+    t0, t1 = pose_switch(shots, n_frames) / fps, n_frames / fps
+    talk = sorted((p.start, p.start + p.duration) for p in placed if p.line.speaker == hero)
+    keys, t = [], t0
+    for a, b in talk:
+        if b <= t:
+            continue
+        if a > t:
+            keys.append((t, min(a, t1)))
+        t = max(t, b + 0.3)
+    if t < t1:
+        keys.append((t, t1))
+    return blips, [(a, b) for a, b in keys if b - a > 0.4]
+
+
+def caption_tints(perf) -> dict:
+    """Speaker dot colours: the hero's jacket, the buddy's shell."""
+    hero, buddy = cast(perf)
+    shell = buddy_tables()["BUDDIES"][perf.characters[buddy].model.replace("buddy_", "")]["shell"]
+    return {hero: perf.characters[hero].options.get("outfit_color", "#7C3AED"), buddy: shell}
 
 
 def buddy_acting(placed: list, buddy: str, n_frames: int, fps: int, envelope: list | None, seed: int) -> dict:

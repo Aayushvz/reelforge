@@ -192,8 +192,8 @@ def test_acting_tracks_and_animatic_timing():
     props = shots_av.hero_acting(faces, shots, "me", n, fps)
     assert faces["me"]["eyeBlinkLeft"][151] == 1.0 and faces["me"]["eyeBlinkLeft"][1] == 0.0  # a blink on the cut
     hand = props["PoseCtrl"]["HandL"]
-    assert hand[0] == 1.0 and hand[-1] == 0.0 and sum(a != b for a, b in zip(hand, hand[1:])) == 1  # one change
-    assert hand.index(0.0) == 150  # ...and it lands on a cut
+    assert hand[0] == 1.0 and hand[-1] == 4.0 and sum(a != b for a, b in zip(hand, hand[1:])) == 1  # think -> type
+    assert hand.index(4.0) == 150  # ...once, and it lands on a cut
     p = parse_performance(_av())
     timing = shots_av.estimate_timing(p.lines)
     assert all(b[0] >= a[0] + a[1] for a, b in zip(timing, timing[1:]))

@@ -9,8 +9,8 @@ from dataclasses import replace
 from pathlib import Path
 
 from .a2f import frames_to_tracks
-from .ambience import add_ambience
-from .captions import build_ass
+from .ambience import add_ambience, add_av_sound, find_music
+from .captions import build_ass, build_ass_shotsav
 from .direct import mood_keys, plan_shots, plan_shots_av, plan_shots_v2
 from .engines import DEFAULT, ENGINES, get_engine
 from .face import build_faces
@@ -113,7 +113,7 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         total = max(total, placed[-1].start + placed[-1].duration + 0.9)
     n_frames = math.ceil(total * perf.fps)
     mix_dialogue(placed, total, out / "dialogue.wav")
-    if perf.ambience:
+    if perf.ambience and engine.ID != "shots-av":  # shots-av mixes its sound once the shots are planned
         add_ambience(out / "dialogue.wav", perf.environment, perf.lighting, total)
 
     overrides = {}
@@ -140,7 +140,14 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         shots = plan_shots_v2(placed, perf.fps, n_frames, list(perf.characters), seed, perf.camera)
     moods = mood_keys(placed, perf.fps)
     w, h = RATIOS[perf.ratio]
-    (out / "captions.ass").write_text(build_ass(placed, perf, w, h), encoding="utf-8")
+    if engine.ID == "shots-av":
+        (out / "captions.ass").write_text(build_ass_shotsav(placed, perf, w, h, perf.fps, total,
+                                                            engine.caption_tints(perf)), encoding="utf-8")
+        if perf.ambience:
+            blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps)
+            add_av_sound(out / "dialogue.wav", perf.environment, total, blips, keys, find_music(project), seed)
+    else:
+        (out / "captions.ass").write_text(build_ass(placed, perf, w, h), encoding="utf-8")
     if getattr(engine, "WANTS_PLACED", False):
         engine.render(perf, n_frames, faces, shots, moods, out, stage, draft, placed=placed)
     else:

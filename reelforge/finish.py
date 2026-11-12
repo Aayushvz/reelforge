@@ -51,8 +51,43 @@ FILTER_CINEMA = (
 )
 BT709 = ["-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
 
+# Shots-AV (prompt section 7): contrast back on top of PBR Neutral through a master curve (the same on every
+# channel, so hues do not move), and no saturation push, so #7C3AED never clips; a mild warm halo on highlights
+# only; a vignette that darkens the corners by at most 12%; fine grain; ~11 Mbps at 1080x1920.
+AV_GRADES = {
+    "shotsav_dark": "curves=master='0/0 0.06/0.042 0.5/0.5 0.86/0.9 1/0.985',",
+    "shotsav_light": "curves=master='0/0.012 0.5/0.5 0.9/0.925 1/0.99',",
+}
+AV_ROOM_GRADE = {"av_studio_night": "shotsav_dark", "av_neon_den": "shotsav_dark", "av_late_office": "shotsav_dark",
+                 "av_studio_morning": "shotsav_light", "av_cafe_day": "shotsav_light", "av_cyc_lilac": "shotsav_light"}
+AV_VIGNETTE = 0.22  # radians: measured, the corners land at 0.89 of the centre (11% darker; the cap is 12%)
+FILTER_SHOTSAV = (
+    "[0:v]format=gbrp16le,split=2[base][hi];"
+    "[hi]curves=all='0/0 0.84/0 1/1',gblur=sigma=18,"
+    "colorchannelmixer=rr=1:gg=0.72:bb=0.55[halo];"
+    "[base][halo]blend=all_mode=screen:all_opacity=0.12,"
+    "GRADE"
+    f"vignette=angle={AV_VIGNETTE},"
+    "noise=alls=3:allf=t,"
+    "ass=captions.ass:fontsdir=fonts,"
+    "scale=out_color_matrix=bt709:out_range=tv:sws_dither=ed,"
+    "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv,"  # the scale leaves them unset
+    "format=yuv420p[v];"
+    "[1:a]acompressor=threshold=0.1:ratio=4:attack=5:release=80:makeup=2,"
+    "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]"
+)
+AV_VIDEO = ["-b:v", "11M", "-maxrate", "12M", "-bufsize", "24M", "-profile:v", "high", "-level", "4.2"]
+
 
 def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "", look: str = "classic") -> list[str]:
+    if look == "shotsav":
+        grade = AV_GRADES[AV_ROOM_GRADE.get(environment, "shotsav_dark")]
+        return ["ffmpeg", "-y", "-loglevel", "error",
+                "-framerate", str(fps), "-start_number", "1", "-i", "frames/%04d.png",
+                "-i", "dialogue.wav",
+                "-filter_complex", FILTER_SHOTSAV.replace("GRADE", grade), "-map", "[v]", "-map", "[a]",
+                "-c:v", "libx264", "-preset", "slow", *AV_VIDEO, *BT709,
+                "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest", out_name]
     grade = GRADES.get(environment)
     cinema = look == "cinema"
     graph = (FILTER_CINEMA if cinema else FILTER).replace("GRADE", f"{grade}," if grade else "")
@@ -78,6 +113,12 @@ def measure_lufs(path: Path) -> float:
 
 def finish(workdir: Path, fps: int, out_name: str, environment: str = "", look: str = "classic") -> Path:
     # Relative paths + cwd avoid Windows drive-letter escaping inside the ass= filter.
+    if look == "shotsav":  # the caption font travels with the job (fontsdir=fonts)
+        font = Path(__file__).resolve().parents[1] / "tools" / "fonts" / "Geist-Bold.ttf"
+        (Path(workdir) / "fonts").mkdir(exist_ok=True)
+        if font.exists():
+            import shutil
+            shutil.copyfile(font, Path(workdir) / "fonts" / font.name)
     subprocess.run(build_ffmpeg_cmd(fps, out_name, environment, look), cwd=workdir, check=True)
     out = Path(workdir) / out_name
     # One-pass loudnorm undershoots on short clips: correct the residual gain. The peak limiter eats part

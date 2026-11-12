@@ -32,9 +32,10 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | Engine render + acting (hero blink on cuts, think-to-rest pose change, buddy BuddyCtrl from loudness and `pick_action`), `reelforge animatic` | done | 776c0f3 | `samples/shots-av-fixture` |
 | 4 | **Match pass** | **done, all within tolerance** | 776c0f3 | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
 | 4 | Silent animatic (draft, 540x960, 16 samples) | done | 737579e | `p4/animatic_silent.mp4` (48.7 s), `p4/animatic_strip.jpg`. **Render time 9 min 18 s for 48.7 s (0.36 s/frame)**: over the prompt's 6-minute draft budget; see notes |
-| 4 | **Gate P4: owner reviews the match pass and the animatic** | **waiting on owner** | — | |
+| 4 | Gate P4: match pass and animatic | **passed** | — | Owner approved, 2026-11-13 |
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
-| 5-8 | Captions and sound, editor page, benchmark, docs | not started | — | |
+| 5 | Captions, sound, grade (spec below) | in progress | — | Started 2026-11-13 |
+| 6-8 | Editor page, benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
@@ -112,9 +113,22 @@ Animatic notes (honest): the cut list, blinks on hero cuts, the pose change and 
 9. Evidence: the match pass (each set-up as a still in `av_studio_night`, measured subject height, eye line and centre against the reference, tolerances 0.03 H / 0.03 H / 0.05 W); the 20-line fixture test; a silent animatic.
 10. Tests: av framing maths, the fixture (20 shots, same kinds in order, cuts within 2 frames, screen-time split within 3 points of 46 / 37 / 17), both grammars, determinism.
 
+## P5 spec (captions, sound, grade)
+1. Caption template `shotsav_top` (`reelforge/captions.py::build_ass_shotsav`): top centre, block at 0.08-0.12 H, Geist Bold 46 px at 1080 wide, white, at most two lines of 22 characters (longer lines become successive captions), the whole line at once; in 4 frames after the cut, out 3 frames before the next cut.
+2. A faint ink plate (`#1F1F1F` at 45%, 10 px radius) drawn behind the text; a 6 px speaker dot before it (the hero's jacket colour, the buddy's shell colour). Word highlighting stays available (the classic template) but is off for this style.
+3. Sound (`reelforge/ambience.py`): beds for the six rooms (`room_night` for the dark rooms, `room_day` for the light ones, each with its own colour), a 60 ms soft blip at each buddy line start, sparse keyboard taps while the hero is in his typing pose, and the owner's own music file if one sits in the project (`music.mp3` or `.wav`), never downloaded.
+4. The hero's second pose becomes `type` (hands at the keyboard), so the keyboard foley has something to follow; still one pose change per reel.
+5. Grades `shotsav_dark` and `shotsav_light` (`reelforge/finish.py`): contrast back on top of PBR Neutral through a master curve (equal on all channels, so hue is untouched), no saturation boost (so `#7C3AED` cannot clip), mild warm halation on highlights only, a vignette that darkens corners no more than 12%, fine grain, -14 LUFS.
+6. Output: 1080x1920, 30 fps, about 11 Mbps (capped at 12), bt709 tags.
+7. Tests: caption wrapping and timing, plate and dot drawing, bed per room, blip and key placement, purple through the grade (hue within 3 degrees, no clipped channel), vignette strength, the encoder settings.
+8. Evidence: a 10 s graded clip with captions and sound in `av_studio_night` (Claude) and in `av_studio_morning` (ChatGPT), with placeholder voices; measured loudness, bitrate and purple.
+
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-13 | Gate P4 passed: set-ups, director, acting and the silent animatic approved | Owner: "Approve, start P5" |
+| 2026-11-13 | Captions use **Geist Bold** from `tools/fonts/Geist-Bold.ttf` (SIL OFL, 73 KB, fetched from Google Fonts; git-ignored like the rest of `tools/`); Segoe UI Bold if the file is missing | The prompt names Geist 700; the editor only loads it in the browser, and burned-in captions need the font file |
+| 2026-11-13 | P5 evidence clips use **placeholder Windows voices** (David for the hero, Zira for the buddy) | The real takes come from the owner's ElevenLabs web app (P7); placeholders are local, free and need no account. Whisper aligns them, so lip sync is real |
 | 2026-11-13 | **The connected move is deferred**; the signature grammar keeps the rack focus only | Prompt 11 allows dropping it if it cannot be made clean. It has to hide a 2.6x scale change (hero head to buddy body) in 0.5 s; doing it well needs its own camera path and a look at it in motion. Revisit after P5 with the owner |
 | 2026-11-13 | Framing measures the hero's head **with hair** (`FaceAnchor["frame_height"]`, set at build) for the av set-ups | The reference's 0.46 H includes hair; the skull alone would make every close-up 15% too big |
 | 2026-11-13 | The match pass is measured by projection (every vertex of the head and hair, or the buddy's body, through the shot camera), not by eye | Exact and repeatable; `render_plan.py` writes `measure.json` beside the stills when the plan asks |
