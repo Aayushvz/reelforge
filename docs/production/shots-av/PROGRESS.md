@@ -24,8 +24,9 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 1 | Likeness pass (owner's photos): hair, bold glasses, wheat skin, beard, oval-squarish face, directional key | done | 319b54e | `p1/likeness.jpg` (front, three-quarter, side) and every P1 sheet re-rendered |
 | 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | 319b54e | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
 | 1 | Innocence pass + two soft hair designs | done | da4dd8b | `p1/hair_options.jpg`, `p1/expressions.jpg`. Hair: all six kept as editor options, default `fringe` (owner, 2026-11-12) |
-| 2 | **Gate P2: owner decides how literal the brand shapes may be** | **waiting on owner** | — | Also: may real logos appear (on the monitor, P3)? Known gap: the taller head runs off the top of `p2/lineup.jpg` |
-| 3-8 | Rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
+| 2 | Gate P2: brand literalness | **passed** | gate commit | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
+| 3 | Six rooms (three dark, three light) | next | — | Waiting on the owner's go-ahead |
+| 4-8 | Camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
@@ -42,6 +43,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-12 | **Gate P2 passed: brand literalness stays at the current robots' level.** Viewers must be able to tell which product each buddy is (colour, shell, signature accessory), and the robots in `p2/` reach that. No logo is traced on the buddies. Real logos elsewhere (for example on the monitor in P3) were not asked for: default none, ask again at P3 if a shot needs one | Owner: "viewers should be able to understand that they are what they are, this much is fine" |
 | 2026-11-12 | **All hair designs stay viewer choices in the editor** (fringe, soft_fringe, curtain, swept, curly_top, buzz); `fringe` stays the default as the closest to the owner's own hair. P6's Hero section shows them as a picker; `ensure_hero()` builds whichever is picked | Owner: "keep all the hairs as an option in editor" |
 | 2026-11-12 | **Innocent yet serious**: bigger glossy eyes (0.029 by 0.047) with two catchlights, set a little lower for an open forehead; brows rest with the inner ends a touch high (earnest, not stern); the resting smile cut to 0.10 (calm, serious); face height up to 0.37. Two new soft hair designs, `soft_fringe` and `curtain` (smooth rounded locks that hang onto the forehead), beside `fringe`; `p1/hair_options.jpg` compares them. **Owner to pick the default hair** | Owner: "something users can relate with and share; innocent yet serious; shows emotions and innocence; try some other hair design; increase the height of the face a little" |
 | 2026-11-12 | **Face is oval and squarish**: head 0.31 wide by 0.36 tall (was 0.36 by 0.35); the lower face's outline is a superellipse (power 3.4) so the cheeks run straight into defined jaw corners; the chin is flatter (`CHIN` 0.80) and the jaw turns in only near the bottom | Owner: "the animated face is very rounded, keep it oval squarish" (second photo) |
