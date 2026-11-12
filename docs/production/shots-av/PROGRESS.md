@@ -31,7 +31,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | `plan_shots_av` (reference + signature grammars), rack focus | done | 776c0f3 | 20-line fixture: 20 shots, same kinds in order, cuts within 2 frames, split 46/37/17 within 3 points |
 | 4 | Engine render + acting (hero blink on cuts, think-to-rest pose change, buddy BuddyCtrl from loudness and `pick_action`), `reelforge animatic` | done | 776c0f3 | `samples/shots-av-fixture` |
 | 4 | **Match pass** | **done, all within tolerance** | 776c0f3 | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
-| 4 | Silent animatic (draft, 540x960, 16 samples) | done | animatic commit | `p4/animatic_silent.mp4` (48.7 s), `p4/animatic_strip.jpg`. **Render time 9 min 18 s for 48.7 s (0.36 s/frame)**: over the prompt's 6-minute draft budget; see notes |
+| 4 | Silent animatic (draft, 540x960, 16 samples) | done | 737579e | `p4/animatic_silent.mp4` (48.7 s), `p4/animatic_strip.jpg`. **Render time 9 min 18 s for 48.7 s (0.36 s/frame)**: over the prompt's 6-minute draft budget; see notes |
 | 4 | **Gate P4: owner reviews the match pass and the animatic** | **waiting on owner** | — | |
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
 | 5-8 | Captions and sound, editor page, benchmark, docs | not started | — | |
