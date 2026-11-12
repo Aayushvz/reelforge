@@ -21,8 +21,8 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2 | Clip library `reelforge/buddy.py` (8 clips, pick rules, WAV envelope, talk squash, `animate()`) | done | P2 commit | `tests/test_buddy.py` (16 tests) |
 | 2 | Four buddies `blender/shotsav/buddies.py` + shared rig; engine builds them | done | P2 commit | `assets/build/shotsav/buddy_<id>.blend`; table tests in `test_shots_av.py` |
 | 2 | Evidence (`blender/shotsav/buddy_sheets.py`) | done | P2 commit | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_<id>.mp4` (6 s each), `p2/loops_grid.mp4` |
-| 1 | Likeness pass (owner's photos): hair, bold glasses, wheat skin, beard, oval-squarish face, directional key | done | likeness commit | `p1/likeness.jpg` (front, three-quarter, side) and every P1 sheet re-rendered |
-| 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | likeness commit | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
+| 1 | Likeness pass (owner's photos): hair, bold glasses, wheat skin, beard, oval-squarish face, directional key | done | 319b54e | `p1/likeness.jpg` (front, three-quarter, side) and every P1 sheet re-rendered |
+| 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | 319b54e | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
 | 2 | **Gate P2: owner decides how literal the brand shapes may be** | **waiting on owner** | — | Also: may real logos appear (on the monitor, P3)? Known gap: the taller head runs off the top of `p2/lineup.jpg` |
 | 3-8 | Rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
