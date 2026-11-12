@@ -35,7 +35,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | Gate P4: match pass and animatic | **passed** | — | Owner approved, 2026-11-13 |
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
 | 5 | `shotsav_top` captions, room beds + buddy blip + keyboard foley + owner music, `shotsav_dark/light` grades, finish | done | b8abc33, cae3920 | `tests/test_shotsav_finish.py` (14 tests) |
-| 5 | Evidence clips (placeholder voices) | done | P5 commit | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
+| 5 | Evidence clips (placeholder voices) | done | 37a6841 | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
 | 5 | **Gate P5: owner reviews the two clips** | **waiting on owner** | — | Also: describe the music and voices you want (the reference was measured, not listened to) |
 | 6-8 | Editor page, benchmark, docs | not started | — | |
 
