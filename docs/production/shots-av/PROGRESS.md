@@ -25,7 +25,8 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | 319b54e | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
 | 1 | Innocence pass + two soft hair designs | done | da4dd8b | `p1/hair_options.jpg`, `p1/expressions.jpg`. Hair: all six kept as editor options, default `fringe` (owner, 2026-11-12) |
 | 2 | Gate P2: brand literalness | **passed** | 1fd68c9 | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
-| 3 | Six rooms (three dark, three light) | next | — | Waiting on the owner's go-ahead |
+| 3 | Six rooms (`blender/shotsav/rooms.py`), room builds, schema `AV_ROOMS`, engine `room_blend()`, tests | done | P3 commit | `p3/rooms.jpg` (a wide and a hero close-up per room, hero and the Claude robot in place), `p3/rooms.json` |
+| 3 | **Gate P3: owner reviews the 12 stills** | **waiting on owner** | — | |
 | 4-8 | Camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
@@ -39,6 +40,35 @@ Update this file after every task. A new session reads it and `git log`, and nev
 8. Evidence: a line-up still with the hero for scale; a clip sheet (8 clips at their peak); an eye and signature sheet (5 eye shapes and the signature pose for each buddy); a 6 s loop of each buddy talking and reacting, plus a 2x2 grid of the four loops.
 9. Tests: clip lengths and ranges, the pick rules, envelope attack and release, determinism, blink spacing.
 10. Gate P2: **the owner decides how literal the brand shapes may be** (and whether real logos may appear, for example on the monitor).
+
+## P3 measurements (`p3/rooms.json`; jacket ΔE is CIE76 against `#7C3AED`; desk-front luminance is display-referred)
+| Room | Tone | Jacket, wide | Jacket, close-up | Desk front luminance (wide) |
+|---|---|---|---|---|
+| `av_studio_night` | dark | `#833DD0` ΔE 16.5 | `#8030D5` ΔE 9.6 | 7.7% |
+| `av_neon_den` | dark | `#7545E8` ΔE 8.7 | `#743CEE` ΔE 2.2 | 9.4% |
+| `av_late_office` | dark | `#8C49DE` ΔE 16.3 | `#893CE1` ΔE 8.2 | 8.8% |
+| `av_studio_morning` | light | `#6F32D8` ΔE 7.4 | `#7135DB` ΔE 6.9 | 80.6% |
+| `av_cafe_day` | light | `#793DD1` ΔE 15.8 | `#7D40DA` ΔE 12.5 | 85.7% |
+| `av_cyc_lilac` | light | `#7A3AEA` ΔE 1.6 | `#7838E7` ΔE 2.2 | 93.1% |
+
+Honest notes:
+- **Purple holds best in the cyc (ΔE 2), the den and the morning studio (2-9).** The night studio and late office wides read 16 because the wide's sample point lands on the jacket's half-lit side; their close-ups are 8-10. The cafe runs 12-16: the hue is right but its warm bounce light desaturates the purple slightly. P5's purple-protecting grade (prompt section 7) is the planned fix; a per-room key tweak could also close it.
+- **Desk front never crushes:** 7.7-9.4% in the dark rooms (target 8-12%), bright in the light rooms.
+- **Framing is a first pass of `av_wide_34` and `av_hero_34`.** P4 owns the measured match pass against `01_five_setups.jpg`. The wide currently looks down on the desk a little more than the reference.
+- **Bokeh is real depth of field** from emissive discs 30-120 m away (night city, office window band, cafe street, morning sky). The reference's square bokeh is not copied; ours is round.
+- **Not built yet** (listed in the prompt, belong to P4/P5): an animated monitor (bubbles appearing per line), screen flicker on the chest, background life (aircraft light, headlight sweep, swaying leaves). The lamp sits just out of frame for the closing pull-out but nothing animates it in yet.
+
+## P3 spec (rooms)
+1. `blender/shotsav/rooms.py`: table `ROOMS` (av_studio_night, av_neon_den, av_late_office dark; av_studio_morning, av_cafe_day, av_cyc_lilac light), built by `build_shotsav.py -- <out> room <id>` into `assets/build/shotsav/<id>.blend`.
+2. Same contract as `blender/sets.py`: lights `Key`, `Rim`, `Fill`, `Glow` with `base_color`/`base_energy`; `ScreenMat` with a "Code" node; `Mark_A` (the hero's chair, origin) and `Mark_B` (on the desk, to the hero's right and toward the viewer: (-0.30, -0.36, 0.74), as in P2).
+3. Shared desk stage: desk 1.6 by 0.75 at 0.74 (bevelled, with legs), a chair behind the hero, monitor on the hero's left turned 25 degrees so its chat screen shows at screen-right in the wides, keyboard, pen, two sticky notes, a mug, and a desk lamp kept just out of frame for the closing pull-out.
+4. Chat screen: the `ScreenMat` "Code" brick node draws staggered rounded bars (left and right), so the monitor reads as a chat; moods recolour it.
+5. Depth: the background sits 2.2 m behind the hero; far lights are real emissive discs 30-120 m away, so bokeh comes from the camera's depth of field, not a painted plate. Thin haze per room.
+6. Light: neutral-warm key (never the reference's orange), warmth in the background; violet or cool rims; each room stores its exposure (`av_exposure`) for the `shotsav` look.
+7. Desk front never crushes: a low bounce keeps it at 8-12% luminance.
+8. Evidence: per room one wide (about 50 mm, 15 degrees off axis, 8 degrees above the eyes) and one hero close-up (85 mm, 30 degrees round, 4 degrees above), hero and the Claude robot in place; measured jacket purple and desk-front luminance per room.
+9. Tests: room table matches the schema's environments, every room has the contract.
+10. Gate P3: the owner reviews the 12 stills.
 
 ## Decisions
 | Date | Decision | Why |

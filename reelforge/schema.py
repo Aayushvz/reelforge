@@ -34,6 +34,7 @@ AV_GRAMMARS = ("signature", "reference")  # signature (default) = the reference 
 AV_ACTIONS = ("hop", "tilt", "dry", "happy", "think", "shrink", "nod", "lookaway")  # buddy reaction clips
 AV_PURPLE = "#7C3AED"  # Aayush Visuals brand purple: the default jacket
 AV_ROOM = "av_studio_night"
+AV_ROOMS = ("av_studio_night", "av_neon_den", "av_late_office", "av_studio_morning", "av_cafe_day", "av_cyc_lilac")
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
 
@@ -118,6 +119,8 @@ def parse_performance(data: dict) -> Performance:
         errors.append("at least one character required")
     if len(chars) > MAX_CHARACTERS:
         errors.append(f"at most {MAX_CHARACTERS} characters (one per mark), got {len(chars)}")
+    if av and data.get("environment", AV_ROOM) not in AV_ROOMS:
+        errors.append(f"shots-av environment must be one of {AV_ROOMS}, got {data.get('environment')!r}")
     if av:
         models = sorted(c.model for c in chars.values())
         if len(models) != 2 or models[0] != AV_HERO or models[1] not in AV_BUDDIES:

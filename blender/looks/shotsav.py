@@ -45,7 +45,8 @@ def apply_scene(sc, plan, characters):
     if hasattr(sc.eevee, "shadow_pool_size"):
         sc.eevee.shadow_pool_size = "1024"
     sc.view_settings.view_transform, sc.view_settings.look = "Khronos PBR Neutral", "None"
-    sc.view_settings.exposure, sc.view_settings.gamma = EXPOSURE, 1.0
+    sc.view_settings.exposure = float(sc.get("av_exposure", EXPOSURE))  # each room stores its own
+    sc.view_settings.gamma = 1.0
     sc["shotsav_dials"] = d
     print(f"shotsav look: dials={d}")
 

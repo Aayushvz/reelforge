@@ -3,7 +3,8 @@ Run: blender -b --factory-startup --python-exit-code 1 -P blender/build_shotsav.
      blender -b --factory-startup --python-exit-code 1 -P blender/build_shotsav.py -- <out.blend> buddy <id> [color=#hex]
 Hero dials (blender/shotsav/hero.py HERO): outfit, outfit_color, hair, hair_color, glasses, headphones, skin,
 stubble, chest_mark. Example: ... -- hero.blend hero outfit=hoodie hair=buzz skin=tan
-Buddies (blender/shotsav/buddies.py BUDDIES): claude, chatgpt, figma, nova. `room <id>` (P3) is not built yet."""
+Buddies (blender/shotsav/buddies.py BUDDIES): claude, chatgpt, figma, nova.
+Rooms (blender/shotsav/rooms.py ROOMS): ... -- <out.blend> room av_studio_night"""
 import sys
 from pathlib import Path
 
@@ -11,7 +12,7 @@ import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from shotsav import buddies, hero  # noqa: E402
+from shotsav import buddies, hero, rooms  # noqa: E402
 
 
 def parse_dials(pairs):
@@ -37,8 +38,10 @@ if __name__ == "__main__":
     elif kind == "buddy":
         opts = dict(a.split("=", 1) for a in args[3:])
         buddies.build(args[2], color=opts.get("color"))
+    elif kind == "room":
+        rooms.build(args[2])
     else:
-        raise SystemExit(f"shots-av {kind!r} is not built yet (rooms are P3); `hero` and `buddy <id>` exist")
+        raise SystemExit(f"unknown shots-av asset {kind!r}: use hero, buddy <id> or room <id>")
     out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(out))
     print(f"saved {out}")

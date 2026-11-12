@@ -163,6 +163,26 @@ def test_buddy_table_matches_the_schema_and_the_acting_controls():
     assert shots_av.buddy_blend("buddy_nova").name == "buddy_nova.blend"
 
 
+def test_room_table_matches_the_schema_and_the_contract():
+    t = shots_av.room_tables()
+    assert tuple(t["ROOMS"]) == schema.AV_ROOMS and schema.AV_ROOM in t["ROOMS"]
+    tones = [r["tone"] for r in t["ROOMS"].values()]
+    assert tones.count("dark") == 3 and tones.count("light") == 3
+    for rid, r in t["ROOMS"].items():
+        for light in ("key", "rim", "fill", "glow"):
+            color, energy, pos, size = r[light]
+            assert energy > 0 and len(pos) == 3 and size > 0, (rid, light)
+        assert -2.5 < r["exposure"] < 0 and r["look"], rid
+    assert t["MARK_B"] == (-0.30, -0.36, 0.74) and t["DESK_Z"] == 0.74
+    assert t["NEUTRAL_WARM"] == (1.0, 0.85, 0.72)  # never the reference's orange: it turns purple brown
+    assert shots_av.room_blend("av_cafe_day").name == "av_cafe_day.blend"
+
+
+def test_shots_av_environment_must_be_one_of_the_rooms():
+    assert parse_performance(_av(environment="av_cyc_lilac")).environment == "av_cyc_lilac"
+    _bad("environment must be one of", environment="night_city")
+
+
 def test_render_refuses_until_the_later_phases_exist(tmp_path):
     with pytest.raises(SystemExit, match="cannot render yet"):
         shots_av.render(None, 0, {}, [], [], tmp_path, "stills", True)

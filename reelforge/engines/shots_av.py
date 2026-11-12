@@ -1,7 +1,7 @@
 """Style 3: Shots-AV Animation. A low-poly hero in Aayush Visuals purple talks to a small AI buddy at a desk.
 
-Built in phases (docs/production/shots-av/PROGRESS.md). So far the engine builds the hero and the four buddies;
-the rooms (P3) and the director with its five camera set-ups (P4) are not built, so render() refuses to run.
+Built in phases (docs/production/shots-av/PROGRESS.md). So far the engine builds the hero, the four buddies and the
+six rooms; the director with its five camera set-ups (P4) is not built, so render() refuses to run.
 From P4 it reuses blender3d.render() with plan["look"] = LOOK and shots from direct.plan_shots_av().
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ CAPABILITIES = {
 LOOK = "shotsav"
 ASSETS = blender3d.ASSETS / "shotsav"
 BUILD_SCRIPT = blender3d.BLENDER_DIR / "build_shotsav.py"
-PENDING = "rooms (P3), camera set-ups and director (P4)"
+PENDING = "camera set-ups and director (P4)"
 
 
 def hero_tables() -> dict:
@@ -70,6 +70,15 @@ def buddy_blend(model: str) -> Path:
     return ASSETS / f"{model}.blend"
 
 
+def room_tables() -> dict:
+    """The rooms' table, read from blender/shotsav/rooms.py (pure data at import; no bpy needed)."""
+    return runpy.run_path(str(blender3d.BLENDER_DIR / "shotsav" / "rooms.py"))
+
+
+def room_blend(room_id: str) -> Path:
+    return ASSETS / f"{room_id}.blend"
+
+
 def build_assets() -> None:
     """Prebuild each outfit with the default skin and hair (any other pick is built on demand by ensure_hero())
     and the four buddies."""
@@ -77,6 +86,8 @@ def build_assets() -> None:
         ensure_hero({"outfit": outfit})
     for bid in buddy_tables()["BUDDIES"]:
         run_blender(BUILD_SCRIPT, [str(buddy_blend(f"buddy_{bid}")), "buddy", bid])
+    for rid in room_tables()["ROOMS"]:
+        run_blender(BUILD_SCRIPT, [str(room_blend(rid)), "room", rid])
     print(f"shots-av: hero built into {ASSETS}; not built yet: {PENDING}")
 
 
