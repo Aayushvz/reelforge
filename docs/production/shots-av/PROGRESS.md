@@ -23,7 +23,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2 | Evidence (`blender/shotsav/buddy_sheets.py`) | done | P2 commit | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_<id>.mp4` (6 s each), `p2/loops_grid.mp4` |
 | 1 | Likeness pass (owner's photos): hair, bold glasses, wheat skin, beard, oval-squarish face, directional key | done | 319b54e | `p1/likeness.jpg` (front, three-quarter, side) and every P1 sheet re-rendered |
 | 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | 319b54e | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
-| 1 | Innocence pass + two soft hair designs | done | innocence commit | `p1/hair_options.jpg`, `p1/expressions.jpg`. **Waiting on owner: default hair (fringe, soft_fringe or curtain)** |
+| 1 | Innocence pass + two soft hair designs | done | da4dd8b | `p1/hair_options.jpg`, `p1/expressions.jpg`. **Waiting on owner: default hair (fringe, soft_fringe or curtain)** |
 | 2 | **Gate P2: owner decides how literal the brand shapes may be** | **waiting on owner** | — | Also: may real logos appear (on the monitor, P3)? Known gap: the taller head runs off the top of `p2/lineup.jpg` |
 | 3-8 | Rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
