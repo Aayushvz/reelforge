@@ -18,11 +18,31 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 1 | Evidence sheets (`blender/shotsav/sheets.py`) | done | 222f99c | `turnaround.jpg`, `expressions.jpg`, `mouth_shapes.jpg`, `purple_check.jpg` + `.json`, `outfits_poses.jpg`, `options_skin_hair.jpg` |
 | 1 | Gate P1: skin, hair, glasses | **passed** | 0c77508 | Glasses: round default. Skin and hair: **all kept as viewer choices** (see Decisions). Rubric approved |
 | 1 | Skin, hair and stubble as per-project choices | done | 0c77508 | `skin` (6 tones), `hair` (3 presets), `stubble` (0-1) on the hero in `performance.json`; `shots_av.ensure_hero(options)` builds the picked combination on demand into `assets/build/shotsav/av_hero__<outfit>__<skin>__<hair>__<glasses>__<headphones>__<colour>__<stubble>.blend` and reuses it after (one build checked: hoodie, deep, curly_top) |
-| 2-8 | Buddies, rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | Out of scope for this session |
+| 2 | Clip library `reelforge/buddy.py` (8 clips, pick rules, WAV envelope, talk squash, `animate()`) | done | P2 commit | `tests/test_buddy.py` (16 tests) |
+| 2 | Four buddies `blender/shotsav/buddies.py` + shared rig; engine builds them | done | P2 commit | `assets/build/shotsav/buddy_<id>.blend`; table tests in `test_shots_av.py` |
+| 2 | Evidence (`blender/shotsav/buddy_sheets.py`) | done | P2 commit | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_<id>.mp4` (6 s each), `p2/loops_grid.mp4` |
+| 2 | **Gate P2: owner decides how literal the brand shapes may be** | **waiting on owner** | — | Also: may real logos appear (on the monitor, P3)? |
+| 3-8 | Rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
+
+## P2 spec (buddies)
+1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
+2. Shared size: body 0.13-0.15 m tall (about 0.4 of the hero's head), two black rectangle eyes 0.022 by 0.008, no mouth, 2-4 stub feet, a soft contact shadow that shrinks on a hop.
+3. Shared rig: `CHAR_root` -> `Body` (render_plan's lean and breath) -> `Squash` (drivers) -> `Head` (render_plan's nod and listen-turn) -> geometry; `FaceAnchor` (head_height = body height), `EyeFocus`, `FaceCtrl` (52 ARKit props, so the existing blink and lip tracks drive it too).
+4. `BuddyCtrl` props: `squash`, `lean_x`, `lean_y`, `hop`, `eye_h` (1 neutral, 0.35 dry, 0 closed), `eye_shape` (0 rect, 1 happy arcs, 2 sad tilt, 3 wide, 4 wink), `eye_look_x/y`, `glow`, `sig` (signature motion amount) and `phase` (its running angle).
+5. Signature motion: claude's 8 lobes ripple outward; chatgpt's six petals turn a few degrees; figma's blocks spread and snap back into the grid; nova's ring spins faster. Each reads `sig` and `phase`.
+6. Brand rule: colour and silhouette say the product, but nothing traces a logo. Claude is a puffy 8-lobe blob, ChatGPT a woven ring of six capsule petals, Figma a stack of five toy blocks, Nova a gem with a ring.
+7. `reelforge/buddy.py` (stdlib): the 8 reaction clips (hop, tilt, dry, happy, think, shrink, nod, lookaway; 10-18 frames each), `pick_action()` (! -> hop, trailing ... -> think, intensity under 0.3 -> dry, else by emotion), the loudness envelope from a WAV, the talk squash (3-6%, 2-frame attack, 5-frame release), and `animate()` (idle breath, seeded blinks every 2.8-4.2 s, a glance at the hero, a lean toward the hero while talking).
+8. Evidence: a line-up still with the hero for scale; a clip sheet (8 clips at their peak); an eye and signature sheet (5 eye shapes and the signature pose for each buddy); a 6 s loop of each buddy talking and reacting, plus a 2x2 grid of the four loops.
+9. Tests: clip lengths and ranges, the pick rules, envelope attack and release, determinism, blink spacing.
+10. Gate P2: **the owner decides how literal the brand shapes may be** (and whether real logos may appear, for example on the monitor).
 
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-12 | **Claude is a spark creature**, not a lumpy blob: a soft clay core, a cream face plate (`#F0EEE6`), eight chunky rays of uneven length; it stands on its two lower rays; its rays ripple outward in turn while it talks | Owner: "make the model more creative not the generic one" (about the faceted blob, which was close to the reference's buddy) |
+| 2026-11-12 | ChatGPT is a pinwheel of six twisted white petals around a hub, with a teal glow showing through the gaps | The prompt's "interlocked petals in a hexagonal knot" built as continuous arcs merged into one white ring (it read as a sheep, then a donut) |
+| 2026-11-12 | Nova's ring orbits the gem (tilted 18 degrees), not stood upright behind it | Upright, it read as a halo or a portal |
+| 2026-11-12 | Evidence loops use a stand-in loudness envelope from the text (`syllable_envelope`), not a voice | No buddy voices exist yet; the real pipeline reads the line's WAV with `wav_envelope` |
 | 2026-11-12 | **Skin tone and hair stay user choices.** All six skin tones and all three hair presets are options; the editor's Hero section (P6) shows them as pickers and the video renders with whatever the viewer picks. Defaults stay warm_brown and swept | Owner: "keep all of them as option in editor so user will select and generate video accordingly" |
 | 2026-11-12 | Rubric approved as written | Owner |
 | 2026-11-12 | Glasses: **round** is the default (owner answered "Yes, glasses" to "Should the hero wear round glasses like the reference?") | Owner decision, relayed by the session that started this one |

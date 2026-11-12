@@ -147,6 +147,22 @@ def test_engine_is_registered_and_default_is_unchanged():
         assert hasattr(e, name)
 
 
+def test_buddy_table_matches_the_schema_and_the_acting_controls():
+    from reelforge import buddy as acting
+    t = shots_av.buddy_tables()
+    assert tuple(f"buddy_{b}" for b in t["BUDDIES"]) == schema.AV_BUDDIES
+    assert tuple(t["BUDDY_CONTROLS"]) == acting.CONTROLS
+    assert {k: v for k, v in t["BUDDY_CONTROLS"].items() if v} == {"eye_h": 1.0} == {
+        k: v for k, v in acting.REST.items() if v}
+    for bid, b in t["BUDDIES"].items():
+        assert 0.13 <= b["height"] <= 0.15, bid  # about 0.4 of the hero's 0.34 m head
+        assert 2 <= b["feet"] <= 4 and b["signature"], bid
+    assert t["EYE"] == (0.008, 0.022)
+    assert t["BUDDIES"]["claude"]["body"] == "#D97757" and t["BUDDIES"]["chatgpt"]["glow"] == "#10A37F"
+    assert set(t["BUDDIES"]["figma"]["blocks"].values()) == {"#F24E1E", "#FF7262", "#A259FF", "#1ABCFE", "#0ACF83"}
+    assert shots_av.buddy_blend("buddy_nova").name == "buddy_nova.blend"
+
+
 def test_render_refuses_until_the_later_phases_exist(tmp_path):
     with pytest.raises(SystemExit, match="cannot render yet"):
         shots_av.render(None, 0, {}, [], [], tmp_path, "stills", True)

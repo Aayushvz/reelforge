@@ -1,7 +1,7 @@
 """Style 3: Shots-AV Animation. A low-poly hero in Aayush Visuals purple talks to a small AI buddy at a desk.
 
-Built in phases (docs/production/shots-av/PROGRESS.md). So far the engine builds the hero; the buddies (P2), the
-rooms (P3) and the director with its five camera set-ups (P4) are not built, so render() refuses to run.
+Built in phases (docs/production/shots-av/PROGRESS.md). So far the engine builds the hero and the four buddies;
+the rooms (P3) and the director with its five camera set-ups (P4) are not built, so render() refuses to run.
 From P4 it reuses blender3d.render() with plan["look"] = LOOK and shots from direct.plan_shots_av().
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ CAPABILITIES = {
 LOOK = "shotsav"
 ASSETS = blender3d.ASSETS / "shotsav"
 BUILD_SCRIPT = blender3d.BLENDER_DIR / "build_shotsav.py"
-PENDING = "buddies (P2), rooms (P3), camera set-ups and director (P4)"
+PENDING = "rooms (P3), camera set-ups and director (P4)"
 
 
 def hero_tables() -> dict:
@@ -60,10 +60,23 @@ def ensure_hero(options: dict) -> Path:
     return out
 
 
+def buddy_tables() -> dict:
+    """The buddies' table, read from blender/shotsav/buddies.py (pure data at import; no bpy needed)."""
+    return runpy.run_path(str(blender3d.BLENDER_DIR / "shotsav" / "buddies.py"))
+
+
+def buddy_blend(model: str) -> Path:
+    """`buddy_claude` (the schema's model name) -> assets/build/shotsav/buddy_claude.blend."""
+    return ASSETS / f"{model}.blend"
+
+
 def build_assets() -> None:
-    """Prebuild each outfit with the default skin and hair; any other pick is built on demand by ensure_hero()."""
+    """Prebuild each outfit with the default skin and hair (any other pick is built on demand by ensure_hero())
+    and the four buddies."""
     for outfit in hero_tables()["OUTFITS"]:
         ensure_hero({"outfit": outfit})
+    for bid in buddy_tables()["BUDDIES"]:
+        run_blender(BUILD_SCRIPT, [str(buddy_blend(f"buddy_{bid}")), "buddy", bid])
     print(f"shots-av: hero built into {ASSETS}; not built yet: {PENDING}")
 
 

@@ -22,3 +22,4 @@ docs/production/**/turn_*.png
 
 # shots-av sheet tiles: regenerate with blender/shotsav/sheets.py; only the composite sheets are kept
 docs/production/shots-av/**/_tiles/
+docs/production/shots-av/**/_frames/
