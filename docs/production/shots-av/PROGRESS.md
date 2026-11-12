@@ -24,7 +24,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 1 | Likeness pass (owner's photos): hair, bold glasses, wheat skin, beard, oval-squarish face, directional key | done | 319b54e | `p1/likeness.jpg` (front, three-quarter, side) and every P1 sheet re-rendered |
 | 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | 319b54e | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
 | 1 | Innocence pass + two soft hair designs | done | da4dd8b | `p1/hair_options.jpg`, `p1/expressions.jpg`. Hair: all six kept as editor options, default `fringe` (owner, 2026-11-12) |
-| 2 | Gate P2: brand literalness | **passed** | gate commit | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
+| 2 | Gate P2: brand literalness | **passed** | 1fd68c9 | Recognisable as their products at the current robots' level; no traced logos (owner, 2026-11-12) |
 | 3 | Six rooms (three dark, three light) | next | — | Waiting on the owner's go-ahead |
 | 4-8 | Camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
