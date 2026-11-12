@@ -9,19 +9,22 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | Phase | Task | Status | Commit | Evidence / notes |
 |---|---|---|---|---|
 | 0 | Working tree clean before branching | done | — | The cinema edits the prompt mentions were already committed on `feat/cinema-real` (a58c4ce), so there was nothing to commit or stash |
-| 0 | Ledger and rubric | done | P1 commit | `PROGRESS.md`, `RUBRIC.md` (ten rows from section 6, scored 0 to 10; ship rule 8 of 10). **Rubric awaits owner approval** |
-| 0 | Engine stub `reelforge/engines/shots_av.py` (`shots-av`, "Shots-AV Animation") | done | P1 commit | Registered; `build_assets()` builds the hero; `render()` refuses with a clear message until P2-P4 exist |
-| 0 | Look stub `blender/looks/shotsav.py` | done | P1 commit | Eevee, rig cameras, raytraced AO/contact shadows, Khronos PBR Neutral at -0.75 (see Decisions); `look_params` dials read and stored, wired in P3 |
-| 0 | Schema fields (section 5.4) | done | P1 commit | `style: "shots-av"` defaults: `look` shotsav, `environment` av_studio_night; exactly one `av_hero` and one `buddy_*`; hero `outfit`/`outfit_color` (any hex, default `#7C3AED`)/`glasses`/`headphones`; line `beat` and `action`; `camera.grammar` and `camera.seed`. Chat-style lines (speaker and text only) get defaults. Other styles unchanged |
-| 0 | Tests | done | P1 commit | `tests/test_shots_av.py` (19 tests); full suite 129 pass |
-| 1 | Hero geometry, face, rig (`blender/shotsav/hero.py`, `geo.py`, `build_shotsav.py`) | done | P1 commit | See "P1 hero" below |
-| 1 | Evidence sheets (`blender/shotsav/sheets.py`) | done | P1 commit | `turnaround.jpg`, `expressions.jpg`, `mouth_shapes.jpg`, `purple_check.jpg` + `.json`, `outfits_poses.jpg`, `options_skin_hair.jpg` |
-| 1 | **Gate P1: owner picks skin tone and hair preset** | **waiting on owner** | — | Glasses already decided (round) |
+| 0 | Ledger and rubric | done | 222f99c | `PROGRESS.md`, `RUBRIC.md` (ten rows from section 6, scored 0 to 10; ship rule 8 of 10). **Rubric approved by the owner, 2026-11-12** |
+| 0 | Engine stub `reelforge/engines/shots_av.py` (`shots-av`, "Shots-AV Animation") | done | 222f99c | Registered; `build_assets()` builds the hero; `render()` refuses with a clear message until P2-P4 exist |
+| 0 | Look stub `blender/looks/shotsav.py` | done | 222f99c | Eevee, rig cameras, raytraced AO/contact shadows, Khronos PBR Neutral at -0.75 (see Decisions); `look_params` dials read and stored, wired in P3 |
+| 0 | Schema fields (section 5.4) | done | 222f99c | `style: "shots-av"` defaults: `look` shotsav, `environment` av_studio_night; exactly one `av_hero` and one `buddy_*`; hero `outfit`/`outfit_color` (any hex, default `#7C3AED`)/`glasses`/`headphones`; line `beat` and `action`; `camera.grammar` and `camera.seed`. Chat-style lines (speaker and text only) get defaults. Other styles unchanged |
+| 0 | Tests | done | 222f99c | `tests/test_shots_av.py`; full suite 152 pass after the gate change |
+| 1 | Hero geometry, face, rig (`blender/shotsav/hero.py`, `geo.py`, `build_shotsav.py`) | done | 222f99c | See "P1 hero" below |
+| 1 | Evidence sheets (`blender/shotsav/sheets.py`) | done | 222f99c | `turnaround.jpg`, `expressions.jpg`, `mouth_shapes.jpg`, `purple_check.jpg` + `.json`, `outfits_poses.jpg`, `options_skin_hair.jpg` |
+| 1 | Gate P1: skin, hair, glasses | **passed** | gate commit | Glasses: round default. Skin and hair: **all kept as viewer choices** (see Decisions). Rubric approved |
+| 1 | Skin, hair and stubble as per-project choices | done | gate commit | `skin` (6 tones), `hair` (3 presets), `stubble` (0-1) on the hero in `performance.json`; `shots_av.ensure_hero(options)` builds the picked combination on demand into `assets/build/shotsav/av_hero__<outfit>__<skin>__<hair>__<glasses>__<headphones>__<colour>__<stubble>.blend` and reuses it after (one build checked: hoodie, deep, curly_top) |
 | 2-8 | Buddies, rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | Out of scope for this session |
 
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-12 | **Skin tone and hair stay user choices.** All six skin tones and all three hair presets are options; the editor's Hero section (P6) shows them as pickers and the video renders with whatever the viewer picks. Defaults stay warm_brown and swept | Owner: "keep all of them as option in editor so user will select and generate video accordingly" |
+| 2026-11-12 | Rubric approved as written | Owner |
 | 2026-11-12 | Glasses: **round** is the default (owner answered "Yes, glasses" to "Should the hero wear round glasses like the reference?") | Owner decision, relayed by the session that started this one |
 | 2026-11-12 | The `shotsav` look uses **Khronos PBR Neutral at exposure -0.75**, not AgX Medium High Contrast (prompt 4.4) | Measured under the 4300 K key: AgX renders a lit matte `#7C3AED` card at ΔE 49-75 (pastel lilac) at every exposure from -1.5 to 0, and Punchy is no better. PBR Neutral at -0.75 keeps the jacket's lit side at ΔE 3-5 and its shadow side at 3-5 under all three keys (table below). P5's grade adds contrast back with a purple-protected curve |
 | 2026-11-12 | Jacket sheen 0.06 (was 0.35), hair sheen 0.04 | Sheen added a white grazing layer that washed purple to lilac and made black hair read grey |

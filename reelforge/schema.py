@@ -26,6 +26,9 @@ AV_BUDDIES = ("buddy_claude", "buddy_chatgpt", "buddy_figma", "buddy_nova")
 AV_OUTFITS = ("puffer", "hoodie", "overshirt")
 AV_GLASSES = ("round", "rect", "none")
 AV_HEADPHONES = ("on", "neck", "none")
+# Skin and hair are the viewer's pick in the editor (owner decision, gate P1); the first entry is the default.
+AV_SKINS = ("warm_brown", "porcelain", "light", "tan", "brown", "deep")
+AV_HAIRS = ("swept", "curly_top", "buzz")
 AV_GRAMMARS = ("signature", "reference")  # signature (default) = the reference grammar plus our upgrades
 AV_ACTIONS = ("hop", "tilt", "dry", "happy", "think", "shrink", "nod", "lookaway")  # buddy reaction clips
 AV_PURPLE = "#7C3AED"  # Aayush Visuals brand purple: the default jacket
@@ -201,10 +204,17 @@ def _av_options(name: str, c: dict, errors: list[str]) -> dict:
     if c.get("model") != AV_HERO:
         return {}
     opts = {"outfit": c.get("outfit", AV_OUTFITS[0]), "outfit_color": c.get("outfit_color", AV_PURPLE),
-            "glasses": c.get("glasses", AV_GLASSES[0]), "headphones": c.get("headphones", "neck")}
-    for key, allowed in (("outfit", AV_OUTFITS), ("glasses", AV_GLASSES), ("headphones", AV_HEADPHONES)):
+            "glasses": c.get("glasses", AV_GLASSES[0]), "headphones": c.get("headphones", "neck"),
+            "skin": c.get("skin", AV_SKINS[0]), "hair": c.get("hair", AV_HAIRS[0]), "stubble": c.get("stubble", 0.3)}
+    for key, allowed in (("outfit", AV_OUTFITS), ("glasses", AV_GLASSES), ("headphones", AV_HEADPHONES),
+                         ("skin", AV_SKINS), ("hair", AV_HAIRS)):
         if opts[key] not in allowed:
             errors.append(f"character {name}: {key} must be one of {allowed}, got {opts[key]!r}")
     if not isinstance(opts["outfit_color"], str) or not _HEX.fullmatch(opts["outfit_color"]):
         errors.append(f"character {name}: outfit_color must be a hex colour like {AV_PURPLE}")
+    s = opts["stubble"]
+    if isinstance(s, bool) or not isinstance(s, (int, float)) or not 0.0 <= s <= 1.0:
+        errors.append(f"character {name}: stubble must be a number 0..1")
+    else:
+        opts["stubble"] = float(s)
     return opts

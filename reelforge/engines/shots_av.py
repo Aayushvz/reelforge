@@ -6,6 +6,7 @@ From P4 it reuses blender3d.render() with plan["look"] = LOOK and shots from dir
 """
 from __future__ import annotations
 
+import re
 import runpy
 from pathlib import Path
 
@@ -33,13 +34,36 @@ def hero_tables() -> dict:
     return runpy.run_path(str(blender3d.BLENDER_DIR / "shotsav" / "hero.py"))
 
 
-def hero_blend(outfit: str) -> Path:
-    return ASSETS / f"av_hero__{outfit}.blend"
+HERO_KEYS = ("outfit", "skin", "hair", "glasses", "headphones", "outfit_color", "stubble")  # the file-name order
+
+
+def _slug(value) -> str:
+    if isinstance(value, float):
+        return f"s{round(value * 100):03d}"
+    return re.sub(r"[^0-9A-Za-z_]", "", str(value)).lower()
+
+
+def hero_blend(options: dict) -> Path:
+    """One .blend per combination the viewer picks (outfit, skin, hair, glasses, headphones, jacket colour,
+    stubble), named from the options so a render reuses a build. Defaults fill anything missing."""
+    opts = {**hero_tables()["DEFAULTS"], **{k: v for k, v in options.items() if k in HERO_KEYS}}
+    opts["stubble"] = float(opts["stubble"])  # 0 and 0.0 must name the same build
+    return ASSETS / ("av_hero__" + "__".join(_slug(opts[k]) for k in HERO_KEYS) + ".blend")
+
+
+def ensure_hero(options: dict) -> Path:
+    """Build the hero for these options unless that exact build is already on disk (a few seconds in Blender)."""
+    out = hero_blend(options)
+    if not out.exists():
+        args = [f"{k}={v}" for k, v in options.items() if k in HERO_KEYS]
+        run_blender(BUILD_SCRIPT, [str(out), "hero", *args])
+    return out
 
 
 def build_assets() -> None:
+    """Prebuild each outfit with the default skin and hair; any other pick is built on demand by ensure_hero()."""
     for outfit in hero_tables()["OUTFITS"]:
-        run_blender(BUILD_SCRIPT, [str(hero_blend(outfit)), "hero", f"outfit={outfit}"])
+        ensure_hero({"outfit": outfit})
     print(f"shots-av: hero built into {ASSETS}; not built yet: {PENDING}")
 
 

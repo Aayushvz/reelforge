@@ -40,7 +40,8 @@ def test_prompt_example_parses_with_defaults():
     assert (p.style, p.environment, p.look) == ("shots-av", "av_studio_night", "shotsav")
     me, buddy = p.characters["me"], p.characters["buddy"]
     assert me.model == "av_hero" and buddy.model == "buddy_claude" and buddy.options == {}
-    assert me.options == {"outfit": "puffer", "outfit_color": "#7C3AED", "glasses": "round", "headphones": "neck"}
+    assert me.options == {"outfit": "puffer", "outfit_color": "#7C3AED", "glasses": "round", "headphones": "neck",
+                          "skin": "warm_brown", "hair": "swept", "stubble": 0.3}
     assert [l.id for l in p.lines] == ["l01", "l02", "l03"]
     assert [(l.beat, l.action) for l in p.lines] == [(False, ""), (False, "hop"), (True, "")]
     assert (p.lines[0].emotion, p.lines[0].intensity, p.lines[0].mood) == ("neutral", 0.5, "calm")
@@ -51,7 +52,25 @@ def test_hero_options_default_to_brand_purple_puffer():
     d = _av()
     d["characters"]["me"] = {"model": "av_hero"}
     assert parse_performance(d).characters["me"].options == {
-        "outfit": "puffer", "outfit_color": schema.AV_PURPLE, "glasses": "round", "headphones": "neck"}
+        "outfit": "puffer", "outfit_color": schema.AV_PURPLE, "glasses": "round", "headphones": "neck",
+        "skin": "warm_brown", "hair": "swept", "stubble": 0.3}
+
+
+@pytest.mark.parametrize("skin", schema.AV_SKINS)
+@pytest.mark.parametrize("hair", schema.AV_HAIRS)
+def test_every_skin_and_hair_is_a_user_choice(skin, hair):
+    d = _av()
+    d["characters"]["me"].update(skin=skin, hair=hair, stubble=0)
+    o = parse_performance(d).characters["me"].options
+    assert (o["skin"], o["hair"], o["stubble"]) == (skin, hair, 0.0)
+
+
+def test_hero_blend_names_each_combination_once():
+    a = shots_av.hero_blend({"outfit": "hoodie", "skin": "deep", "hair": "buzz", "outfit_color": "#22C55E"})
+    assert a == shots_av.hero_blend({"hair": "buzz", "outfit_color": "#22c55e", "skin": "deep", "outfit": "hoodie"})
+    assert a.name == "av_hero__hoodie__deep__buzz__round__neck__22c55e__s030.blend"
+    assert shots_av.hero_blend({}).name == "av_hero__puffer__warm_brown__swept__round__neck__7c3aed__s030.blend"
+    assert shots_av.hero_blend({"skin": "tan"}) != shots_av.hero_blend({"skin": "light"})
 
 
 def test_any_hex_jacket_colour_is_accepted_and_junk_is_not():
@@ -65,7 +84,8 @@ def test_any_hex_jacket_colour_is_accepted_and_junk_is_not():
 
 
 @pytest.mark.parametrize("key,value", [("outfit", "tuxedo"), ("outfit", 1), ("glasses", "monocle"),
-                                       ("headphones", "ears")])
+                                       ("headphones", "ears"), ("skin", "green"), ("hair", "mohawk"),
+                                       ("stubble", 2), ("stubble", "some")])
 def test_unknown_hero_options_are_rejected(key, value):
     d = _av()
     d["characters"]["me"][key] = value
@@ -154,11 +174,11 @@ def test_hero_table_matches_the_schema_and_the_brand():
     assert tuple(hero["glasses"]["options"]) == schema.AV_GLASSES and hero["glasses"]["default"] == "round"
     assert set(hero["headphones"]["options"]) == set(schema.AV_HEADPHONES) and hero["headphones"]["default"] == "neck"
     assert tuple(hero["hair"]["options"]) == ("swept", "curly_top", "buzz") and hero["hair"]["default"] == "swept"
-    assert len(t["SKINS"]) == 6 and hero["skin"]["default"] in t["SKINS"]
+    assert set(t["SKINS"]) == set(schema.AV_SKINS) and hero["skin"]["default"] == schema.AV_SKINS[0]
+    assert tuple(hero["hair"]["options"]) == tuple(schema.AV_HAIRS)
     assert hero["stubble"]["default"] == 0.3 and hero["outfit"]["default"] == "puffer"
     assert t["BRAND"] == {"purple": "#7C3AED", "purple_mid": "#6D28D9", "purple_soft": "#A78BFA",
                           "lilac": "#DDD6FE", "ink": "#1F1F1F", "cream": "#F4F2EE"}
     assert hero["outfit_color"]["default"] == schema.AV_PURPLE
     assert len(t["MOUTH_SHAPES"]) == 8 and t["MOUTH_SHAPES"][0] == "rest"
     assert tuple(t["HAND_POSES"]) == ("rest", "fist_cheek", "point", "open", "type")
-    assert shots_av.hero_blend("puffer").name == "av_hero__puffer.blend"
