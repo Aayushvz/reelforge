@@ -31,7 +31,8 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | `plan_shots_av` (reference + signature grammars), rack focus | done | 776c0f3 | 20-line fixture: 20 shots, same kinds in order, cuts within 2 frames, split 46/37/17 within 3 points |
 | 4 | Engine render + acting (hero blink on cuts, think-to-rest pose change, buddy BuddyCtrl from loudness and `pick_action`), `reelforge animatic` | done | 776c0f3 | `samples/shots-av-fixture` |
 | 4 | **Match pass** | **done, all within tolerance** | 776c0f3 | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
-| 4 | Silent animatic (draft) | rendering | — | `samples/shots-av-fixture/out/animatic.mp4` |
+| 4 | Silent animatic (draft, 540x960, 16 samples) | done | animatic commit | `p4/animatic_silent.mp4` (48.7 s), `p4/animatic_strip.jpg`. **Render time 9 min 18 s for 48.7 s (0.36 s/frame)**: over the prompt's 6-minute draft budget; see notes |
+| 4 | **Gate P4: owner reviews the match pass and the animatic** | **waiting on owner** | — | |
 | 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
 | 5-8 | Captions and sound, editor page, benchmark, docs | not started | — | |
 
@@ -96,6 +97,8 @@ Honest notes:
 | C av_wide_34 | buddy centre (W) | 0.10-0.30 | 0.222 | - | inside | yes |
 
 Honest notes: every value is inside tolerance, but three sit near the edge: D's head height (-0.028), E's hair top (-0.027) and E's head width (-0.047, our oval face is narrower than the reference's long-haired head). The buddy's eyes match (0.63 vs 0.62) while its body sits higher in frame than the reference's (centre 0.61 vs 0.69), because our robot carries its eyes lower on a taller body with an antenna. Bokeh is round-heptagonal (7 blades), not the reference's squares.
+
+Animatic notes (honest): the cut list, blinks on hero cuts, the pose change and the buddy's waveform, eyes and reactions all play as planned. It is silent and the lip timing is synthetic (characters spread evenly across each line), so the mouths flap evenly rather than in sync; real voices fix that. No captions or grade yet (P5). The draft render misses the 6-minute budget by about 55%; the first things to try are a lower volumetric resolution for the haze and fewer shadow rays at the draft tier (Eevee spends most of each frame on those two).
 
 ## P4 spec (camera, director, acting)
 1. `camera_rig.FRAMING` gains `av_hero_34`, `av_hero_front`, `av_buddy`, `av_wide_34`, `av_wide_front` (prompt 5.1), plus a `pull_truck` move. Sign conversion: 5.1 measures azimuth "positive toward the monitor"; the rig measures it toward the other speaker. With the buddy on the hero's right, hero set-ups store the negated range (e.g. `av_hero_34` = -34..-28 so the camera lands +28..+34 on the monitor side); `av_buddy` keeps -8..-2.
