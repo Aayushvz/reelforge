@@ -21,7 +21,9 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2 | Clip library `reelforge/buddy.py` (8 clips, pick rules, WAV envelope, talk squash, `animate()`) | done | P2 commit | `tests/test_buddy.py` (16 tests) |
 | 2 | Four buddies `blender/shotsav/buddies.py` + shared rig; engine builds them | done | P2 commit | `assets/build/shotsav/buddy_<id>.blend`; table tests in `test_shots_av.py` |
 | 2 | Evidence (`blender/shotsav/buddy_sheets.py`) | done | P2 commit | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_<id>.mp4` (6 s each), `p2/loops_grid.mp4` |
-| 2 | **Gate P2: owner decides how literal the brand shapes may be** | **waiting on owner** | — | Also: may real logos appear (on the monitor, P3)? |
+| 1 | Likeness pass (owner's photos): hair, bold glasses, wheat skin, beard, oval-squarish face, directional key | done | likeness commit | `p1/likeness.jpg` (front, three-quarter, side) and every P1 sheet re-rendered |
+| 2 | Robot redesign of the four buddies (display faces, waveform mouths) | done | likeness commit | `p2/lineup.jpg`, `p2/clips_claude.jpg`, `p2/eyes_signature.jpg`, `p2/loop_*.mp4`, `p2/loops_grid.mp4` re-rendered |
+| 2 | **Gate P2: owner decides how literal the brand shapes may be** | **waiting on owner** | — | Also: may real logos appear (on the monitor, P3)? Known gap: the taller head runs off the top of `p2/lineup.jpg` |
 | 3-8 | Rooms, camera and director, captions and sound, editor page, benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
@@ -39,8 +41,13 @@ Update this file after every task. A new session reads it and `git log`, and nev
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
-| 2026-11-12 | **Claude is a spark creature**, not a lumpy blob: a soft clay core, a cream face plate (`#F0EEE6`), eight chunky rays of uneven length; it stands on its two lower rays; its rays ripple outward in turn while it talks | Owner: "make the model more creative not the generic one" (about the faceted blob, which was close to the reference's buddy) |
-| 2026-11-12 | ChatGPT is a pinwheel of six twisted white petals around a hub, with a teal glow showing through the gaps | The prompt's "interlocked petals in a hexagonal knot" built as continuous arcs merged into one white ring (it read as a sheep, then a donut) |
+| 2026-11-12 | **Face is oval and squarish**: head 0.31 wide by 0.36 tall (was 0.36 by 0.35); the lower face's outline is a superellipse (power 3.4) so the cheeks run straight into defined jaw corners; the chin is flatter (`CHIN` 0.80) and the jaw turns in only near the bottom | Owner: "the animated face is very rounded, keep it oval squarish" (second photo) |
+| 2026-11-12 | **The hero is the owner's likeness** (from his photo): new defaults `hair: fringe` (thick black textured hair, a choppy layered fringe to the brows, sides close over the ears), `glasses: bold` (black acetate rectangles with real depth), `skin: wheat` (`#D6A688`), `beard: light` (thin moustache + chin beard), an oval face narrowing to a defined chin, straight strong brows just above the frames, a soft closed smile at rest. The earlier looks stay selectable (`swept`, `round`, `warm_brown`, `stubble`...) | Owner: "make him like this guy, it's me... do it very properly". Supersedes the round-glasses default |
+| 2026-11-12 | Hair volume halved (about 3.5 cm above the scalp at head scale) | Owner: "hair height is too long" |
+| 2026-11-12 | Evidence lighting: a smaller, higher key (0.45 m area) from the monitor side, fill at 1:5, so fringe, frames and nose cast readable shadows; Eevee shadow rays 4, steps 12 (also in the `shotsav` look) so those thin shadows render clean | Owner: "there will be shadows on the face based on lighting". At 1 shadow ray the frames' shadows were grainy |
+| 2026-11-12 | **Buddies are modern desk robots**: satin shells with a seam line, a recessed glossy display under a domed glass lens, glowing display eyes (all the expressions kept) and a **live waveform mouth** (9 bars driven by the new `voice` control; a row of dots when quiet, a small smile when happy and quiet). Claude: terracotta shell, cream bezel, spark antenna that spins and pulses. ChatGPT: white ceramic orb on a charging puck, rounded-hex screen, teal hex ring around the lower body. Figma: charcoal display head built from the five colour blocks (two on top, a block ear, a round knob ear, a block stand). Nova: a hovering pearl orb, pill visor, beaded orbit ring | Owner: "I need more realistic models, something like this [an orange robot head with a screen face and a waveform mouth] but not same, go more creative and modern". Supersedes the spark creature and the pinwheel |
+| 2026-11-12 | (superseded by the robots) Claude is a spark creature, not a lumpy blob: a soft clay core, a cream face plate (`#F0EEE6`), eight chunky rays of uneven length; it stands on its two lower rays; its rays ripple outward in turn while it talks | Owner: "make the model more creative not the generic one" (about the faceted blob, which was close to the reference's buddy) |
+| 2026-11-12 | (superseded by the robots) ChatGPT is a pinwheel of six twisted white petals around a hub, with a teal glow showing through the gaps | The prompt's "interlocked petals in a hexagonal knot" built as continuous arcs merged into one white ring (it read as a sheep, then a donut) |
 | 2026-11-12 | Nova's ring orbits the gem (tilted 18 degrees), not stood upright behind it | Upright, it read as a halo or a portal |
 | 2026-11-12 | Evidence loops use a stand-in loudness envelope from the text (`syllable_envelope`), not a voice | No buddy voices exist yet; the real pipeline reads the line's WAV with `wav_envelope` |
 | 2026-11-12 | **Skin tone and hair stay user choices.** All six skin tones and all three hair presets are options; the editor's Hero section (P6) shows them as pickers and the video renders with whatever the viewer picks. Defaults stay warm_brown and swept | Owner: "keep all of them as option in editor so user will select and generate video accordingly" |
@@ -53,7 +60,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 2026-11-12 | The preview desk in the sheets is a plain stand-in | The real desk and chair belong to the P3 rooms; the side view shows the hero seated on nothing |
 
 ## P1 hero (what was built)
-- **Proportions:** head 0.34 tall by 0.36 wide (lower half 5% wider, squarer chin), eyes at 1.18 m seated, desk top at 0.74, shoulders 0.46 wide over the sleeves, short thick arms, hands about 0.10.
+- **Proportions:** head 0.36 tall by 0.31 wide, oval with a squarish jaw (the owner's), eyes at 1.18 m seated, desk top at 0.74, shoulders 0.46 wide over the sleeves, short thick arms, hands about 0.10.
 - **Face:** black oval eyes (0.024 by 0.040, 0.115 apart) with one fixed highlight; upper and lower lids (blink, half-lid, squint, wide, cheek push); brows that raise, lower, angle and pinch; a small wedge nose; ears; per-vertex blush on cheeks, ears and nose tip; a stubble band (dial 0 to 1, default 0.3).
 - **Mouth:** a real slit with an inner lip wall, dark warm interior, upper teeth and a tongue that drops with the jaw. Shape keys: rest, MBP, small, wide, O, E, FV, smile, plus corner up and down on each side and a sideways shift. All are driven from the 52 ARKit channels on `FaceCtrl` (the `MOUTH_DRIVERS` table), so the existing viseme and emotion tracks drive it unchanged.
 - **Hair:** `swept` (12 faceted clumps over a thin cap, fringe lifted off the forehead, side part), `curly_top` (18 faceted curls), `buzz` (cap only).
@@ -67,11 +74,11 @@ Update this file after every task. A new session reads it and `git log`, and nev
 ## P1 purple check (neutral-warm 4300 K key; matte card of pure `#7C3AED` beside the jacket)
 | Key | Card (faces the key) | Jacket, lit side | Jacket, shadow side |
 |---|---|---|---|
-| neutral warm 4300K | `#A05EF4` ΔE 19.2 | `#8636E8` ΔE 3.6 | `#772AE1` ΔE 4.5 |
-| screen cool 7500K | `#8C6AF9` ΔE 25.0 | `#7545F3` ΔE 4.8 | `#6A37EF` ΔE 5.3 |
-| daylight 5600K | `#9969F8` ΔE 24.4 | `#8243F2` ΔE 3.2 | `#7535ED` ΔE 3.0 |
+| neutral warm 4300K | `#9649F1` ΔE 9.4 | `#8632E4` ΔE 4.6 | `#7A29DD` ΔE 5.3 |
+| screen cool 7500K | `#835AF8` ΔE 15.0 | `#7442F3` ΔE 3.7 | `#6A37EE` ΔE 4.9 |
+| daylight 5600K | `#9058F6` ΔE 14.1 | `#8240F1` ΔE 2.1 | `#7734EB` ΔE 2.3 |
 
-ΔE is CIE76 against `#7C3AED`, measured on a 15 px patch (white ticks in `purple_check.jpg`; the top-right chip is the exact sRGB value). **The jacket passes** (lit side ΔE 3-5 under all three keys, against the P1 target of 10). **The card misses its target of 6** (ΔE 19-25): it faces the key head-on and catches about half a stop more light than the jacket, so it renders lighter. That's an exposure question for each room (P3), not a hue shift: every patch stays within 8° of the target hue (262°). Before this pass, AgX gave the same jacket ΔE 61.
+ΔE is CIE76 against `#7C3AED`, measured on a 15 px patch (white ticks in `purple_check.jpg`; the top-right chip is the exact sRGB value). Re-measured with the final directional key. **The jacket passes** (lit side ΔE 2-5 under all three keys, against the P1 target of 10). **The card misses its target of 6** (ΔE 9-15): it faces the key head-on and catches about half a stop more light than the jacket, so it renders lighter. That's an exposure question for each room (P3), not a hue shift: every patch stays within 8° of the target hue (262°). Before this pass, AgX gave the same jacket ΔE 61.
 
 ## P1 review against `references/style/shots-av/01_five_setups.jpg` (honest)
 Compared side by side with panels A (hero close-up) and C/E (wides) of the reference. Provisional rubric scores for the hero rows (the reference in brackets):

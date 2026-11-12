@@ -14,7 +14,7 @@ import wave
 from pathlib import Path
 
 CONTROLS = ("squash", "lean_x", "lean_y", "hop", "eye_h", "eye_shape", "eye_look_x", "eye_look_y", "glow", "sig",
-            "phase")
+            "phase", "voice")  # voice: the display's waveform mouth, from the line's loudness
 REST = {c: 0.0 for c in CONTROLS} | {"eye_h": 1.0}
 EYE_SHAPES = ("rect", "happy", "sad", "wide", "wink")
 TOWARD_HERO = {"lean_x", "eye_look_x"}
@@ -185,6 +185,7 @@ def animate(n_frames: int, fps: int, segments: list[dict], seed: int = 7, hero_s
                 if s["start"] + i < min(s["end"], n_frames):
                     loud[s["start"] + i] = v
     squash_talk = talk_squash(loud)
+    voice = follow(loud, 1.5, 4.0)  # the waveform mouth: quick to rise, a short tail
     level = follow([1.0 if v > 0.08 else 0.0 for v in follow(loud, 2, 8)], 6, 14)  # talking at all, smoothed
     glance_rng = random.Random(seed + 1)
     glances = []  # idle looks at the hero: (start, length)
@@ -196,6 +197,7 @@ def animate(n_frames: int, fps: int, segments: list[dict], seed: int = 7, hero_s
         breath = math.sin(2 * math.pi * f / (fps * 3.0) + seed)
         talk[f] = level[f]
         tr["squash"][f] = 0.008 * breath + squash_talk[f]
+        tr["voice"][f] = min(1.0, voice[f])
         tr["lean_x"][f] = 0.10 * level[f]  # lean toward the hero while talking
         tr["sig"][f] = level[f]
         tr["glow"][f] = 0.25 * level[f]

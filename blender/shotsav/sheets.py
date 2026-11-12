@@ -68,15 +68,16 @@ def scene(dials, face=None, pose=None, view="front", shot="bust", key="neutral_w
         sc.collection.objects.link(o)
 
     # key from the monitor side (the hero's left, screen right), low and in front; violet rim; navy fill
-    lamp("Key", (1.15, -1.5, 0.35), 95, 1.0, KEYS[key])
+    # a small, high key from the monitor side: the fringe, glasses and nose cast shadows that read on the face
+    lamp("Key", (1.15, -1.25, 0.75), 95, 0.45, KEYS[key])
     if light == "night":
         lamp("Rim", (-0.9, 1.3, 0.6), 110, 0.6, lin("#8B5CF6"))
-        lamp("Fill", (-1.5, -1.0, 0.2), 16, 1.8, (0.55, 0.65, 1.0))
-        lamp("Top", (0.2, 0.2, 1.4), 22, 1.2, (0.8, 0.85, 1.0))
+        lamp("Fill", (-1.5, -1.0, 0.2), 7, 1.8, (0.55, 0.65, 1.0))  # a 1:5 fill keeps the shadow side dark
+        lamp("Top", (0.2, 0.2, 1.4), 10, 1.2, (0.8, 0.85, 1.0))
         back, world = "#141A2E", (0.012, 0.015, 0.03)
     else:  # a plain bright studio, to judge form on the turnaround
         lamp("Rim", (-0.9, 1.3, 0.6), 80, 0.8, (1, 1, 1))
-        lamp("Fill", (-1.5, -1.2, 0.3), 45, 2.0, (0.92, 0.95, 1.0))
+        lamp("Fill", (-1.5, -1.2, 0.3), 22, 2.0, (0.92, 0.95, 1.0))
         lamp("Top", (0.2, 0.0, 1.5), 40, 1.5, (1, 1, 1))
         back, world = "#8E8F96", (0.12, 0.12, 0.13)
     bpy.ops.mesh.primitive_plane_add(size=14, location=(0, 0, 0))
@@ -107,6 +108,8 @@ def scene(dials, face=None, pose=None, view="front", shot="bust", key="neutral_w
     sc.render.engine = EEVEE
     sc.eevee.taa_render_samples = samples
     sc.eevee.use_raytracing = True
+    if hasattr(sc.eevee, "shadow_ray_count"):  # soft shadows of thin parts (glasses, hair tips) render grainy at 1 ray
+        sc.eevee.shadow_ray_count, sc.eevee.shadow_step_count = 4, 12
     sc.render.resolution_x, sc.render.resolution_y = size
     sc.view_settings.view_transform, sc.view_settings.look, sc.view_settings.exposure = VIEW
     sc.render.image_settings.file_format = "PNG"

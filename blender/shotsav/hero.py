@@ -22,8 +22,8 @@ except ImportError:  # read as a data table outside Blender
 # --- dials (pure data) ----------------------------------------------------------------------------------
 BRAND = {"purple": "#7C3AED", "purple_mid": "#6D28D9", "purple_soft": "#A78BFA", "lilac": "#DDD6FE",
          "ink": "#1F1F1F", "cream": "#F4F2EE"}
-SKINS = {"porcelain": "#F2D3BC", "light": "#E8BE9A", "tan": "#D3A074", "warm_brown": "#B9804F",
-         "brown": "#8E5A39", "deep": "#5E3B28"}
+SKINS = {"wheat": "#D6A688", "porcelain": "#F2D3BC", "light": "#E8BE9A", "tan": "#D3A074", "warm_brown": "#B9804F",
+         "brown": "#8E5A39", "deep": "#5E3B28"}  # wheat: the owner's own tone, read from his photo
 OUTFITS = {
     "puffer": {"label": "Purple puffer", "open": True, "bands": 4, "puff": 0.011, "shell": 0.012, "tee": "ink",
                "collar": "stand", "sleeve_bands": 2, "arm": 0.062},
@@ -36,11 +36,12 @@ HERO = {
     "outfit": {"default": "puffer", "options": list(OUTFITS)},
     "outfit_color": {"default": BRAND["purple"],
                      "swatches": [BRAND[k] for k in ("purple", "purple_mid", "purple_soft", "lilac", "ink")]},
-    "hair": {"default": "swept", "options": ["swept", "curly_top", "buzz"]},
-    "hair_color": {"default": "#1C1512"},
-    "glasses": {"default": "round", "options": ["round", "rect", "none"]},  # owner confirmed round, 2026-11-12
+    "hair": {"default": "fringe", "options": ["fringe", "swept", "curly_top", "buzz"]},  # fringe: the owner's hair
+    "hair_color": {"default": "#15110F"},
+    "glasses": {"default": "bold", "options": ["bold", "round", "rect", "none"]},  # bold: his black acetate frames
     "headphones": {"default": "neck", "options": ["on", "neck", "none"]},
-    "skin": {"default": "warm_brown", "options": list(SKINS)},
+    "skin": {"default": "wheat", "options": list(SKINS)},
+    "beard": {"default": "light", "options": ["light", "stubble", "none"]},  # light: thin moustache + chin beard
     "stubble": {"default": 0.3, "min": 0.0, "max": 1.0},
     "chest_mark": {"default": False},
 }
@@ -50,10 +51,12 @@ DEFAULTS = {k: v["default"] for k, v in HERO.items()}
 
 # --- proportions (metres, seated; the desk top is at 0.74) ---------------------------------------------------
 HC_Z = 1.20  # head centre; the eyes sit 0.02 below it, at 1.18
-RX, RY, RZT, RZB = 0.18, 0.165, 0.175, 0.165  # head 0.36 wide, 0.34 tall
-JAW, CHIN = 0.05, 0.9  # lower half 5% wider and a squarer chin: reads male
+RX, RY, RZT, RZB = 0.152, 0.165, 0.182, 0.172  # head about 0.31 wide, 0.36 tall: an oval, taller than wide
+JAW, TAPER, CHIN = 0.0, 0.16, 0.80  # straight cheeks into defined jaw corners and a flat chin: oval-squarish (the owner's)
+SQUARE = 3.4  # superellipse power of the lower face's outline (2 = round)
+SMILE_REST = 0.2  # his resting face is a soft closed smile
 EYE_X, EYE_Z, EYE_R = 0.0575, -0.02, (0.012, 0.0052, 0.020)  # black ovals 0.024 x 0.040, 0.115 apart
-BROW_Z = 0.040  # above the glasses rim (its top is at 0.030), so the brows can act
+BROW_Z = 0.036  # just above the frame top (0.022), as in his photo, so the brows still act
 NECK_Z = 1.035
 BODY_AT = (0.0, 0.03, 0.62)
 SHOULDER = (0.165, 0.0, 0.955)  # shoulders 0.46 wide over the sleeves
@@ -117,7 +120,38 @@ MOUTH_VARS = {"j": "jawOpen", "fu": "mouthFunnel", "pu": "mouthPucker", "mc": "m
 
 # Hair: clumps as (theta0, theta1, f0, f1, (root lift, mid bump, tip lift), width). theta runs over the top of
 # the head from the character's right (-90) to the left (+90); f runs front (-1) to back (+1).
+_BACK = [(0, 0.66, 0.006), (0, 0.86, 0.018), (0, 0.985, 0.016), (180, 0.93, 0.012), (180, 0.80, 0.003)]
+_BACK_CLOSE = [(0, 0.66, 0.004), (0, 0.86, 0.008), (0, 0.985, 0.007), (180, 0.93, 0.005), (180, 0.80, 0.002)]
 HAIR = {
+    # The owner's hair: thick, black and textured, a heavy choppy fringe falling to the brows, volume on top, full
+    # sides over the tops of the ears. Clumps run from the crown forward; tips land just above the brow line.
+    "fringe": {"cap": 0.006, "band": 0.036, "thick": 0.34, "hairline": [(0, 22), (30, 20), (52, 14), (68, 4), (79, -3), (88, 10),
+                                                         (100, 10), (112, -14), (180, -27)], "clumps": [
+        (-6, -48, 0.22, -0.90, (0.010, 0.020, 0.010), 0.050),  # fringe: pieces of uneven width, tips turned apart
+        (-3, -27, 0.26, -0.945, (0.012, 0.022, 0.008), 0.046),
+        (0, -9, 0.30, -0.955, (0.012, 0.023, 0.007), 0.052),
+        (3, 9, 0.30, -0.94, (0.012, 0.023, 0.008), 0.044),
+        (6, 25, 0.26, -0.955, (0.012, 0.022, 0.007), 0.050),
+        (9, 43, 0.22, -0.92, (0.010, 0.020, 0.010), 0.046),
+        (12, 60, 0.16, -0.85, (0.010, 0.017, 0.010), 0.044),
+        (-16, -63, 0.10, -0.84, (0.010, 0.016, 0.010), 0.044),
+        (-20, -36, -0.50, -0.935, (0.024, 0.015, 0.011), 0.034),  # a short top layer: choppy, not combed
+        (-4, -16, -0.46, -0.965, (0.026, 0.016, 0.010), 0.032),
+        (12, 30, -0.48, -0.93, (0.024, 0.015, 0.011), 0.034),
+        (28, 52, -0.40, -0.88, (0.022, 0.014, 0.011), 0.030),
+        (-22, 18, 0.62, 0.02, (0.014, 0.021, 0.013), 0.050),  # volume on top
+        (20, -14, 0.64, 0.06, (0.014, 0.020, 0.013), 0.050),
+        (-46, 34, 0.50, -0.30, (0.012, 0.018, 0.014), 0.048),
+        (-54, -96, -0.48, -0.40, (0.006, 0.006, 0.003), 0.038),  # sides: full but close, the ears show
+        (-54, -98, -0.16, -0.10, (0.006, 0.006, 0.003), 0.040),
+        (-56, -100, 0.18, 0.22, (0.006, 0.006, 0.003), 0.040),
+        (54, 96, -0.48, -0.40, (0.006, 0.006, 0.003), 0.038),
+        (54, 98, -0.16, -0.10, (0.006, 0.006, 0.003), 0.040),
+        (56, 100, 0.18, 0.22, (0.006, 0.006, 0.003), 0.040),
+        (-40, -126, 0.62, 0.70, (0.006, 0.008, 0.003), 0.040),  # back
+        (40, 126, 0.62, 0.70, (0.006, 0.008, 0.003), 0.040),
+        _BACK_CLOSE,  # close at the crown: no bun at the back
+    ]},
     "swept": {"cap": 0.006, "band": 0.050, "clumps": [
         (-42, 64, -0.80, -0.70, (0.004, 0.040, 0.006), 0.034),  # fringe, lifted off the forehead
         (-40, 76, -0.60, -0.52, (0.006, 0.044, 0.004), 0.037),
@@ -130,7 +164,7 @@ HAIR = {
         (-46, -108, 0.22, 0.26, (0.004, 0.010, 0.002), 0.033),
         (-50, -128, 0.72, 0.62, (0.004, 0.012, 0.002), 0.035),  # back
         (44, 128, 0.72, 0.62, (0.004, 0.014, 0.002), 0.035),
-        [(0, 0.66, 0.006), (0, 0.86, 0.016), (0, 0.985, 0.014), (180, 0.93, 0.010), (180, 0.80, 0.003)],
+        _BACK,
     ]},
     "curly_top": {"cap": 0.006, "band": 0.075, "curls": [(t, f) for f in (-0.72, -0.38, 0.0, 0.38, 0.7) for t in (-42, -14, 14, 42)
                                            if not (f == 0.7 and abs(t) > 20)]},
@@ -143,11 +177,20 @@ HAIRLINE = [(0, 40), (35, 38), (55, 27), (70, 6), (79, -2), (88, 13), (100, 13),
 # ============================================================================================================
 # Everything below runs inside Blender.
 # ============================================================================================================
+def wfac(low):
+    """Width of the head at a depth `low` (0 at the midline, 1 at the chin) relative to RX."""
+    jaw = np.clip((low - 0.45) / 0.55, 0.0, 1.0) ** 1.6  # the sides stay straight, then turn in at the jaw
+    return 1 + JAW * np.sin(np.pi * low) - TAPER * jaw
+
+
 def head_map(n):
     """Unit directions (N, 3) -> points on the head, head-centred."""
     low = np.clip(-n[:, 2], 0.0, 1.0)
-    return np.stack([RX * n[:, 0] * (1 + JAW * np.sin(np.pi * low)), RY * n[:, 1],
-                     np.where(n[:, 2] >= 0, RZT * n[:, 2], -RZB * low ** CHIN)], 1)
+    a, b = np.abs(n[:, 0]), np.abs(n[:, 2])  # the lower half's silhouette leans toward a rounded square:
+    g = np.sqrt(a * a + b * b) / np.maximum((a ** SQUARE + b ** SQUARE) ** (1 / SQUARE), 1e-6)  # straight cheeks,
+    g = 1 + (g - 1) * np.clip(low * 2.0, 0.0, 1.0)  # defined jaw corners; the cranium stays round
+    return np.stack([RX * n[:, 0] * wfac(low) * g, RY * n[:, 1],
+                     np.where(n[:, 2] >= 0, RZT * n[:, 2], -RZB * low ** CHIN * g)], 1)
 
 
 def surf_y(x, z):
@@ -155,7 +198,7 @@ def surf_y(x, z):
     x, z = np.asarray(x, float), np.asarray(z, float)
     nz = np.where(z >= 0, z / RZT, -(np.clip(-z, 0.0, RZB) / RZB) ** (1 / CHIN))
     low = np.clip(-nz, 0.0, 1.0)
-    nx = x / (RX * (1 + JAW * np.sin(np.pi * low)))
+    nx = x / (RX * wfac(low))
     return -RY * np.sqrt(np.clip(1 - nx * nx - nz * nz, 1e-5, 1.0))
 
 
@@ -195,7 +238,7 @@ def build(**dials):
     if bad:
         raise ValueError(f"unknown hero dials {sorted(bad)}; known: {sorted(DEFAULTS)}")
     D = {**DEFAULTS, **dials}
-    for key in ("outfit", "hair", "glasses", "headphones", "skin"):
+    for key in ("outfit", "hair", "glasses", "headphones", "skin", "beard"):
         if D[key] not in HERO[key]["options"]:
             raise ValueError(f"{key} must be one of {HERO[key]['options']}, got {D[key]!r}")
     OF = OUTFITS[D["outfit"]]
@@ -219,7 +262,7 @@ def build(**dials):
         nt.links.new(attr.outputs["Color"], sep.inputs["Color"])
         prev = None
         for chan, col, amount in (("Red", mix_hex(skin_hex, "#D4483F", 0.55), 0.55),
-                                  ("Green", mix_hex(skin_hex, D["hair_color"], 0.62), stubble)):
+                                  ("Green", mix_hex(skin_hex, D["hair_color"], 0.85), min(1.0, 0.6 + stubble))):
             mul = nt.nodes.new("ShaderNodeMath")
             mul.operation = "MULTIPLY"
             mul.inputs[1].default_value = amount
@@ -376,6 +419,13 @@ def build(**dials):
         Q[:, 1] += surf_y(xr + dx, P0[:, 2] + dz) - surf_y(xr, P0[:, 2]) - out_y * f
         return Q
 
+    if SMILE_REST:  # his resting face: the closed smile at SMILE_REST, baked into the basis
+        sm_spec = MOUTH["smile"]
+        P0 = mouth_key(a=1 + (sm_spec["a"] - 1) * SMILE_REST, lift=sm_spec["lift"] * SMILE_REST)
+        me.vertices.foreach_set("co", P0.ravel())
+        side = np.where(P0[:, 2] > zm, 1.0, -1.0)
+        xr, zr = P0[:, 0], P0[:, 2] - zm
+        t = np.clip(xr / w0, -1.0, 1.0)
     hd.shape_key_add(name="Basis")
     for name, spec in MOUTH.items():
         kb = hd.shape_key_add(name=name, from_mix=False)
@@ -386,10 +436,17 @@ def build(**dials):
 
     # blush (red) and stubble (green) masks, painted per vertex so they move with the face
     x, y, z = P0[:, 0], P0[:, 1], P0[:, 2]
-    blush = np.exp(-(((np.abs(x) - 0.100) / 0.034) ** 2 + ((z + 0.066) / 0.026) ** 2)) * (y < 0)
+    blush = np.exp(-(((np.abs(x) - 0.090) / 0.030) ** 2 + ((z + 0.066) / 0.026) ** 2)) * (y < 0)
     sm = lambda e0, e1, v: np.clip((v - e0) / (e1 - e0), 0, 1) ** 2 * (3 - 2 * np.clip((v - e0) / (e1 - e0), 0, 1))  # noqa: E731
-    stub = sm(-0.058, -0.088, z) * sm(0.085, 0.015, y)
-    stub *= 1 - 0.85 * np.exp(-((x / (w0 * 1.25)) ** 2 + ((z - zm) / 0.010) ** 2))  # lips stay clean
+    band = sm(-0.058, -0.088, z) * sm(0.085, 0.015, y)  # the jaw-and-chin stubble band
+    band *= 1 - 0.85 * np.exp(-((x / (w0 * 1.25)) ** 2 + ((z - zm) / 0.010) ** 2))  # lips stay clean
+    front = (y < 0).astype(float)
+    tache = (np.exp(-((z - (zm + 0.0090 - 0.006 * (x / w0) ** 2)) / 0.0042) ** 2)  # thin, drooping at the corners
+             * np.exp(-np.maximum(0, np.abs(x) - 1.12 * w0) ** 2 / 0.003 ** 2)
+             * (1 - 0.45 * np.exp(-(x / 0.005) ** 2)) * front)  # lighter at the philtrum
+    chin = np.exp(-(x / 0.021) ** 2) * sm(zm - 0.009, zm - 0.022, z) * front  # the chin beard, below the lower lip
+    stub = {"light": np.maximum(np.maximum(tache, chin), 0.28 * band), "stubble": band,
+            "none": np.zeros_like(band)}[D["beard"]]
     mask = np.stack([blush, stub, np.zeros_like(x), np.ones_like(x)], 1)
     me.color_attributes.new("Mask", "FLOAT_COLOR", "POINT").data.foreach_set("color", mask.ravel())
     sub = hd.modifiers.new("Subd", "SUBSURF")
@@ -419,7 +476,7 @@ def build(**dials):
 
     # nose: one small wedge
     np_, nrot = on_face(0, -0.060, -0.002)
-    nose = soften(mesh("AV_Nose", [(0, 0, 0.013), (-0.0085, 0, -0.008), (0.0085, 0, -0.008), (0, -0.013, -0.006)],
+    nose = soften(mesh("AV_Nose", [(0, 0, 0.016), (-0.0095, 0, -0.009), (0.0095, 0, -0.009), (0, -0.016, -0.007)],
                        [(0, 1, 3), (0, 3, 2), (1, 2, 3), (0, 2, 1)], coll, M["blush"], smooth=True, parent=hgeo),
                   0.0025, 2)
     nose.location, nose.rotation_euler = np_, nrot
@@ -462,11 +519,11 @@ def build(**dials):
         bp, brot = on_face(sx * (EYE_X + 0.002), BROW_Z, 0.0005)
         bpiv = empty(f"Brow{tag}", bp, coll, hgeo)
         bpiv.rotation_euler = brot
-        brow = rbox(f"AV_Brow{tag}", (0.042, 0.008, 0.0100), coll, M["brow"], 0.0035, parent=bpiv)
+        brow = rbox(f"AV_Brow{tag}", (0.048, 0.009, 0.0125), coll, M["brow"], 0.004, parent=bpiv)
         bv = face({"u": "browInnerUp", "d": f"browDown{sname}", "o": f"browOuterUp{sname}"})
         drive(brow, "location", f"{-sx}*0.004*d", bv, 0)
         drive(brow, "location", "0.010*u+0.013*o-0.008*d", bv, 2)
-        drive(brow, "rotation_euler", f"{sx}*(0.05+0.42*u-0.46*d-0.16*o)", bv, 1)
+        drive(brow, "rotation_euler", f"{sx}*(-0.02+0.42*u-0.46*d-0.16*o)", bv, 1)  # straight at rest
         # ears
         ear = ball(f"AV_Ear{tag}", (0.011, 0.022, 0.030), coll, M["blush"], (sx * (RX - 0.002), 0.012, -0.022),
                    parent=hgeo, segs=16)
@@ -477,7 +534,8 @@ def build(**dials):
 
     def hairline(az):
         a = abs((az + 180) % 360 - 180)
-        return float(np.interp(a, [h[0] for h in HAIRLINE], [h[1] for h in HAIRLINE]))
+        line = preset.get("hairline", HAIRLINE)
+        return float(np.interp(a, [h[0] for h in line], [h[1] for h in line]))
 
     cols, rows = 44, 10  # dense enough that the flat facets never dip under the skin
     cap_v, cap_f = [], []
@@ -505,7 +563,7 @@ def build(**dials):
         for i, (d, _) in enumerate(path):
             s = i / (len(path) - 1)
             w = width * float(np.interp(s, [0, 0.15, 0.45, 0.8, 1], [0.55, 0.9, 1.0, 0.62, 0.07]))
-            th = 0.44 * w
+            th = preset.get("thick", 0.44) * w  # flatter clumps keep a short cut close to the head
             _, sd, up = geo.frame(pts, i, d)
             c = pts[i] + up * th * 0.3
             rings.append([c + sd * (w * math.cos(2 * math.pi * j / k + math.pi / 2))
@@ -517,7 +575,7 @@ def build(**dials):
             path = [(hdir(th, f), lift) for th, f, lift in spec]
         else:
             th0, th1, f0, f1, (l0, lm, l1), width = spec
-            wob = 0.004 * math.sin(ci * 12.9898)  # a little irregularity, the same every build
+            wob = (0.012 if D["hair"] == "fringe" else 0.004) * math.sin(ci * 12.9898)  # irregular, same every build
             path = [(hdir(th0 + (th1 - th0) * s, f0 + (f1 - f0) * s + wob * math.sin(math.pi * s)),
                      l0 + (l1 - l0) * s + lm * math.sin(math.pi * s) ** 0.8) for s in (i / 7 for i in range(8))]
         clump(f"AV_Hair{ci:02d}", path, spec[5] if not isinstance(spec, list) else 0.036)
@@ -527,8 +585,47 @@ def build(**dials):
                     parent=hgeo, ico=1, smooth=False)
         curl.rotation_euler = (ci * 0.9, ci * 1.7, ci * 0.5)
 
-    # --- glasses: a thin real rim and a faint lens ------------------------------------------------------
-    if D["glasses"] != "none":
+    # --- glasses: bold acetate (default) or a thin wire rim, with a faint lens ----------------------------
+    if D["glasses"] == "bold":
+        gx, gz = EYE_X + 0.002, EYE_Z + 0.002
+        gy = float(surf_y(gx, gz)) - 0.019
+        acetate = mat("AV_Acetate", "#0E0D0F", rough=0.22, coat=0.6)
+        ao, bo, band_w, n_r = 0.054, 0.040, 0.0068, 4.2  # each lens: outer half-width/height, rim band, squareness
+
+        def sup_ring(a_, b_, centre, rot, n=48, droop=0.0):
+            pts = []
+            for i in range(n):
+                t = 2 * math.pi * i / n
+                c, s_ = math.cos(t), math.sin(t)
+                x_ = a_ * math.copysign(abs(c) ** (2 / n_r), c)
+                z_ = b_ * math.copysign(abs(s_) ** (2 / n_r), s_)
+                if z_ < 0:  # the lower edge curves a little, like real frames
+                    z_ -= droop * (1 - (x_ / a_) ** 2)
+                pts.append(centre + rot @ Vector((x_, 0, z_)))
+            return pts
+
+        for sx in (1, -1):
+            rot = Matrix.Rotation(sx * math.radians(12), 4, "Z")
+            centre = Vector((sx * gx, gy, gz))
+            outer = sup_ring(ao, bo, centre, rot, droop=0.004)
+            inner = sup_ring(ao - band_w, bo - band_w * 1.05, centre, rot, droop=0.004)
+            front = loft(f"AV_Frame{'L' if sx > 0 else 'R'}", [outer, inner], coll, acetate, closed=True,
+                         caps=(False, False), smooth=True, parent=hgeo)
+            so = front.modifiers.new("Solid", "SOLIDIFY")
+            so.thickness, so.offset = 0.0055, 0.0
+            soften(front, 0.0016, 2, 35)
+            glass = mesh(f"AV_Lens{'L' if sx > 0 else 'R'}", [centre] + inner,
+                         [(0, i + 1, (i + 1) % 48 + 1) for i in range(48)], coll, M["lens"], smooth=True, parent=hgeo)
+            glass.visible_shadow = False
+            hinge = centre + rot @ Vector((sx * (ao - 0.002), 0.003, bo - 0.012))
+            tube(f"AV_Temple{'L' if sx > 0 else 'R'}",
+                 [hinge, hinge + Vector((sx * 0.012, 0.010, 0.0)), Vector((sx * (RX + 0.006), -0.04, gz + 0.016)),
+                  Vector((sx * (RX + 0.004), 0.03, gz + 0.010))], 0.0028, coll, acetate, k=8, parent=hgeo)
+        inner_x = gx - ao * math.cos(math.radians(12))
+        tube("AV_Bridge", [Vector((-inner_x - 0.002, gy - 0.002, gz + 0.012)), Vector((0, gy - 0.006, gz + 0.016)),
+                           Vector((inner_x + 0.002, gy - 0.002, gz + 0.012))], 0.0034, coll, acetate, k=8,
+             parent=hgeo)
+    elif D["glasses"] != "none":
         gx, gz = EYE_X + 0.001, EYE_Z + 0.002
         gy = float(surf_y(gx, gz)) - 0.017
         a_r, b_r, n_r = (0.046, 0.046, 2.0) if D["glasses"] == "round" else (0.047, 0.034, 5.0)

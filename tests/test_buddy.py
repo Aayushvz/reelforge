@@ -103,6 +103,7 @@ def test_animate_is_deterministic_bounded_and_mirrors_toward_the_hero():
     assert all(-0.15 <= v <= 0.3 for v in a["squash"])
     assert all(0.0 <= v <= 1.0 for v in a["eye_h"]) and min(a["eye_h"]) == 0.0  # it blinks
     assert max(a["hop"]) == pytest.approx(1.0, abs=0.01)
+    assert all(0.0 <= v <= 1.0 for v in a["voice"]) and max(a["voice"]) > 0.5 and max(a["voice"][:18]) == 0.0
     assert set(a["eye_shape"]) <= {0.0, 1.0, 2.0, 3.0, 4.0}
     assert all(y > x for x, y in zip(a["phase"], a["phase"][1:]))  # the signature angle only moves forward
     b = buddy.animate(180, FPS, _segments(), seed=7, hero_side=-1)

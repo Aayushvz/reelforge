@@ -41,7 +41,7 @@ def test_prompt_example_parses_with_defaults():
     me, buddy = p.characters["me"], p.characters["buddy"]
     assert me.model == "av_hero" and buddy.model == "buddy_claude" and buddy.options == {}
     assert me.options == {"outfit": "puffer", "outfit_color": "#7C3AED", "glasses": "round", "headphones": "neck",
-                          "skin": "warm_brown", "hair": "swept", "stubble": 0.3}
+                          "skin": "wheat", "hair": "fringe", "beard": "light", "stubble": 0.3}
     assert [l.id for l in p.lines] == ["l01", "l02", "l03"]
     assert [(l.beat, l.action) for l in p.lines] == [(False, ""), (False, "hop"), (True, "")]
     assert (p.lines[0].emotion, p.lines[0].intensity, p.lines[0].mood) == ("neutral", 0.5, "calm")
@@ -52,8 +52,8 @@ def test_hero_options_default_to_brand_purple_puffer():
     d = _av()
     d["characters"]["me"] = {"model": "av_hero"}
     assert parse_performance(d).characters["me"].options == {
-        "outfit": "puffer", "outfit_color": schema.AV_PURPLE, "glasses": "round", "headphones": "neck",
-        "skin": "warm_brown", "hair": "swept", "stubble": 0.3}
+        "outfit": "puffer", "outfit_color": schema.AV_PURPLE, "glasses": "bold", "headphones": "neck",
+        "skin": "wheat", "hair": "fringe", "beard": "light", "stubble": 0.3}
 
 
 @pytest.mark.parametrize("skin", schema.AV_SKINS)
@@ -68,8 +68,8 @@ def test_every_skin_and_hair_is_a_user_choice(skin, hair):
 def test_hero_blend_names_each_combination_once():
     a = shots_av.hero_blend({"outfit": "hoodie", "skin": "deep", "hair": "buzz", "outfit_color": "#22C55E"})
     assert a == shots_av.hero_blend({"hair": "buzz", "outfit_color": "#22c55e", "skin": "deep", "outfit": "hoodie"})
-    assert a.name == "av_hero__hoodie__deep__buzz__round__neck__22c55e__s030.blend"
-    assert shots_av.hero_blend({}).name == "av_hero__puffer__warm_brown__swept__round__neck__7c3aed__s030.blend"
+    assert a.name == "av_hero__hoodie__deep__buzz__bold__neck__light__22c55e__s030.blend"
+    assert shots_av.hero_blend({}).name == "av_hero__puffer__wheat__fringe__bold__neck__light__7c3aed__s030.blend"
     assert shots_av.hero_blend({"skin": "tan"}) != shots_av.hero_blend({"skin": "light"})
 
 
@@ -85,7 +85,7 @@ def test_any_hex_jacket_colour_is_accepted_and_junk_is_not():
 
 @pytest.mark.parametrize("key,value", [("outfit", "tuxedo"), ("outfit", 1), ("glasses", "monocle"),
                                        ("headphones", "ears"), ("skin", "green"), ("hair", "mohawk"),
-                                       ("stubble", 2), ("stubble", "some")])
+                                       ("stubble", 2), ("stubble", "some"), ("beard", "full")])
 def test_unknown_hero_options_are_rejected(key, value):
     d = _av()
     d["characters"]["me"][key] = value
@@ -156,9 +156,9 @@ def test_buddy_table_matches_the_schema_and_the_acting_controls():
         k: v for k, v in acting.REST.items() if v}
     for bid, b in t["BUDDIES"].items():
         assert 0.13 <= b["height"] <= 0.15, bid  # about 0.4 of the hero's 0.34 m head
-        assert 2 <= b["feet"] <= 4 and b["signature"], bid
-    assert t["EYE"] == (0.008, 0.022)
-    assert t["BUDDIES"]["claude"]["body"] == "#D97757" and t["BUDDIES"]["chatgpt"]["glow"] == "#10A37F"
+        assert 0 <= b["feet"] <= 4 and b["signature"], bid  # robots stand on feet, a puck, a stand block or hover
+    assert t["EYE"] == (0.011, 0.019) and t["MOUTH_BARS"] == 9
+    assert t["BUDDIES"]["claude"]["shell"] == "#D97757" and t["BUDDIES"]["chatgpt"]["glow"] == "#10A37F"
     assert set(t["BUDDIES"]["figma"]["blocks"].values()) == {"#F24E1E", "#FF7262", "#A259FF", "#1ABCFE", "#0ACF83"}
     assert shots_av.buddy_blend("buddy_nova").name == "buddy_nova.blend"
 
@@ -187,9 +187,10 @@ def test_hero_table_matches_the_schema_and_the_brand():
     t = shots_av.hero_tables()  # hero.py must import without Blender
     hero = t["HERO"]
     assert tuple(t["OUTFITS"]) == schema.AV_OUTFITS
-    assert tuple(hero["glasses"]["options"]) == schema.AV_GLASSES and hero["glasses"]["default"] == "round"
+    assert tuple(hero["glasses"]["options"]) == schema.AV_GLASSES and hero["glasses"]["default"] == "bold"
+    assert tuple(hero["beard"]["options"]) == schema.AV_BEARDS and hero["beard"]["default"] == "light"
     assert set(hero["headphones"]["options"]) == set(schema.AV_HEADPHONES) and hero["headphones"]["default"] == "neck"
-    assert tuple(hero["hair"]["options"]) == ("swept", "curly_top", "buzz") and hero["hair"]["default"] == "swept"
+    assert tuple(hero["hair"]["options"]) == ("fringe", "swept", "curly_top", "buzz") and hero["hair"]["default"] == "fringe"
     assert set(t["SKINS"]) == set(schema.AV_SKINS) and hero["skin"]["default"] == schema.AV_SKINS[0]
     assert tuple(hero["hair"]["options"]) == tuple(schema.AV_HAIRS)
     assert hero["stubble"]["default"] == 0.3 and hero["outfit"]["default"] == "puffer"

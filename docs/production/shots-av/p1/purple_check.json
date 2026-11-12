@@ -7,44 +7,44 @@
   ],
   "neutral_warm_4300K": {
     "card": {
-      "hex": "#A05EF4",
-      "dE76": 19.2
+      "hex": "#9649F1",
+      "dE76": 9.4
     },
     "jacket_lit": {
-      "hex": "#8636E8",
-      "dE76": 3.6
+      "hex": "#8632E4",
+      "dE76": 4.6
     },
     "jacket_shadow": {
-      "hex": "#772AE1",
-      "dE76": 4.5
+      "hex": "#7A29DD",
+      "dE76": 5.3
     }
   },
   "screen_cool_7500K": {
     "card": {
-      "hex": "#8C6AF9",
-      "dE76": 25.0
+      "hex": "#835AF8",
+      "dE76": 15.0
     },
     "jacket_lit": {
-      "hex": "#7545F3",
-      "dE76": 4.8
+      "hex": "#7442F3",
+      "dE76": 3.7
     },
     "jacket_shadow": {
-      "hex": "#6A37EF",
-      "dE76": 5.3
+      "hex": "#6A37EE",
+      "dE76": 4.9
     }
   },
   "daylight_5600K": {
     "card": {
-      "hex": "#9969F8",
-      "dE76": 24.4
+      "hex": "#9058F6",
+      "dE76": 14.1
     },
     "jacket_lit": {
-      "hex": "#8243F2",
-      "dE76": 3.2
+      "hex": "#8240F1",
+      "dE76": 2.1
     },
     "jacket_shadow": {
-      "hex": "#7535ED",
-      "dE76": 3.0
+      "hex": "#7734EB",
+      "dE76": 2.3
     }
   }
 }

@@ -34,7 +34,7 @@ def hero_tables() -> dict:
     return runpy.run_path(str(blender3d.BLENDER_DIR / "shotsav" / "hero.py"))
 
 
-HERO_KEYS = ("outfit", "skin", "hair", "glasses", "headphones", "outfit_color", "stubble")  # the file-name order
+HERO_KEYS = ("outfit", "skin", "hair", "glasses", "headphones", "beard", "outfit_color", "stubble")  # the file-name order
 
 
 def _slug(value) -> str:

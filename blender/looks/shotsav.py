@@ -40,6 +40,8 @@ def apply_scene(sc, plan, characters):
     im.file_format, im.color_depth, im.color_mode, im.compression = "PNG", "8", "RGB", 15
     sc.render.dither_intensity = 1.0
     sc.eevee.use_raytracing = True  # contact shadows and ambient occlusion under every object
+    if hasattr(sc.eevee, "shadow_ray_count"):  # glasses and hair tips cast thin soft shadows: 1 ray is grainy
+        sc.eevee.shadow_ray_count, sc.eevee.shadow_step_count = 4, 12
     if hasattr(sc.eevee, "shadow_pool_size"):
         sc.eevee.shadow_pool_size = "1024"
     sc.view_settings.view_transform, sc.view_settings.look = "Khronos PBR Neutral", "None"
