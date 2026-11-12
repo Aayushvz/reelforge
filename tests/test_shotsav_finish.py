@@ -123,3 +123,17 @@ def test_shotsav_finish_command():
 
 def test_caption_tints_use_the_jacket_and_the_shell():
     assert shots_av.caption_tints(_perf()) == {"me": "#7C3AED", "claude": "#D97757"}
+
+
+@pytest.mark.parametrize("skin", ["0xF2B48C", "0xE8A07A", "0xD6A688"])
+def test_halation_never_tints_skin(skin):
+    """Bright skin (red over the halo threshold, green under it) must keep its hue through the halo."""
+    graph = "format=gbrp16le,split=2[base][hi];" + finish.AV_HALO.rstrip(",")
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", f"color=c={skin}:s=64x64:d=0.04",
+                          "-filter_complex", graph + ",format=rgb24", "-frames:v", "1", "-f", "rawvideo", "-"],
+                         capture_output=True, check=True).stdout
+    r, g, b = raw[3 * (32 * 64 + 32):3 * (32 * 64 + 32) + 3]
+    want = [int(skin[i:i + 2], 16) for i in (2, 4, 6)]
+    h0 = colorsys.rgb_to_hsv(*(v / 255 for v in want))[0] * 360
+    h1 = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)[0] * 360
+    assert abs(h1 - h0) <= 2.0 and max(abs(x - y) for x, y in zip((r, g, b), want)) <= 4
