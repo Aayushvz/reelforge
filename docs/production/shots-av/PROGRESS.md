@@ -220,6 +220,13 @@ different placements in the room; captions placed and sized by hand.
   Final 3.3 s/frame, Balanced 1.0 s/frame (SSIM 0.987, PSNR 40 dB; faces match by eye), 32 samples alone 1.9 s/frame
   (SSIM 0.998). A 49 s reel: Draft ~9 min, Balanced ~25 min, Final ~80 min. Render settings only; no character change.
 
+## P7 benchmark (2026-11-13): shipped
+Original 20-line script approved by the owner ("the client wants the logo bigger"), 20 ElevenLabs takes, rendered at
+Balanced in Studio night with the reference grammar (23.3 min) and the signature director (24.1 min), and in Studio
+morning (25.3 min); 54.7 s each, -14.3 to -14.4 LUFS. Rubric: ours wins 10 of 10 rows, loses none (`p7/score.md`).
+Strips in `p7/strip_*.jpg`; `side_by_side.mp4` is local only (42 MB). Next steps from the score: a connected camera
+move, moving background life, stronger subsurface at phone size.
+
 ## P1 hero (what was built)
 - **Proportions:** head 0.36 tall by 0.31 wide, oval with a squarish jaw (the owner's), eyes at 1.18 m seated, desk top at 0.74, shoulders 0.46 wide over the sleeves, short thick arms, hands about 0.10.
 - **Face:** black oval eyes (0.024 by 0.040, 0.115 apart) with one fixed highlight; upper and lower lids (blink, half-lid, squint, wide, cheek push); brows that raise, lower, angle and pinch; a small wedge nose; ears; per-vertex blush on cheeks, ears and nose tip; a stubble band (dial 0 to 1, default 0.3).
