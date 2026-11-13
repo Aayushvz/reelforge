@@ -122,3 +122,9 @@ def test_balanced_tier_is_the_default_full_size_render():
                                                "rt_scale", "gi_steps"}  # render cost only, never the characters
     t = shots_av.TIMING
     assert t["draft_s_per_frame"] < t["balanced_s_per_frame"] < t["final_s_per_frame"] / 2
+
+
+def test_draft_tier_keeps_shadow_quality():
+    from reelforge.engines import shots_av
+    d = shots_av.TIERS["draft"]
+    assert d["samples"] < 16 and "shadow_rays" not in d  # fewer samples, but full soft shadows (no speckle)
