@@ -175,14 +175,14 @@ export function VoicePanel() {
     <Panel id="voice" title="Voice & audio" right={lines.length > 0 ? <Badge tone={cached === lines.length ? "ok" : undefined}><AudioLines size={11} />{busy ? "Voicing…" : `${cached}/${lines.length} voiced`}</Badge> : undefined}>
       <div className="col" style={{ gap: 6 }}>
         {speakers.map((sp) => {
-          const v = perf!.characters[sp].voice_id;
+          const v = perf!.characters[sp]?.voice_id ?? "";  // older or imported projects may have no voice yet
           const known = voiceById(v);
           return (
             <div key={sp} className="row">
               <span className="mono meta" style={{ width: 56, color: speakerTone(perf, sp) }}>{sp}</span>
               <Select size="sm" ariaLabel={`Voice for ${sp}`} value={known ? v : "custom"}
                 onChange={(id) => id !== "custom" && setPerf((p) => ({ ...p, characters: { ...p.characters, [sp]: { ...p.characters[sp], voice_id: id } } }))}
-                options={[...VOICES.map((x) => ({ value: x.id, label: `${x.name} · ${x.tags.slice(1, 3).join(", ")}` })), ...(known ? [] : [{ value: "custom", label: `Custom ID ${v.slice(0, 6)}…` }])]} />
+                options={[...VOICES.map((x) => ({ value: x.id, label: `${x.name} · ${x.tags.slice(1, 3).join(", ")}` })), ...(known ? [] : [{ value: "custom", label: v ? `Custom ID ${v.slice(0, 6)}…` : "No voice yet" }])]} />
             </div>
           );
         })}
