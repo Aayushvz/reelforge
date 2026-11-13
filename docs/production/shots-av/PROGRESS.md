@@ -79,6 +79,14 @@ plants sway; PC fans breathe their RGB; the CRT flickers; neon and LED strips hu
 of seconds. Every room except Lilac cyc has visible motion. Evidence: `p7/background_life.mp4` (3 s held wides,
 draft). Rubric row 6 now has "moving background life".
 
+## Skin at phone size (2026-11-14)
+Subsurface was 0.22 over 1.2 cm, too shallow on a 31 cm cartoon head to show on a phone (an A/B at 0.42/2.8 cm and
+0.5/8 cm measured no change). Now `SKIN_SSS = (0.85, 0.18)` and `EAR_SSS = (1.0, 0.20)` with a red-heavy radius in
+`blender/shotsav/hero.py`: the shadow-side cheek warms (Editor night R 136 -> 145, G and B unchanged), the terminator
+softens toward orange, and the ears glow against the light. Jacket purple unchanged in both rooms; still render time
+unchanged. Shading only, no geometry or texture change. Evidence: `p1/skin_phone_size.jpg` (left before, right after;
+top Editor night, bottom Studio morning). Hero blends rebuild on demand.
+
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
 2. Shared size: body 0.13-0.15 m tall (about 0.4 of the hero's head), two black rectangle eyes 0.022 by 0.008, no mouth, 2-4 stub feet, a soft contact shadow that shrinks on a hop.

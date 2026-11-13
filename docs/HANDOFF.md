@@ -193,5 +193,5 @@ full-size render; never reduce character quality (render settings only).
 **Projects:** `projects/i-just-asked-you-to-fix-one-thing` (the owner's script, Editor night),
 `projects/p7-bench-{reference,signature,morning}` (benchmark). Projects are git-ignored.
 
-**Next steps (from the P7 score):** ~~a connected camera move~~ done 2026-11-14 (`camera.connect`); ~~moving background life~~ done 2026-11-14 (`blender/shotsav/life.py`) (cars, signs, monitor activity); stronger
-subsurface at phone size; draft speed toward the 6-minute budget (haze resolution and shadow rays are the levers).
+**Next steps (from the P7 score):** ~~a connected camera move~~ done 2026-11-14 (`camera.connect`); ~~moving background life~~ done 2026-11-14 (`blender/shotsav/life.py`) (cars, signs, monitor activity); ~~stronger
+subsurface at phone size~~ done 2026-11-14 (`SKIN_SSS`); draft speed toward the 6-minute budget (haze resolution and shadow rays are the levers).
