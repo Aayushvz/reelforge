@@ -44,7 +44,21 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 6 | Walkthrough evidence | done | 1283779 | starter script -> plan (9 shots) -> `p6/preview_still_shot5.png` -> `p6/walkthrough_silent_animatic.mp4` (22.8 s, draft) |
 | 6 | Generate reel run end to end (owner approved spending credits) | done | — | "The 2 AM fix": 9 ElevenLabs takes in about 10 s, draft rendered in 5.5 min, -14.2 LUFS |
 | 6 | Owner's script "I just asked you to fix one thing" (`projects/i-just-asked-you-to-fix-one-thing`) | **final done** (1080x1920, 32.8 s, 10.7 Mbps, -14.1 LUFS, rendered in about 47 min) | 5d42699 | 6 directed takes (`[annoyed]`, `[cheerfully]`, `[frustrated]`, `[sheepishly]`, `[sadly]`, `[sadly] [quietly]`), 32.8 s with the end card, 14 shots |
-| 7-8 | Benchmark, docs | not started | — | |
+| 6 | Hero fixes: proportional hands and legs, cartoon mouth with lips/teeth/tongue, loudness-driven jaw, desk panel | done | 0284327 | `p1/_tiles/fix_body.png`, `fix_mouth.png`, `fix_legs.png` |
+| 6 | Six 3D gamer/editor rooms, room placement (`room_view` + panorama picker), 36-angle director, hand-placed captions | done | d6d73de | `p3/rooms.jpg`, `p7/angles_editor_night.jpg` |
+| 6 | Balanced render tier (default full-size render) | done | dea9863 | bench table below |
+| 7 | Benchmark reel: script, 20 ElevenLabs takes, reference + signature in Studio night, signature in Studio morning, side-by-side, rubric | **passed: ours wins 10 of 10** | 23645c1 | `p7/score.md`, `p7/strip_*.jpg`; `side_by_side.mp4` local only |
+| 8 | Docs (`HANDOFF.md` section 9, README), bench numbers, final test run | done | P8 commit | 246 tests pass; editor `npm run build` clean (2026-11-13) |
+
+## Bench numbers (RTX 4060 Laptop, Blender 4.5.15, 1080x1920 output)
+| Tier | Settings | s/frame | 49 s reel | 55 s P7 reel (measured) | Prompt budget |
+|---|---|---|---|---|---|
+| Draft | 540x960, 16 samples | 0.36 | about 9 min | — | 6 min (missed; acceptable to the owner) |
+| **Balanced** (default) | 1080x1920, 24 samples, 2 shadow rays / 6 steps, haze grid 16 / 32 samples | 0.9-1.0 | about 25 min | 23.3-25.3 min | 30 min (**met**) |
+| Final | 1080x1920, 64 samples, 4 shadow rays / 12 steps | 3.3 | about 80 min | — (33 s reel: 47-57 min) | over |
+| Preview still | one shot, Final settings | — | — | 15-25 s each | — |
+Balanced vs Final on six frames of the owner's reel: SSIM 0.987, PSNR 40 dB; the faces match by eye. Render
+settings only: no character geometry, texture or shape-key change (CLAUDE.md rule).
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.

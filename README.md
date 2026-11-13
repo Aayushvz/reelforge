@@ -16,6 +16,7 @@ It's a multi-style platform. Each animation style is a pluggable "engine":
 | Style | Look | Status |
 |---|---|---|
 | `blender3d` | Stylized 3D characters in moody, glowing sets | Works: 7-character cast, 10 sets × 3 lighting presets (v1 look) |
+| `shots-av` | Shots-AV Animation: you and an AI buddy robot at a desk, low-poly 3D in brand purple, 12 rooms, 36 camera angles | **Works**: editor page, ElevenLabs voices, benchmark passed (see below) |
 | `cinematic-ai` | Pixar-like cinematic AI video (opt-in, paid providers) | Planned |
 | more | From future references | Planned |
 
@@ -36,7 +37,7 @@ python -m venv .venv
 # and extract it into tools/blender-4.5/, then:
 echo "<absolute path to blender.exe>" > tools/blender_path.txt
 export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
-.venv/Scripts/python -m pytest -q          # 63 tests should pass
+.venv/Scripts/python -m pytest -q          # 246 tests should pass
 ```
 
 ## Make a reel
@@ -51,11 +52,27 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
 .venv/Scripts/reelforge run <project> --stage full             # final video → <project>/out/final_9x16.mp4
 ```
 
+## Make a Shots-AV reel (you + an AI buddy)
+The easy way is the editor: `cd editor && npm install && npm run dev`, open `http://localhost:5190/shots-av`, paste a
+script (`Me: ...` / `Claude: ...`), pick the buddy (Claude, ChatGPT, Figma, Nova), the room and your spot in it, the
+camera angles and the captions, and press **Generate reel**. Voices come from ElevenLabs with your own key (Settings);
+each line's emotion is performed. Quality: Draft (about 6 min for 30 s), Balanced (default, about 15 min for 30 s at
+1080x1920), Final (about 3x Balanced).
+From the command line:
+```bash
+.venv/Scripts/reelforge build-assets --style shots-av                 # hero, 4 buddies, 12 rooms
+.venv/Scripts/reelforge animatic <project>                             # silent preview, estimated timing
+.venv/Scripts/reelforge run <project> --stage full                     # Balanced, 1080x1920
+.venv/Scripts/reelforge run <project> --stage full --quality cinema    # Final
+```
+Details: [docs/HANDOFF.md section 9](docs/HANDOFF.md) and [docs/production/shots-av/PROGRESS.md](docs/production/shots-av/PROGRESS.md).
+
 ## Repository layout
 | Path | What's in it |
 |---|---|
 | `reelforge/` | Pipeline (Python, standard library only): schema, voice, alignment, timeline, visemes and face, director, captions, finish, CLI |
-| `blender/` | Headless Blender scripts: character, set, render-plan executor |
+| `blender/` | Headless Blender scripts: character, set, render-plan executor; `blender/shotsav/` holds the Shots-AV hero, buddies and rooms |
+| `editor/` | The web editor (React + Vite), including the Shots-AV page |
 | `tools/a2f_fetch.py` | Audio2Face ONNX experiment (optional) |
 | `tests/` | pytest suite |
 | `samples/` | Example projects: `look-test` (M1), `cafe-test` (one character), `duo-test` (two characters), `talk-<name>` (one per cast member) |

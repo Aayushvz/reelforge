@@ -1,4 +1,4 @@
-# reelforge: project handoff (as of 2026-10-31)
+# reelforge: project handoff (as of 2026-11-13; Shots-AV in section 9)
 
 Read this first in any new session. It covers what exists, how to run it, the decisions already made, and what to do next.
 
@@ -153,3 +153,46 @@ The owner supplied third-party Blender files (`~/Downloads/BLENDER FILES`; RARs 
   - The Rigify and ARP face moves are hand-tuned bone offsets. Freya's smile range is subtle.
   - Wide-shot framing was tuned for the seated stand-in, so standing characters sit low in frame.
   - The procedural (seated) cast doesn't suit the imported rooms.
+
+## 9. Shots-AV Animation (style `shots-av`, 2026-11-11 to 2026-11-13, branch `feat/shots-av`)
+A desk two-hander: you (a low-poly hero with the owner's likeness, Aayush Visuals purple `#7C3AED`) talking to an
+AI buddy robot. Brief: `docs/prompts/03-shots-av-animation.md`. Ledger, decisions and evidence:
+`docs/production/shots-av/PROGRESS.md` (read it first; it is the source of truth). Rubric: `RUBRIC.md` there.
+**Status: P0-P8 done; the P7 benchmark won 10 of 10 rubric rows** (`docs/production/shots-av/p7/score.md`).
+
+**Use it (editor):** `/shots-av` in the editor (dev server `reelforge-editor`, port 5190). Paste a script ("Me: ...",
+"Claude: ..."), pick the buddy, room, your spot in the room, look and captions, then **Generate reel**: ElevenLabs
+voices (the owner's key in Settings; each line's emotion becomes an audio tag), then the video timed to that audio.
+Quality: Draft (about 0.36 s/frame), **Balanced** (default, about 1 s/frame, 1080x1920), Final (about 3.3 s/frame).
+Restarting the dev server kills running render jobs.
+
+**Use it (CLI):** `reelforge build-assets --style shots-av` (hero, 4 buddies, 12 rooms);
+`reelforge run <project> --stage full [--draft | --quality cinema]`; `reelforge animatic <project>` (silent,
+estimated timing); `reelforge shots-av catalog|plan|preview <project>`; `reelforge thumbnails --style shots-av`.
+
+**Where things live:**
+- Characters: `blender/shotsav/hero.py` (hero, every option in the `HERO` table: 6 hairs, 7 skins, glasses, beards,
+  outfits), `buddies.py` (claude, chatgpt, figma, nova), `geo.py`; built on demand per option set by
+  `engines/shots_av.ensure_hero`.
+- Rooms: `blender/shotsav/rooms.py` (12: six original + six 3D gamer/editor rooms in `gamer_rooms.py`); everything
+  behind the desk hangs off `RoomPivot`, moved by `performance.room_view` {pan, height, turn}; `room_pano.py` renders
+  the editor's panorama picker into `assets/build/shotsav/thumbs/<room>_pano.jpg`.
+- Camera: `reelforge/angles.py` (36 angles + the director that picks them per shot from mood, role and reuse; seeded
+  per project, Reroll in the editor, per-shot override), `reelforge/direct.py::plan_shots_av` (cutting grammar,
+  "reference" keeps the reference reel's five set-ups), `blender/camera_rig.py` (framing maths, moves).
+- Acting, sound, captions, finish: `reelforge/buddy.py`, `engines/shots_av.py` (lip smoothing, loudness jaw,
+  acting), `ambience.py` (beds, foley, voice reflections), `captions.py` (`build_ass_shotsav`, the 10 editor
+  templates, hand placement and size, end card), `finish.py` (purple-safe grade, halo, vignette, -14 LUFS).
+- Render tiers: `engines/shots_av.TIERS` read by `blender/looks/shotsav.py`; `render_plan.py ... bench` times frames.
+- Editor: `editor/src/pages/shotsav/` (list, workspace, `Placers.tsx` for the room frame and caption placement).
+
+**Decisions to keep:** Khronos PBR Neutral, not AgX (purple accuracy); neutral-warm key, never orange; buddies read
+as their products with no traced logos; reference art is inspiration only, never a backdrop; Balanced is the default
+full-size render; never reduce character quality (render settings only).
+
+**Projects:** `projects/i-just-asked-you-to-fix-one-thing` (the owner's script, Editor night),
+`projects/p7-bench-{reference,signature,morning}` (benchmark). Projects are git-ignored.
+
+**Next steps (from the P7 score):** a connected camera move that hides the hero-to-buddy scale change (deferred at P4;
+drop it if it cannot be clean, keep the rack focus); moving background life (cars, signs, monitor activity); stronger
+subsurface at phone size; draft speed toward the 6-minute budget (haze resolution and shadow rays are the levers).
