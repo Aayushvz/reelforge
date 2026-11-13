@@ -64,7 +64,9 @@ SHOULDER = (0.165, 0.0, 0.955)  # shoulders 0.46 wide over the sleeves
 LU, LF = 0.17, 0.17  # upper arm and forearm: short and thick
 GAP = 0.0013  # the resting mouth is a thin dark line
 LIP_DEPTH = 0.009
-MOUTH_ROW, MOUTH_COLS, HEAD_CUTS = 5, 8, 63  # 8 columns: a cartoon mouth about 0.7 of the eye spacing
+MOUTH_ROW, MOUTH_COLS, HEAD_CUTS = 5, 8, 63
+SKIN_SSS = (0.85, 0.18)  # subsurface weight, scale (m): sized to this big cartoon head so it reads at phone size (was 0.22, 0.012)
+EAR_SSS = (1.0, 0.20)  # ears and nose tip: thin, so the rim light glows through them
 
 # Hand poses for the left hand (+X); the right mirrors in X. wrist/hint/finger/palm are in root space.
 # gain = how much of render_plan's talking-hand lift (ElbowL/R) the pose lets through.
@@ -290,9 +292,17 @@ def build(**dials):
     bpy.context.scene.collection.children.link(coll)
 
     # --- materials --------------------------------------------------------------------------------------
+    def translucent(m, weight, scale):
+        """Skin subsurface sized for a phone screen: deep enough on a 31 cm head that the terminator warms and thin
+        parts glow under the rim; the radius is red-heavy, like blood under skin (shading only, no geometry)."""
+        b = m.node_tree.nodes["Principled BSDF"]
+        b.inputs["Subsurface Weight"].default_value = weight
+        b.inputs["Subsurface Scale"].default_value = scale
+        b.inputs["Subsurface Radius"].default_value = (1.0, 0.26, 0.12)
+        return m
+
     def skin_material(name, masked):
-        m = mat(name, skin_hex, rough=0.52, sss=0.22)
-        m.node_tree.nodes["Principled BSDF"].inputs["Subsurface Scale"].default_value = 0.012
+        m = translucent(mat(name, skin_hex, rough=0.52), SKIN_SSS[0], SKIN_SSS[1])
         if not masked:
             return m
         nt = m.node_tree
@@ -322,7 +332,7 @@ def build(**dials):
     M = {
         "skin": skin_material("AV_Skin", True),
         "skin_plain": skin_material("AV_SkinPlain", False),
-        "blush": mat("AV_SkinBlush", mix_hex(skin_hex, "#D4483F", 0.28), rough=0.52, sss=0.22),
+        "blush": translucent(mat("AV_SkinBlush", mix_hex(skin_hex, "#D4483F", 0.28), rough=0.52), *EAR_SSS),
         "eye": mat("AV_Eye", "#0B0B0E", rough=0.12, coat=0.6),
         "glint": mat("AV_EyeGlint", "#FFFFFF", rough=0.3, emit=1.6),
         "brow": mat("AV_Brow", D["hair_color"], rough=0.75),
