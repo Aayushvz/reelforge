@@ -113,10 +113,33 @@ def cast(perf) -> tuple[str, str]:
     return hero, next(n for n in perf.characters if n != hero)
 
 
-def hero_acting(faces: dict, shots: list, hero: str, n_frames: int, fps: int) -> dict:
+MOUTH_SMOOTH = {"jawOpen": (1.6, 3.2), "mouthFunnel": (1.8, 3.5), "mouthPucker": (1.8, 3.5),
+                "mouthStretchLeft": (1.8, 3.5), "mouthStretchRight": (1.8, 3.5), "mouthPressLeft": (1.0, 2.4),
+                "mouthPressRight": (1.0, 2.4), "mouthRollLower": (1.0, 2.4), "mouthRollUpper": (1.0, 2.4),
+                "mouthClose": (1.0, 2.4)}
+
+
+def smooth_mouth(tracks: dict, fps: int, env: list | None, ranges: list) -> None:
+    """Per-letter visemes flicker. Smooth every mouth channel (fast in, slower out; closures stay quick) and, while
+    the hero speaks, mix the jaw with the voice's loudness so the mouth opens on the loud syllables."""
+    for ch, (att, rel) in MOUTH_SMOOTH.items():
+        if ch in tracks:
+            tracks[ch] = [round(v, 4) for v in acting.follow(tracks[ch], att, rel)]
+    if not env or "jawOpen" not in tracks:
+        return
+    loud = acting.follow(env, 1.3, 3.0)
+    jaw = tracks["jawOpen"]
+    for a, b in ranges:
+        for f in range(max(0, a), min(len(jaw), b, len(loud))):
+            jaw[f] = round(min(0.75, 0.5 * jaw[f] + 0.45 * min(1.0, loud[f] * 1.15)), 4)
+
+
+def hero_acting(faces: dict, shots: list, hero: str, n_frames: int, fps: int, env: list | None = None,
+                ranges: list | None = None) -> dict:
     """Blink on the first frames after a cut to his close-up (5.3: it softens the cut), at most every 2.8 s; and
     one pose change across a cut: thinking (fist on cheek) for the first third, then both hands on the desk."""
     tracks = faces[hero]
+    smooth_mouth(tracks, fps, env, ranges or [])
     last = -10 ** 6
     for s in shots:
         if s.kind in HERO_CU and s.start_frame - last >= int(2.8 * fps) and s.start_frame > 0:
@@ -185,7 +208,9 @@ def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope
     for c in plan["characters"]:
         if c["name"] == hero:
             c["blend"] = str(ensure_hero(perf.characters[hero].options))
-            c["props"] = hero_acting(faces, shots, hero, n_frames, perf.fps)
+            ranges = [(int(round(p.start * perf.fps)), int(round((p.start + p.duration) * perf.fps)))
+                      for p in placed if p.line.speaker == hero]
+            c["props"] = hero_acting(faces, shots, hero, n_frames, perf.fps, envelope, ranges)
             c["face"] = faces[hero]
             c["stepped"] = ["HandL", "HandR"]
             c["measure"] = "head"

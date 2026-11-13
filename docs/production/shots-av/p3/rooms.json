@@ -2,15 +2,15 @@
   "av_studio_night": {
     "wide": {
       "jacket": {
-        "hex": "#833DD0",
-        "dE76": 16.5
+        "hex": "#833ED1",
+        "dE76": 16.4
       },
-      "desk_front_luma": 0.077
+      "desk_front_luma": 0.102
     },
     "close": {
       "jacket": {
-        "hex": "#8030D5",
-        "dE76": 9.6
+        "hex": "#8031D5",
+        "dE76": 9.4
       }
     }
   },

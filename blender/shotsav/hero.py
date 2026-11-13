@@ -64,15 +64,15 @@ SHOULDER = (0.165, 0.0, 0.955)  # shoulders 0.46 wide over the sleeves
 LU, LF = 0.17, 0.17  # upper arm and forearm: short and thick
 GAP = 0.0013  # the resting mouth is a thin dark line
 LIP_DEPTH = 0.009
-MOUTH_ROW, MOUTH_COLS, HEAD_CUTS = 5, 5, 63
+MOUTH_ROW, MOUTH_COLS, HEAD_CUTS = 5, 8, 63  # 8 columns: a cartoon mouth about 0.7 of the eye spacing
 
 # Hand poses for the left hand (+X); the right mirrors in X. wrist/hint/finger/palm are in root space.
 # gain = how much of render_plan's talking-hand lift (ElbowL/R) the pose lets through.
 POSES = {
     "rest": {"wrist": (0.085, -0.205, 0.792), "hint": (1.0, 0.4, -0.5), "finger": (-0.40, -1.0, -0.36),
              "palm": (0.0, 0.0, -1.0), "gain": 1.0, "curl": (0.25, 0.30), "thumb": (0.55, 0.15, 0.2)},
-    "fist_cheek": {"wrist": (0.205, -0.125, 1.03), "hint": (0.5, -0.6, -0.8), "finger": (-0.55, 0.15, 0.85),
-                   "palm": (-0.75, 0.55, -0.35), "gain": 0.0, "curl": (1.45, 1.50), "thumb": (0.25, 0.9, 0.8)},
+    "fist_cheek": {"wrist": (0.150, -0.150, 0.975), "hint": (0.6, -0.5, -0.8), "finger": (-0.42, 0.12, 0.90),
+                   "palm": (-0.85, 0.45, -0.25), "gain": 0.0, "curl": (1.45, 1.50), "thumb": (0.25, 0.9, 0.8)},
     "point": {"wrist": (0.12, -0.30, 0.93), "hint": (1.0, 0.2, -0.6), "finger": (-0.22, -1.0, -0.08),
               "palm": (-0.5, 0.0, -0.85), "gain": 0.35, "curl": (1.45, 1.50), "index": (0.05, 0.05),
               "thumb": (0.25, 0.85, 0.7)},
@@ -85,17 +85,17 @@ POSES = {
 # Mouth shapes (metres): half-width a, upper/lower lip travel hu/hl, corner exponent n (2 = oval, higher =
 # rounded rectangle), lift = corners up along a parabola, fwd = lips pushed forward, shift = whole mouth sideways.
 MOUTH = {
-    "MBP": {"a": 1.04, "hu": -GAP / 2, "hl": -GAP / 2},
-    "small": {"a": 0.86, "hu": 0.0025, "hl": 0.0080, "n": 3.0},
-    "wide": {"a": 1.08, "hu": 0.0060, "hl": 0.0220, "n": 2.6},
-    "O": {"a": 0.54, "hu": 0.0085, "hl": 0.0115, "n": 2.0, "fwd": 0.004},
-    "E": {"a": 1.50, "hu": 0.0030, "hl": 0.0050, "n": 3.5, "lift": 0.008},
-    "FV": {"a": 0.95, "hu": 0.0060, "hl": -0.0030, "n": 3.0, "fwd_low": -0.0025},
-    "smile": {"a": 1.62, "lift": 0.021},
-    "cornerUpL": {"a_l": 1.34, "lift_l": 0.017},
-    "cornerUpR": {"a_r": 1.34, "lift_r": 0.017},
-    "cornerDownL": {"a_l": 1.12, "lift_l": -0.014},
-    "cornerDownR": {"a_r": 1.12, "lift_r": -0.014},
+    "MBP": {"a": 1.02, "hu": -GAP / 2, "hl": -GAP / 2},
+    "small": {"a": 0.82, "hu": 0.0040, "hl": 0.0120, "n": 2.4},  # a soft oval
+    "wide": {"a": 1.02, "hu": 0.0090, "hl": 0.0300, "n": 2.2},  # "ah": a big rounded opening, not a slot
+    "O": {"a": 0.50, "hu": 0.0120, "hl": 0.0160, "n": 2.0, "fwd": 0.005},
+    "E": {"a": 1.24, "hu": 0.0040, "hl": 0.0100, "n": 3.0, "lift": 0.006},
+    "FV": {"a": 0.90, "hu": 0.0070, "hl": -0.0030, "n": 2.6, "fwd_low": -0.0025},
+    "smile": {"a": 1.28, "lift": 0.018},
+    "cornerUpL": {"a_l": 1.16, "lift_l": 0.015},
+    "cornerUpR": {"a_r": 1.16, "lift_r": 0.015},
+    "cornerDownL": {"a_l": 1.06, "lift_l": -0.012},
+    "cornerDownR": {"a_r": 1.06, "lift_r": -0.012},
     "side": {"shift": 0.006},
 }
 # The 52 ARKit channels mapped down to the mouth shapes (simple driver expressions; see _mouth_drivers).
@@ -302,7 +302,8 @@ def build(**dials):
         nt.links.new(attr.outputs["Color"], sep.inputs["Color"])
         prev = None
         for chan, col, amount in (("Red", mix_hex(skin_hex, "#D4483F", 0.55), 0.55),
-                                  ("Green", mix_hex(skin_hex, D["hair_color"], 0.85), min(1.0, 0.6 + stubble))):
+                                  ("Green", mix_hex(skin_hex, D["hair_color"], 0.85), min(1.0, 0.6 + stubble)),
+                                  ("Blue", mix_hex(skin_hex, "#A8483F", 0.42), 0.85)):
             mul = nt.nodes.new("ShaderNodeMath")
             mul.operation = "MULTIPLY"
             mul.inputs[1].default_value = amount
@@ -487,7 +488,9 @@ def build(**dials):
     chin = np.exp(-(x / 0.021) ** 2) * sm(zm - 0.009, zm - 0.022, z) * front  # the chin beard, below the lower lip
     stub = {"light": np.maximum(np.maximum(tache, chin), 0.10 * band), "stubble": band,  # jaw shadow kept faint: more reads as grime under coloured light
             "none": np.zeros_like(band)}[D["beard"]]
-    mask = np.stack([blush, stub, np.zeros_like(x), np.ones_like(x)], 1)
+    lips = (np.exp(-((z - zm) / 0.0055) ** 2) * np.exp(-np.maximum(0, np.abs(x) - 1.05 * w0) ** 2 / 0.004 ** 2)
+            * (y < 0))  # a soft lip tone around the mouth line; it rides the mouth shapes
+    mask = np.stack([blush, stub, lips, np.ones_like(x)], 1)
     me.color_attributes.new("Mask", "FLOAT_COLOR", "POINT").data.foreach_set("color", mask.ravel())
     sub = hd.modifiers.new("Subd", "SUBSURF")
     sub.levels = sub.render_levels = 1
@@ -507,10 +510,10 @@ def build(**dials):
     mesh("AV_MouthIn", dish, [(r * nx_ + c, r * nx_ + c + 1, (r + 1) * nx_ + c + 1, (r + 1) * nx_ + c)
                               for r in range(len(gz_) - 1) for c in range(nx_ - 1)], coll, M["mouth"], smooth=True,
          parent=hgeo)
-    rbox("AV_Teeth", (0.036, 0.004, 0.008), coll, M["teeth"], 0.0015, (0, my + 0.0048, zm + 0.0052), parent=hgeo)
+    rbox("AV_Teeth", (1.55 * w0, 0.004, 0.0085), coll, M["teeth"], 0.002, (0, my + 0.0048, zm + 0.0052), parent=hgeo)
     tz = zm - 0.008
     ty = float(surf_y(0, tz)) + 0.016
-    tongue = ball("AV_Tongue", (0.014, 0.007, 0.0045), coll, M["tongue"], (0, ty, tz), parent=hgeo)
+    tongue = ball("AV_Tongue", (0.62 * w0, 0.008, 0.0055), coll, M["tongue"], (0, ty, tz), parent=hgeo)
     drive(tongue, "location", f"{tz:.5f}-0.010*clamp(j)", face({"j": "jawOpen"}), 2)
     drive(tongue, "location", f"{ty:.5f}+0.004*clamp(j)", face({"j": "jawOpen"}), 1)
 
@@ -907,18 +910,26 @@ def build(**dials):
         wrist = empty(f"Wrist{tag}", (0, -LF + 0.004, 0), coll, fore)
         for i in range(3):
             drive(wrist, "rotation_euler", pose_expr([p["hand"][i] for p in solved]), sel, i)
-        rbox(f"AV_Palm{tag}", (0.054, 0.052, 0.023), coll, M["skin_plain"], 0.006, origin=(0, 1, 0), parent=wrist)
-        for fi, (lp, ld) in enumerate(((0.026, 0.021), (0.028, 0.023), (0.026, 0.021), (0.021, 0.018))):
-            prox = rbox(f"AV_Finger{tag}{fi}a", (0.0118, lp, 0.0125), coll, M["skin_plain"], 0.0035,
-                        (-sx * (1.5 - fi) * 0.0132, -0.050, 0.0), (0, 1, 0), wrist)
-            dist_ = rbox(f"AV_Finger{tag}{fi}b", (0.0112, ld, 0.0118), coll, M["skin_plain"], 0.0035,
-                         (0, -lp + 0.002, 0), (0, 1, 0), prox)
+        # Hands sized for the big head (palm 7.5 cm, about 10.5 cm long): soft palm, rounded capsule fingers.
+        rbox(f"AV_Palm{tag}", (0.075, 0.070, 0.031), coll, M["skin_plain"], 0.013, origin=(0, 1, 0), parent=wrist, segs=3)
+
+        def capsule(name, length, r, loc, parent):
+            n = 7
+            pts = [Vector((0, -length * (1 - (1 - i / (n - 1)) ** 1.25), 0)) for i in range(n)]
+            rads = [r * f for f in (0.92, 1.0, 1.0, 0.98, 0.93, 0.78, 0.40)]
+            o = tube(name, pts, rads, coll, M["skin_plain"], k=12, smooth=True, parent=parent)
+            o.location = loc
+            return o
+
+        for fi, (lp, ld) in enumerate(((0.032, 0.026), (0.035, 0.028), (0.032, 0.026), (0.026, 0.021))):
+            r = 0.0089 if fi < 3 else 0.0080
+            prox = capsule(f"AV_Finger{tag}{fi}a", lp + 0.004, r, (-sx * (1.5 - fi) * 0.0178, -0.066, 0.0), wrist)
+            dist_ = capsule(f"AV_Finger{tag}{fi}b", ld, r * 0.94, (0, -lp + 0.001, 0), prox)
             for seg, j in ((prox, 0), (dist_, 1)):
                 drive(seg, "rotation_euler",
                       pose_expr([(p.get("index", p["curl"]) if fi == 0 else p["curl"])[j] for p in solved]), sel, 0)
-        th_a = rbox(f"AV_Thumb{tag}a", (0.0135, 0.024, 0.0135), coll, M["skin_plain"], 0.004,
-                    (-sx * 0.026, -0.012, -0.001), (0, 1, 0), wrist)
-        th_b = rbox(f"AV_Thumb{tag}b", (0.0125, 0.020, 0.0125), coll, M["skin_plain"], 0.004, (0, -0.022, 0), (0, 1, 0), th_a)
+        th_a = capsule(f"AV_Thumb{tag}a", 0.032, 0.0102, (-sx * 0.034, -0.016, -0.004), wrist)
+        th_b = capsule(f"AV_Thumb{tag}b", 0.025, 0.0096, (0, -0.030, 0), th_a)
         drive(th_a, "rotation_euler", pose_expr([-sx * p["thumb"][0] for p in solved]), sel, 2)
         drive(th_a, "rotation_euler", pose_expr([p["thumb"][1] for p in solved]), sel, 0)
         drive(th_b, "rotation_euler", pose_expr([p["thumb"][2] for p in solved]), sel, 0)
@@ -930,10 +941,19 @@ def build(**dials):
     fa["frame_height"] = round(hair_top - (HC_Z - RZB), 4)
 
     # --- lap and legs (never framed, but the side view should not show a floating torso) -----------------
-    ball("AV_Hips", (0.165, 0.125, 0.085), coll, M["ink"], (0, 0.025, 0.60), parent=root, ico=2, smooth=False)
+    denim = mat("AV_Jeans", "#252B3B", rough=0.75, sheen=0.15)
+    sneaker = mat("AV_Sneaker", "#ECEAF2", rough=0.5)
+    sole = mat("AV_Sole", "#C9C4D6", rough=0.6)
+    ball("AV_Hips", (0.160, 0.120, 0.080), coll, denim, (0, 0.03, 0.60), parent=root, segs=24)
     for sx in (1, -1):
-        tube(f"AV_Leg{sx}", [Vector((sx * 0.085, 0.02, 0.585)), Vector((sx * 0.100, -0.30, 0.575)),
-                             Vector((sx * 0.100, -0.33, 0.50)), Vector((sx * 0.100, -0.32, 0.10))],
-             [0.074, 0.066, 0.060, 0.048], coll, M["ink"], k=8, smooth=False, parent=root)
-        rbox(f"AV_Shoe{sx}", (0.090, 0.21, 0.075), coll, M["lilac"], 0.02, (sx * 0.100, -0.37, 0.04), parent=root)
+        hip, knee, ankle = (Vector((sx * 0.084, 0.03, 0.588)), Vector((sx * 0.096, -0.34, 0.560)),
+                            Vector((sx * 0.100, -0.37, 0.115)))
+        thigh = [hip.lerp(knee, t) for t in (0.0, 0.35, 0.7, 1.0)]
+        shin = [knee + Vector((0, -0.015, -0.03)), knee.lerp(ankle, 0.4), ankle]
+        tube(f"AV_Thigh{sx}", thigh, [0.080, 0.076, 0.068, 0.060], coll, denim, k=14, smooth=True, parent=root)
+        ball(f"AV_Knee{sx}", (0.061, 0.060, 0.060), coll, denim, knee, parent=root, segs=20)
+        tube(f"AV_Shin{sx}", shin, [0.056, 0.050, 0.045], coll, denim, k=14, smooth=True, parent=root)
+        rbox(f"AV_Shoe{sx}", (0.095, 0.235, 0.075), coll, sneaker, 0.032, (sx * 0.100, -0.43, 0.060), parent=root, segs=3)
+        rbox(f"AV_ShoeSole{sx}", (0.100, 0.245, 0.022), coll, sole, 0.008, (sx * 0.100, -0.432, 0.012), parent=root)
+        rbox(f"AV_ShoeStripe{sx}", (0.097, 0.07, 0.016), coll, M["trim"], 0.006, (sx * 0.100, -0.41, 0.062), parent=root)
     return coll

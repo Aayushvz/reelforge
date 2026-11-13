@@ -135,6 +135,7 @@ def build(room_id: str):
             rbox(f"DeskLeg{sx}{yy:.1f}", (0.045, 0.045, DESK_Z - dt), coll, leg_m, 0.008,
                  (sx * (dw / 2 - 0.06), yy, (DESK_Z - dt) / 2))
     rbox("DeskApron", (dw - 0.12, 0.02, 0.07), coll, leg_m, 0.004, (dx, dy - dd / 2 + 0.04, DESK_Z - dt - 0.035))
+    rbox("DeskPanel", (dw - 0.16, 0.018, 0.40), coll, leg_m, 0.004, (dx, dy - dd / 2 + 0.08, DESK_Z - dt - 0.20))
     seat_m = mat("Chair", "#24252B" if R["tone"] == "dark" else "#3A3B42", rough=0.7, sheen=0.3)
     rbox("ChairSeat", (0.46, 0.44, 0.07), coll, seat_m, 0.02, (0, 0.06, 0.48))
     rbox("ChairBack", (0.44, 0.06, 0.46), coll, seat_m, 0.025, (0, 0.27, 0.80))
