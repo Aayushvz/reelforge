@@ -38,10 +38,10 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 5 | Evidence clips (placeholder voices) | done | 37a6841 | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
 | 5 | Gate P5: the two clips | **passed** | — | Owner approved, 2026-11-13. Music and voice direction still to come from the owner |
 | 6 | Python for the editor (`reelforge shots-av catalog/plan/preview`, `reelforge thumbnails`), camera.rack/drift, captions, sound | done | d6a3ece | |
-| 6 | Editor page: `/shots-av` list (New, three starter scripts), `/shots-av/:id` workspace (Script, Stage with shot strip, Look), server endpoints | done | P6 commit | typecheck and build clean; verified in the browser pane |
-| 6 | **ElevenLabs flow**: Voices section (you + buddy, defaults per buddy), **Generate reel** = voices with ElevenLabs then the video timed to that audio; emotion performed with audio tags + expressive stability; room depth on the dialogue | done | P6 commit | owner's key from Settings; Claude never handles it |
-| 6 | **Captions use the editor's template gallery** (11: Shots-AV Top + the 10 editor templates) with colour, font, size, position, animation controls; rendered by `captions.build_ass_styled` with the real fonts | done | P6 commit | `p6/caption_templates.png` |
-| 6 | Walkthrough evidence | done | P6 commit | starter script -> plan (9 shots) -> `p6/preview_still_shot5.png` -> `p6/walkthrough_silent_animatic.mp4` (22.8 s, draft) |
+| 6 | Editor page: `/shots-av` list (New, three starter scripts), `/shots-av/:id` workspace (Script, Stage with shot strip, Look), server endpoints | done | 1283779 | typecheck and build clean; verified in the browser pane |
+| 6 | **ElevenLabs flow**: Voices section (you + buddy, defaults per buddy), **Generate reel** = voices with ElevenLabs then the video timed to that audio; emotion performed with audio tags + expressive stability; room depth on the dialogue | done | 1283779 | owner's key from Settings; Claude never handles it |
+| 6 | **Captions use the editor's template gallery** (11: Shots-AV Top + the 10 editor templates) with colour, font, size, position, animation controls; rendered by `captions.build_ass_styled` with the real fonts | done | 1283779 | `p6/caption_templates.png` |
+| 6 | Walkthrough evidence | done | 1283779 | starter script -> plan (9 shots) -> `p6/preview_still_shot5.png` -> `p6/walkthrough_silent_animatic.mp4` (22.8 s, draft) |
 | 6 | **Gate P6: owner tries Generate reel (spends ElevenLabs credits)** | **waiting on owner** | — | |
 | 7-8 | Benchmark, docs | not started | — | |
 
