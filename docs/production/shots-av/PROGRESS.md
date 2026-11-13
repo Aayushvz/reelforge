@@ -43,7 +43,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 6 | **Captions use the editor's template gallery** (11: Shots-AV Top + the 10 editor templates) with colour, font, size, position, animation controls; rendered by `captions.build_ass_styled` with the real fonts | done | 1283779 | `p6/caption_templates.png` |
 | 6 | Walkthrough evidence | done | 1283779 | starter script -> plan (9 shots) -> `p6/preview_still_shot5.png` -> `p6/walkthrough_silent_animatic.mp4` (22.8 s, draft) |
 | 6 | Generate reel run end to end (owner approved spending credits) | done | — | "The 2 AM fix": 9 ElevenLabs takes in about 10 s, draft rendered in 5.5 min, -14.2 LUFS |
-| 6 | Owner's script "I just asked you to fix one thing" (`projects/i-just-asked-you-to-fix-one-thing`) | draft done, final rendering | 5d42699 | 6 directed takes (`[annoyed]`, `[cheerfully]`, `[frustrated]`, `[sheepishly]`, `[sadly]`, `[sadly] [quietly]`), 32.8 s with the end card, 14 shots |
+| 6 | Owner's script "I just asked you to fix one thing" (`projects/i-just-asked-you-to-fix-one-thing`) | **final done** (1080x1920, 32.8 s, 10.7 Mbps, -14.1 LUFS, rendered in about 47 min) | 5d42699 | 6 directed takes (`[annoyed]`, `[cheerfully]`, `[frustrated]`, `[sheepishly]`, `[sadly]`, `[sadly] [quietly]`), 32.8 s with the end card, 14 shots |
 | 7-8 | Benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
