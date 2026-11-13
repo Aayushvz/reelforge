@@ -193,6 +193,5 @@ full-size render; never reduce character quality (render settings only).
 **Projects:** `projects/i-just-asked-you-to-fix-one-thing` (the owner's script, Editor night),
 `projects/p7-bench-{reference,signature,morning}` (benchmark). Projects are git-ignored.
 
-**Next steps (from the P7 score):** a connected camera move that hides the hero-to-buddy scale change (deferred at P4;
-drop it if it cannot be clean, keep the rack focus); moving background life (cars, signs, monitor activity); stronger
+**Next steps (from the P7 score):** ~~a connected camera move~~ done 2026-11-14 (`camera.connect`); moving background life (cars, signs, monitor activity); stronger
 subsurface at phone size; draft speed toward the 6-minute budget (haze resolution and shadow rays are the levers).

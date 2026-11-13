@@ -62,7 +62,7 @@ AV_LEAD = 3 / FPS  # each line starts 3 frames after its cut
 @pytest.mark.parametrize("grammar", ["reference", "signature"])
 def test_fixture_reproduces_the_reference_cut_list(grammar):
     placed, n = fixture()
-    shots = plan_shots_av(placed, FPS, n, "me", "bot", seed=7, grammar=grammar)
+    shots = plan_shots_av(placed, FPS, n, "me", "bot", seed=7, grammar=grammar, camera={"connect": False})
     assert len(shots) == 20
     assert [s.kind for s in shots] == [row[2] for row in TABLE]
     for s, row in zip(shots, TABLE):
@@ -183,3 +183,18 @@ def test_overrides_from_the_shot_strip():
                                                 "12": {"rack": False}}})
     assert shots[1].kind == "av_wide_front" and shots[1].lens == 50 and shots[1].move == "drift"
     assert shots[5].rack["to"] == "bot" and shots[12].rack == {}
+
+
+def test_signature_folds_one_hero_to_buddy_cut_into_a_connected_move():
+    placed, n = fixture()
+    plain = plan_shots_av(placed, FPS, n, "me", "bot", seed=7, camera={"connect": False})
+    shots = plan_shots_av(placed, FPS, n, "me", "bot", seed=7)
+    joined = [s for s in shots if s.connect]
+    assert len(joined) == 1 and len(shots) == len(plain) - 1
+    j = joined[0]
+    assert j.kind in ("av_hero_34", "av_hero_front") and j.subject == "me" and j.connect["to"] == "bot"
+    assert j.start_frame >= n / 3 and j.connect["frames"] == 18 and j.connect["framing"]["lens"] > 0
+    buddy_cut = next(s.start_frame for s in plain if s.start_frame > j.start_frame)
+    assert j.start_frame + j.connect["at"] == buddy_cut - 6  # the arc starts 0.2 s before the reply
+    assert all(a.end_frame == b.start_frame for a, b in zip(shots, shots[1:])) and shots[-1].end_frame == n
+    assert not any(s.connect for s in plan_shots_av(placed, FPS, n, "me", "bot", seed=7, grammar="reference"))

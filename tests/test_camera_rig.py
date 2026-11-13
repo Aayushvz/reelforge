@@ -130,3 +130,15 @@ def test_handheld_has_no_fast_component():
     yaw = [rig.handheld(f, 30, 3, 1.0)[1][1] for f in range(300)]
     steps = [abs(b - a) for a, b in zip(yaw, yaw[1:])]
     assert max(steps) < math.radians(0.4) * 2 * math.pi * 0.8 / 30 * 1.2  # bounded by the 0.8 Hz top band
+
+
+def test_connect_pose_arcs_between_two_framings():
+    p1 = {"pos": (1.0, -1.0, 1.2), "aim": (0.0, 0.0, 1.17), "roll": 0.0, "lens": 85.0}
+    p2 = {"pos": (-0.3, -1.6, 0.9), "aim": (-0.3, -0.36, 0.85), "roll": 0.1, "lens": 100.0}
+    assert rig.connect_pose(p1, p2, 0.0) is p1 and rig.connect_pose(p1, p2, 1.0) is p2
+    mid = rig.connect_pose(p1, p2, 0.5)
+    assert abs(mid["lens"] - (85.0 * 100.0) ** 0.5) < 1e-6 and abs(mid["roll"] - 0.05) < 1e-9
+    straight = tuple((a + b) / 2 for a, b in zip(p1["pos"], p2["pos"]))
+    to_aim = lambda p: math.dist(p["pos"], p["aim"])  # noqa: E731
+    assert math.dist(mid["pos"], straight) > 0.05  # an arc, not a straight dolly
+    assert min(to_aim(p1), to_aim(p2)) <= to_aim(mid) <= max(to_aim(p1), to_aim(p2))
