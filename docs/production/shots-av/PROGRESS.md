@@ -69,6 +69,16 @@ blend geometrically), and focus travels from him to the buddy. Tested on the har
 Claude's close (`projects/p7-bench-connect`, draft, 10.8 min): no jump in scale, no clipping, the middle frames read as
 a quick whip down the jacket. Kept; the rack focus in the first wide stays too. Rubric row 7 now has both.
 
+## Background life (2026-11-14)
+`blender/shotsav/life.py`, applied by `rooms.build` to every room: drivers with simple expressions only (sin, fmod,
+frame), so they evaluate in factory-startup renders with scripts off, and hang off `RoomPivot` with the rest. The desk
+monitor scrolls; distant bokeh breathes; traffic (14 cars, head and tail lights) glides across the city in Studio
+night, Late office, Editor night, Streamer den and Studio apartment; stars, fairy lights and clouds move in Moon
+window; rain slides down the Streamer den glass; lava-lamp blobs rise and sink; the edit timeline's playhead plays;
+plants sway; PC fans breathe their RGB; the CRT flickers; neon and LED strips hum, and neon signs glitch every couple
+of seconds. Every room except Lilac cyc has visible motion. Evidence: `p7/background_life.mp4` (3 s held wides,
+draft). Rubric row 6 now has "moving background life".
+
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.
 2. Shared size: body 0.13-0.15 m tall (about 0.4 of the hero's head), two black rectangle eyes 0.022 by 0.008, no mouth, 2-4 stub feet, a soft contact shadow that shrinks on a hop.

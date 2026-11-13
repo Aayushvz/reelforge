@@ -408,6 +408,8 @@ def build(room_id: str):
     if R.get("gamer"):
         from .gamer_rooms import backdrop
         backdrop(room_id, coll, rng)
+    from .life import add as add_life
+    add_life(room_id, coll, Y)  # background motion; its new objects join the pivot below
     pivot = empty("RoomPivot", (0, 0, 0), coll)
     for o in set(bpy.data.objects) - before:
         if o.parent is None and o is not pivot:
