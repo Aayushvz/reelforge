@@ -44,6 +44,19 @@ def apply_scene(sc, plan, characters):
         sc.eevee.shadow_ray_count, sc.eevee.shadow_step_count = 4, 12
     if hasattr(sc.eevee, "shadow_pool_size"):
         sc.eevee.shadow_pool_size = "1024"
+    tier = plan.get("tier") or {}  # render-cost knobs only (reelforge/engines/shots_av.py TIERS); never geometry
+    if "samples" in tier:
+        sc.eevee.taa_render_samples = int(tier["samples"])
+    if "shadow_rays" in tier and hasattr(sc.eevee, "shadow_ray_count"):
+        sc.eevee.shadow_ray_count, sc.eevee.shadow_step_count = int(tier["shadow_rays"]), int(tier.get("shadow_steps", 12))
+    if "vol_tile" in tier:
+        sc.eevee.volumetric_tile_size = str(int(tier["vol_tile"]))
+    if "vol_samples" in tier:
+        sc.eevee.volumetric_samples = int(tier["vol_samples"])
+    if "rt_scale" in tier:
+        sc.eevee.ray_tracing_options.resolution_scale = str(int(tier["rt_scale"]))
+    if "gi_steps" in tier:
+        sc.eevee.fast_gi_step_count = int(tier["gi_steps"])
     sc.view_settings.view_transform, sc.view_settings.look = "Khronos PBR Neutral", "None"
     sc.view_settings.exposure = float(sc.get("av_exposure", EXPOSURE))  # each room stores its own
     sc.view_settings.gamma = 1.0

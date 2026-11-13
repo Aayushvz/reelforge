@@ -214,6 +214,8 @@ def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope
     plan = build_render_plan(perf, n_frames, faces, shots, moods, ASSETS, out, 16 if draft else 64)
     plan["look"] = LOOK
     plan["resolution_percentage"] = 50 if draft else 100
+    if not draft and perf.quality != "cinema":  # Balanced: full size, about 3x faster than Final (see TIERS)
+        plan["tier"] = dict(TIERS["balanced"])
     hero, buddy = cast(perf)
     plan["environment_blend"] = str(room_blend(perf.environment))
     plan["room_view"] = room_view(perf, seed)
@@ -312,7 +314,13 @@ def _estimated(project: Path):
 
 
 # Render-time estimates for the editor, measured on the RTX 4060 laptop (P4/P5): seconds.
-TIMING = {"preview_still_s": 15.0, "draft_s_per_frame": 0.38, "final_s_per_frame": 2.6, "scene_load_s": 12.0}
+# Render cost tiers (render settings only, never the characters' geometry or textures). Measured 2026-11-13 on six
+# frames of the owner's reel in av_editor_night, RTX 4060, against the 64-sample frames: Final 3.3 s/frame;
+# Balanced 1.0 s/frame at SSIM 0.987 / PSNR 40 dB (faces match by eye; the lighter shadow sampling is the
+# main saving, the coarser haze grid the second); 32 samples alone is 1.9 s/frame at SSIM 0.998.
+TIERS = {"balanced": {"samples": 24, "shadow_rays": 2, "shadow_steps": 6, "vol_tile": 16, "vol_samples": 32}}
+TIMING = {"preview_still_s": 15.0, "draft_s_per_frame": 0.38, "balanced_s_per_frame": 1.05, "final_s_per_frame": 3.3,
+          "scene_load_s": 20.0}
 
 
 def catalog() -> dict:

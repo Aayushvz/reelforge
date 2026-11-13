@@ -215,6 +215,10 @@ different placements in the room; captions placed and sized by hand.
   each shot's menu can pin any angle. "Classic 5" and the reference grammar keep the five set-ups.
 - **Captions**: size 50-200% for every template; "Place by hand" drags the caption on a 9:16 frame (`captions.x/y`);
   an End card field.
+- **Balanced render tier** (default for full-size renders; Final stays available): 24 samples, 2 shadow rays / 6
+  steps, haze grid 16 px / 32 samples. Measured on six frames of the owner's reel against the 64-sample final:
+  Final 3.3 s/frame, Balanced 1.0 s/frame (SSIM 0.987, PSNR 40 dB; faces match by eye), 32 samples alone 1.9 s/frame
+  (SSIM 0.998). A 49 s reel: Draft ~9 min, Balanced ~25 min, Final ~80 min. Render settings only; no character change.
 
 ## P1 hero (what was built)
 - **Proportions:** head 0.36 tall by 0.31 wide, oval with a squarish jaw (the owner's), eyes at 1.18 m seated, desk top at 0.74, shoulders 0.46 wide over the sleeves, short thick arms, hands about 0.10.

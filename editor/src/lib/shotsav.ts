@@ -19,7 +19,7 @@ export type AvCatalog = {
   angles?: { id: string; role: "hero" | "buddy" | "wide"; label: string }[];
   actions: string[];
   built: { hero: boolean; buddies: Record<string, boolean>; rooms: Record<string, boolean> }; allBuilt: boolean;
-  timing: { preview_still_s: number; draft_s_per_frame: number; final_s_per_frame: number; scene_load_s: number };
+  timing: { preview_still_s: number; draft_s_per_frame: number; balanced_s_per_frame?: number; final_s_per_frame: number; scene_load_s: number };
   target: Record<"hero" | "buddy" | "wide", number>;
 };
 

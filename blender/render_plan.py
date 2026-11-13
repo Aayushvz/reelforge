@@ -348,6 +348,15 @@ if mode == "profile":  # where a frame's time goes before any pixel is rendered:
         sc.frame_set(f)
         bpy.context.view_layer.update()
         print(f"EVAL frame {f} {time.time() - t0:.2f}s")
+elif mode == "bench":  # time chosen frames of the real reel: the plan's bench_frames -> out_frames/bench_NNNN.png
+    Path(plan["out_frames"]).mkdir(parents=True, exist_ok=True)
+    for f in plan.get("bench_frames", []):
+        t0 = time.time()
+        sc.frame_set(f)
+        sc.camera = next(c for c, a, b in cams if a <= f <= b) if cams else sc.camera
+        sc.render.filepath = str(Path(plan["out_frames"]) / f"bench_{f:04d}.png")
+        bpy.ops.render.render(write_still=True)
+        print(f"BENCH {f} {time.time() - t0:.2f}s")
 elif mode == "stills":
     Path(plan["out_stills"]).mkdir(parents=True, exist_ok=True)
     only = plan.get("only_shots")

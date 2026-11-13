@@ -311,7 +311,8 @@ function jobView(job: Job) {
   return rest;
 }
 
-function startJob(id: string, stage: "stills" | "full", draft: boolean, mode: "run" | "animatic" = "run"): Job {
+function startJob(id: string, stage: "stills" | "full", draft: boolean, mode: "run" | "animatic" = "run",
+  quality?: "standard" | "cinema"): Job {
   const dir = projectDir(id);
   const running = [...jobs.values()].find((j) => j.projectId === id && j.status === "running");
   if (running) return running;
@@ -328,7 +329,7 @@ function startJob(id: string, stage: "stills" | "full", draft: boolean, mode: "r
   jobs.set(job.id, job);
   const args = mode === "animatic"
     ? ["animatic", dir, "--stage", stage, ...(draft ? [] : ["--final"])]
-    : ["run", dir, "--stage", stage, ...(draft ? ["--draft"] : [])];
+    : ["run", dir, "--stage", stage, ...(draft ? ["--draft"] : quality ? ["--quality", quality] : [])];
   const proc = spawn(bin, args, { cwd: REPO, env: pipelineEnv() });
   job.proc = proc;
   const onData = (buf: Buffer) => {
@@ -703,9 +704,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 201, { ok: true, path: path.relative(dir, file).split(path.sep).join("/") });
     }
     if (id && action === "run" && method === "POST") {
-      const body = await readJson<{ stage?: "stills" | "full"; draft?: boolean; animatic?: boolean }>(req);
+      const body = await readJson<{ stage?: "stills" | "full"; draft?: boolean; animatic?: boolean; quality?: string }>(req);
+      const quality = body.quality === "cinema" || body.quality === "standard" ? body.quality : undefined;
       return send(res, 202, jobView(startJob(id, body.stage === "full" ? "full" : "stills", Boolean(body.draft),
-        body.animatic ? "animatic" : "run")));
+        body.animatic ? "animatic" : "run", quality)));
     }
     if (id && action === "shotsav" && rest[0] === "plan" && method === "POST") {
       projectDir(id);

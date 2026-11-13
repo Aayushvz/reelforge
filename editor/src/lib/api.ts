@@ -23,8 +23,8 @@ export const api = {
   duplicate: (id: string) => req<ProjectData>("POST", `${P(id)}/duplicate`),
   remove: (id: string) => req<{ ok: true }>("DELETE", P(id)),
   upload: (id: string, path: string, file: Blob) => req<{ path: string }>("POST", `${P(id)}/upload?path=${encodeURIComponent(path)}`, file),
-  run: (id: string, stage: "stills" | "full", draft: boolean, animatic = false) =>
-    req<Job>("POST", `${P(id)}/run`, { stage, draft, animatic }),
+  run: (id: string, stage: "stills" | "full", draft: boolean, animatic = false, quality?: "standard" | "cinema") =>
+    req<Job>("POST", `${P(id)}/run`, { stage, draft, animatic, quality }),
   reveal: (id: string) => req<{ ok: true; path: string }>("POST", `${P(id)}/reveal`),
   avCatalog: () => req<AvCatalog>("GET", "/api/shotsav/catalog"),
   avPlan: (id: string) => req<AvPlan>("POST", `${P(id)}/shotsav/plan`),

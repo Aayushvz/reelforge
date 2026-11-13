@@ -66,7 +66,7 @@ export function ShotsAvWorkspace() {
   const [paste, setPaste] = useState(false);
   const [saved, setSaved] = useState<"saved" | "saving" | "error">("saved");
   const [sys, setSys] = useState<SystemStatus | null>(null);
-  const [quality, setQuality] = useState<"draft" | "final">("draft");
+  const [quality, setQuality] = useState<"draft" | "balanced" | "final">("balanced");
   const [gen, setGen] = useState<{ phase: "idle" | "voices" | "render" | "error"; done?: number; total?: number; error?: string }>({ phase: "idle" });
   const [subsOpen, setSubsOpen] = useState(false);
   const focusLine = useRef<number | null>(null);
@@ -143,10 +143,11 @@ export function ShotsAvWorkspace() {
     });
     es.onerror = () => es.close();
   }
-  const start = async (kind: "animatic" | "draft" | "final") => {
+  const start = async (kind: "animatic" | "draft" | "balanced" | "final") => {
     try {
       await flush();
-      const job = kind === "animatic" ? await api.run(id, "full", true, true) : await api.run(id, "full", kind === "draft");
+      const job = kind === "animatic" ? await api.run(id, "full", true, true)
+        : await api.run(id, "full", kind === "draft", false, kind === "final" ? "cinema" : "standard");
       follow(job, setLive);
       setTab("stage");
     } catch (e) { toast((e as Error).message, "err"); }
@@ -228,6 +229,7 @@ export function ShotsAvWorkspace() {
   const est = timing && {
     preview: timing.preview_still_s,
     draft: timing.scene_load_s + frames * timing.draft_s_per_frame,
+    balanced: timing.scene_load_s + frames * (timing.balanced_s_per_frame ?? timing.final_s_per_frame / 3),
     final: timing.scene_load_s + frames * timing.final_s_per_frame,
   };
   const running = live.job?.status === "running";
@@ -397,10 +399,12 @@ export function ShotsAvWorkspace() {
           </button>
           <span className="grow" />
           <Segmented size="sm" value={quality} onChange={setQuality}
-            options={[{ value: "draft", label: "Draft", title: "Half size, quick" }, { value: "final", label: "Final", title: "1080x1920, full quality" }]} />
+            options={[{ value: "draft", label: "Draft", title: "Half size, quick: for checking timing and angles" },
+              { value: "balanced", label: "Balanced", title: "1080x1920, about 3x faster than Final; faces and colour match it by eye" },
+              { value: "final", label: "Final", title: "1080x1920, every render setting at its highest" }]} />
           <button className="btn btn-primary" disabled={!lines.length || running || gen.phase === "voices" || gen.phase === "render"}
             onClick={() => void generateReel()} title="Make the voices with ElevenLabs, then the video on that audio">
-            <Sparkles size={14} />Generate reel{est && <>{" "}<span className="meta">{fmtDur(quality === "draft" ? est.draft : est.final)}</span></>}
+            <Sparkles size={14} />Generate reel{est && <>{" "}<span className="meta">{fmtDur(est[quality])}</span></>}
           </button>
         </div>
 
@@ -449,7 +453,7 @@ export function ShotsAvWorkspace() {
           <div className="av-job panel" aria-live="polite">
             {live.job.status === "running" ? (
               <>
-                <div className="row"><Spinner /><span className="grow">{live.job.mode === "animatic" ? "Silent animatic" : live.job.draft ? "Draft reel" : "Final render"}: frame {live.frame || "…"} of {frames}</span>
+                <div className="row"><Spinner /><span className="grow">{live.job.mode === "animatic" ? "Silent animatic" : live.job.draft ? "Draft reel" : "Full-size render"}: frame {live.frame || "…"} of {frames}</span>
                   <button className="btn btn-sm" onClick={() => void api.cancel(live.job!.id).then(() => toast("Cancelled"))}><X size={12} />Cancel</button></div>
                 <div className="av-progress"><span style={{ width: `${Math.min(100, (live.frame / frames) * 100)}%` }} /></div>
                 <pre className="av-log">{live.log.slice(-4).join("\n")}</pre>

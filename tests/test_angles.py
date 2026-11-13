@@ -113,3 +113,12 @@ def test_captions_can_be_placed_and_sized_by_hand():
     styled = captions.build_ass_styled(pl, perf, 1080, 1920, {}, place=(0.3, 0.4), scale=0.75)
     style = next(l for l in styled.splitlines() if l.startswith("Style: AVS"))
     assert style.startswith("Style: AVS,Geist,48,") and style.split(",")[18] == "5"  # 64 px x 0.75, centred
+
+
+def test_balanced_tier_is_the_default_full_size_render():
+    from reelforge.engines import shots_av
+    assert shots_av.TIERS["balanced"]["samples"] < 64 and shots_av.TIERS["balanced"]["shadow_rays"] >= 2
+    assert set(shots_av.TIERS["balanced"]) <= {"samples", "shadow_rays", "shadow_steps", "vol_tile", "vol_samples",
+                                               "rt_scale", "gi_steps"}  # render cost only, never the characters
+    t = shots_av.TIMING
+    assert t["draft_s_per_frame"] < t["balanced_s_per_frame"] < t["final_s_per_frame"] / 2
