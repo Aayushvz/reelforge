@@ -84,6 +84,7 @@ class Performance:
     look_params: dict = field(default_factory=dict)  # per-look number dials, e.g. {"skin_glow": 1.0}
     captions: dict = field(default_factory=dict)  # shots-av: {"position": "top"|"lower", "plate": bool, "tint": bool}
     sound: dict = field(default_factory=dict)  # shots-av: {"foley": bool}
+    end_text: str = ""  # shots-av: an end card over the closing wide ("Every designer's relationship with AI.")
 
 
 def load_performance(path: Path) -> Performance:
@@ -195,6 +196,10 @@ def parse_performance(data: dict) -> Performance:
                      ("sound.foley", sound.get("foley", True))):
         if not isinstance(val, bool):
             errors.append(f"{key} must be true or false")
+    end_text = data.get("end_text", "")
+    if not isinstance(end_text, str) or len(end_text) > 120:
+        errors.append("end_text must be text of at most 120 characters")
+        end_text = ""
     handheld = camera.get("handheld", 0.15)
     if isinstance(handheld, bool) or not isinstance(handheld, (int, float)) or not 0.0 <= handheld <= 1.0:
         errors.append("camera.handheld must be a number 0..1")
@@ -220,7 +225,8 @@ def parse_performance(data: dict) -> Performance:
         raise PerformanceError("; ".join(errors))
     return Performance(fps, ratio, data.get("environment", AV_ROOM if av else "night_city"), chars, lines,
                        style, data.get("lighting", ""),
-                       bool(data.get("ambience", True)), look, quality, camera, look_params, captions, sound)
+                       bool(data.get("ambience", True)), look, quality, camera, look_params, captions, sound,
+                       end_text.strip())
 
 
 def _av_options(name: str, c: dict, errors: list[str]) -> dict:

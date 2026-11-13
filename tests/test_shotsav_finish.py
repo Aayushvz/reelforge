@@ -144,3 +144,16 @@ def test_voice_chain_gives_every_room_depth():
         chain = ambience.voice_chain(room)
         assert "aecho=" in chain and "acompressor" in chain and "highpass=f=75" in chain
     assert ambience.voice_chain("av_late_office") != ambience.voice_chain("av_neon_den")  # bigger room, longer echo
+
+
+def test_end_card_holds_and_draws_the_closing_line():
+    perf = parse_performance({"style": "shots-av", "end_text": "Every designer's relationship with AI coding tools.",
+                              "characters": {"me": {"model": "av_hero"}, "claude": {"model": "buddy_claude"}},
+                              "lines": [{"speaker": "me", "text": "hi"}]})
+    assert perf.end_text.startswith("Every designer")
+    ass = captions.end_card(captions.av_header(1080, 1920), perf.end_text, 5.0, 8.0, 1080, 1920)
+    assert "Style: End,Geist,54" in ass and ass.count("Dialogue:") == 2 and "relationship with AI" in ass
+    assert captions.end_card("x", "", 0, 1, 1080, 1920) == "x"
+    with pytest.raises(Exception):
+        parse_performance({"style": "shots-av", "end_text": "x" * 200, "characters": {"me": {"model": "av_hero"},
+                           "claude": {"model": "buddy_claude"}}, "lines": [{"speaker": "me", "text": "hi"}]})

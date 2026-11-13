@@ -267,7 +267,7 @@ def _estimated(project: Path):
         placed.append(Placed(l, VoicedLine(l.id, project / "out" / "audio" / f"{l.id}.mp3",
                                            _fake_chars(l.text, 0.0, d0)), s0, d0))
     last = placed[-1]
-    n_frames = math.ceil((last.start + last.duration + 0.9) * perf.fps)
+    n_frames = math.ceil((last.start + last.duration + (3.0 if perf.end_text else 0.9)) * perf.fps)
     hero, buddy = cast(perf)
     shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, int(perf.camera.get("seed", 0)),
                           perf.camera.get("grammar", "signature"), perf.camera)
@@ -362,7 +362,7 @@ def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:
         placed.append(Placed(l, VoicedLine(l.id, project / "out" / "audio" / f"{l.id}.mp3",
                                            _fake_chars(l.text, 0.0, d0)), s0, d0))
     last = placed[-1]
-    n_frames = math.ceil((last.start + last.duration + 0.9) * perf.fps)  # hold 0.9 s after the final word
+    n_frames = math.ceil((last.start + last.duration + (3.0 if perf.end_text else 0.9)) * perf.fps)  # hold 0.9 s after the final word
     faces = build_faces(perf, placed, perf.fps, n_frames)
     hero, buddy = cast(perf)
     seed = int(perf.camera.get("seed", 0))

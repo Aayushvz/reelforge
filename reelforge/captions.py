@@ -185,6 +185,31 @@ def av_events(placed: list[Placed], fps: int, total: float) -> list[tuple[float,
 
 
 AV_LOWER = 0.70  # "lower" captions start here: above the bottom platform band (0.78 H)
+END_HOLD = 3.0  # seconds the closing wide holds after the last word when there is an end card (else 0.9)
+
+
+def end_card(ass: str, text: str, start: float, end: float, width: int, height: int) -> str:
+    """Add the end card to a finished caption file: the line centred in the lower third on an ink plate, fading
+    in a beat after the last word."""
+    if not text:
+        return ass
+    fs = round(54 * width / 1080)
+    lh = round(fs * 1.22)
+    lines = [line for part in wrap_av(text, 26) for line in part][:3]
+    tw = max(len(l) for l in lines) * fs * AV_CHAR_W
+    pad_x, pad_y = round(fs * 0.6), round(fs * 0.36)
+    w, h = tw + 2 * pad_x, lh * len(lines) + 2 * pad_y
+    x, y = width // 2, round(height * 0.72)
+    plate_c, plate_a = ass_alpha_color(AV_PLATE, 0.6)
+    style = (f"Style: End,{AV_FONT},{fs},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,8,"
+             "40,40,0,1")
+    ass = ass.replace("\n\n[Events]", f"\n{style}\n\n[Events]", 1)
+    fade = "\\fad(400,0)"
+    body = "\\N".join(_clean(l) for l in lines)
+    rows = [f"Dialogue: 5,{ts(start)},{ts(end)},End,,0,0,0,,{{\\an7\\pos({x - w / 2:.0f},{y - pad_y:.0f})"
+            f"\\c{plate_c}\\alpha{plate_a}\\bord0\\shad0{fade}\\p1}}{_round_rect(w, h, round(12 * width / 1080))}{{\\p0}}",
+            f"Dialogue: 6,{ts(start)},{ts(end)},End,,0,0,0,,{{\\an8\\pos({x},{y}){fade}}}{body}"]
+    return ass.rstrip("\n") + "\n" + "\n".join(rows) + "\n"
 
 
 def build_ass_shotsav(placed: list[Placed], perf: Performance, width: int, height: int, fps: int, total: float,

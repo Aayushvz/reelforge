@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .a2f import frames_to_tracks
 from .ambience import add_ambience, add_av_sound, find_music
-from .captions import AV_TOP_ID, _css_color, build_ass, build_ass_shotsav, build_ass_styled
+from .captions import AV_TOP_ID, END_HOLD, _css_color, build_ass, build_ass_shotsav, build_ass_styled, end_card
 from .direct import mood_keys, plan_shots, plan_shots_av, plan_shots_v2
 from .engines import DEFAULT, ENGINES, get_engine
 from .face import build_faces
@@ -127,7 +127,7 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     durations = {i: probe_duration(v.audio_path) for i, v in voiced.items()}
     placed, total = place_lines(perf.lines, voiced, durations)
     if engine.ID == "shots-av":  # the closing wide holds 0.9 s after the final word
-        total = max(total, placed[-1].start + placed[-1].duration + 0.9)
+        total = max(total, placed[-1].start + placed[-1].duration + (END_HOLD if perf.end_text else 0.9))
     n_frames = math.ceil(total * perf.fps)
     mix_dialogue(placed, total, out / "dialogue.wav")
     if perf.ambience and engine.ID != "shots-av":  # shots-av mixes its sound once the shots are planned
@@ -167,6 +167,8 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
                                     cap.get("position", "top"), style.get("color", "#FFFFFF"), plate[0], plate[1])
         else:  # one of the editor's subtitle templates, with the colours picked in the editor
             ass = build_ass_styled(placed, perf, w, h, style)
+        last = placed[-1].start + placed[-1].duration
+        ass = end_card(ass, perf.end_text, last + 0.4, total, w, h)
         (out / "captions.ass").write_text(ass, encoding="utf-8")
         if perf.ambience:
             blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps)
