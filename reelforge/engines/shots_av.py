@@ -214,7 +214,9 @@ def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope
     plan = build_render_plan(perf, n_frames, faces, shots, moods, ASSETS, out, 16 if draft else 64)
     plan["look"] = LOOK
     plan["resolution_percentage"] = 50 if draft else 100
-    if not draft and perf.quality != "cinema":  # Balanced: full size, about 3x faster than Final (see TIERS)
+    if draft:  # Draft: half size, 8 samples, coarser haze (see TIERS)
+        plan["tier"] = dict(TIERS["draft"])
+    elif perf.quality != "cinema":  # Balanced: full size, about 3x faster than Final (see TIERS)
         plan["tier"] = dict(TIERS["balanced"])
     hero, buddy = cast(perf)
     plan["environment_blend"] = str(room_blend(perf.environment))
@@ -318,8 +320,12 @@ def _estimated(project: Path):
 # frames of the owner's reel in av_editor_night, RTX 4060, against the 64-sample frames: Final 3.3 s/frame;
 # Balanced 1.0 s/frame at SSIM 0.987 / PSNR 40 dB (faces match by eye; the lighter shadow sampling is the
 # main saving, the coarser haze grid the second); 32 samples alone is 1.9 s/frame at SSIM 0.998.
-TIERS = {"balanced": {"samples": 24, "shadow_rays": 2, "shadow_steps": 6, "vol_tile": 16, "vol_samples": 32}}
-TIMING = {"preview_still_s": 15.0, "draft_s_per_frame": 0.38, "balanced_s_per_frame": 1.05, "final_s_per_frame": 3.3,
+# Draft (2026-11-14, eight frames of the P7 reel against the 16-sample draft): 8 samples and a coarser haze grid cut
+# the per-frame time about 27% at SSIM 0.985; lighter shadow sampling was faster still but speckled the soft shadows
+# (grain no denoise removed), so draft keeps full shadow quality.
+TIERS = {"balanced": {"samples": 24, "shadow_rays": 2, "shadow_steps": 6, "vol_tile": 16, "vol_samples": 32},
+         "draft": {"samples": 8, "vol_tile": 16, "vol_samples": 16}}
+TIMING = {"preview_still_s": 15.0, "draft_s_per_frame": 0.27, "balanced_s_per_frame": 1.05, "final_s_per_frame": 3.3,
           "scene_load_s": 20.0}
 
 

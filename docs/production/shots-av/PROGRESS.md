@@ -53,7 +53,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 ## Bench numbers (RTX 4060 Laptop, Blender 4.5.15, 1080x1920 output)
 | Tier | Settings | s/frame | 49 s reel | 55 s P7 reel (measured) | Prompt budget |
 |---|---|---|---|---|---|
-| Draft | 540x960, 16 samples | 0.36 | about 9 min | — | 6 min (missed; acceptable to the owner) |
+| Draft | 540x960, 8 samples, haze grid 16 / 16 samples (was 16 samples: 0.36-0.39 s/frame) | 0.27 | about 6.9 min | 7.8 min (2026-11-14) | 6 min (about a minute over) |
 | **Balanced** (default) | 1080x1920, 24 samples, 2 shadow rays / 6 steps, haze grid 16 / 32 samples | 0.9-1.0 | about 25 min | 23.3-25.3 min | 30 min (**met**) |
 | Final | 1080x1920, 64 samples, 4 shadow rays / 12 steps | 3.3 | about 80 min | — (33 s reel: 47-57 min) | over |
 | Preview still | one shot, Final settings | — | — | 15-25 s each | — |
@@ -86,6 +86,14 @@ Subsurface was 0.22 over 1.2 cm, too shallow on a 31 cm cartoon head to show on 
 softens toward orange, and the ears glow against the light. Jacket purple unchanged in both rooms; still render time
 unchanged. Shading only, no geometry or texture change. Evidence: `p1/skin_phone_size.jpg` (left before, right after;
 top Editor night, bottom Studio morning). Hero blends rebuild on demand.
+
+## Faster drafts (2026-11-14)
+Benched on eight frames of the P7 reel against the 16-sample draft: 8 samples with lighter shadows was fastest (-35%)
+but speckled the soft shadows, and neither 2 shadow rays nor an ffmpeg denoise (hqdn3d) cleared it; the speckle came
+from cutting shadow quality, not samples. **Draft tier** (`TIERS["draft"]`): 8 samples, full shadows, haze grid 16 /
+16 samples: SSIM 0.985, about 27% faster per frame. Full P7 reel at draft: 466 s (was 647 s), so a 49 s reel takes about
+6.9 min, a minute over the prompt's 6-minute draft budget. The next lever would be draft resolution (40% instead of
+50%), which costs the preview's sharpness; not taken.
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.

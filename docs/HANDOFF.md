@@ -163,7 +163,7 @@ AI buddy robot. Brief: `docs/prompts/03-shots-av-animation.md`. Ledger, decision
 **Use it (editor):** `/shots-av` in the editor (dev server `reelforge-editor`, port 5190). Paste a script ("Me: ...",
 "Claude: ..."), pick the buddy, room, your spot in the room, look and captions, then **Generate reel**: ElevenLabs
 voices (the owner's key in Settings; each line's emotion becomes an audio tag), then the video timed to that audio.
-Quality: Draft (about 0.36 s/frame), **Balanced** (default, about 1 s/frame, 1080x1920), Final (about 3.3 s/frame).
+Quality: Draft (about 0.27 s/frame), **Balanced** (default, about 1 s/frame, 1080x1920), Final (about 3.3 s/frame).
 Restarting the dev server kills running render jobs.
 
 **Use it (CLI):** `reelforge build-assets --style shots-av` (hero, 4 buddies, 12 rooms);
@@ -194,4 +194,4 @@ full-size render; never reduce character quality (render settings only).
 `projects/p7-bench-{reference,signature,morning}` (benchmark). Projects are git-ignored.
 
 **Next steps (from the P7 score):** ~~a connected camera move~~ done 2026-11-14 (`camera.connect`); ~~moving background life~~ done 2026-11-14 (`blender/shotsav/life.py`) (cars, signs, monitor activity); ~~stronger
-subsurface at phone size~~ done 2026-11-14 (`SKIN_SSS`); draft speed toward the 6-minute budget (haze resolution and shadow rays are the levers).
+subsurface at phone size~~ done 2026-11-14 (`SKIN_SSS`); ~~draft speed~~ 2026-11-14: draft tier, 7.8 min for the 55 s P7 reel (about 6.9 min for 49 s; a minute over budget).
