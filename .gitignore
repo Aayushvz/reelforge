@@ -8,6 +8,7 @@ tools/blender*/
 .superpowers/
 tools/*
 !tools/*.py
+!tools/launcher/
 editor/node_modules/
 editor/dist/
 projects/

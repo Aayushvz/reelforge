@@ -52,6 +52,12 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
 .venv/Scripts/reelforge run <project> --stage full             # final video → <project>/out/final_9x16.mp4
 ```
 
+## Open it like an app (Windows)
+Run `powershell -ExecutionPolicy Bypass -File tools/launcher/Install-Shortcut.ps1` once (add `-StartMenu` for the
+Start menu too). The **ReelForge** desktop icon starts the editor's server in the background, out of sight, and opens the
+editor in its own Chrome (or Edge) app window. Closing the window leaves the server running, so renders carry on;
+`tools/launcher/Stop-ReelForge.ps1` stops it. If it doesn't open, the server's log is `%TEMP%eelforge-editor.log`.
+
 ## Make a Shots-AV reel (you + an AI buddy)
 The easy way is the editor: `cd editor && npm install && npm run dev`, open `http://localhost:5190/shots-av`, paste a
 script (`Me: ...` / `Claude: ...`), pick the buddy (Claude, ChatGPT, Figma, Nova), the room and your spot in it, the
