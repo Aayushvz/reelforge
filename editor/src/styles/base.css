@@ -106,6 +106,7 @@ img, video { display: block; max-width: 100%; }
 .range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4.5px; border-radius: 50%; background: var(--text-1); border: 0; box-shadow: 0 0 0 3px var(--bg-1); }
 .range:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.switch::before { content: ""; position: absolute; inset: -5px -4px; }  /* a 36x26 hit area around the 28x16 switch */
 .switch { position: relative; width: 28px; height: 16px; border-radius: 16px; background: var(--bg-4); border: 1px solid var(--line-strong); flex: none; padding: 0; transition: background var(--dur-fast) var(--ease); }
 .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--text-2); transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
 .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }

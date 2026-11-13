@@ -1,28 +1,29 @@
 /* ReelForge design tokens. Every colour, size and duration in the app comes from here. */
 :root {
-  /* Surfaces: near-black greys, stepping up in elevation */
-  --bg-0: #0b0b0c;      /* app background */
-  --bg-1: #111113;      /* panels */
-  --bg-2: #161618;      /* elevated: cards, menus */
-  --bg-3: #1c1c1f;      /* inputs, hover */
-  --bg-4: #242428;      /* pressed, active */
-  --canvas: #050506;    /* video canvas surround */
+  /* Surfaces: neutral graphite, stepping up in elevation (DaVinci Resolve / After Effects style) */
+  --bg-0: #161618;      /* app background */
+  --bg-1: #1c1c1f;      /* panels */
+  --bg-2: #222225;      /* elevated: cards, menus */
+  --bg-3: #29292d;      /* inputs, hover */
+  --bg-4: #313136;      /* pressed, active */
+  --canvas: #0d0d0f;    /* video canvas surround: darker than the panels so the picture reads */
 
-  --line: #232327;
-  --line-strong: #2f2f34;
-  --line-focus: #4a4a52;
+  --line: #2b2b30;
+  --line-strong: #38383e;
+  --line-focus: #5a5a62;
 
-  --text-1: #ededef;
-  --text-2: #a1a1a9;
-  --text-3: #6d6d75;
-  --text-4: #4a4a51;
+  --text-1: #ececef;
+  --text-2: #b4b4bc;
+  --text-3: #9c9ca5;  /* 4.5:1 or better on every surface up to --bg-4 */
+  --text-4: #5c5c64;
 
-  /* One accent: warm amber, echoing the glow look of the renders */
-  --accent: #f0a43a;
-  --accent-hover: #f5b558;
-  --accent-ink: #1b1204;
-  --accent-soft: rgba(240, 164, 58, 0.12);
-  --accent-line: rgba(240, 164, 58, 0.45);
+  /* No hue in the chrome: light buttons and selections on dark panels, like pro editors. Colour is kept for
+     status (ok / warn / error) and for the user's content (characters, captions, the timeline tracks). */
+  --accent: #e4e4e8;
+  --accent-hover: #ffffff;
+  --accent-ink: #141416;
+  --accent-soft: rgba(228, 228, 232, 0.10);
+  --accent-line: rgba(228, 228, 232, 0.50);
 
   /* Status only */
   --ok: #46b97f;
