@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import {
   Clapperboard, FolderOpen, Film, Library, Users, Mountain, Captions, AudioLines, Settings, Plus,
-  PanelLeftClose, PanelLeftOpen, FilePlus2, Scissors,
+  PanelLeftClose, PanelLeftOpen, FilePlus2, Scissors, MessagesSquare,
 } from "lucide-react";
 import { useUI } from "@/stores/ui";
 import { pipelineReady, useSystem } from "@/stores/system";
@@ -21,6 +21,7 @@ export function LogoMark() {
 
 const NAV = [
   { to: "/", label: "Create", icon: Clapperboard, end: true },
+  { to: "/shots-av", label: "Shots-AV Animation", icon: MessagesSquare },
   { to: "/projects", label: "Projects", icon: FolderOpen },
   { to: "/editor", label: "Editor", icon: Film },
 ];

@@ -11,23 +11,33 @@ export type Emotion = (typeof EMOTIONS)[number];
 export type Mood = (typeof MOODS)[number];
 export type Ratio = keyof typeof RATIOS;
 
-export type PerfCharacter = { voice_id: string; caption_color?: string; highlight_color?: string; model?: string; outfit?: number };
+export type PerfCharacter = {
+  voice_id: string; caption_color?: string; highlight_color?: string; model?: string;
+  outfit?: number | string;  // blender3d: a wardrobe index; shots-av hero: puffer | hoodie | overshirt
+  // shots-av hero options (reelforge/schema.py _av_options)
+  outfit_color?: string; glasses?: string; headphones?: string; skin?: string; hair?: string; beard?: string; stubble?: number;
+};
 export type PerfLine = {
   id: string; speaker: string; text: string; emotion: Emotion; intensity: number; mood: Mood;
   pause_after?: number; punchline?: boolean;
+  beat?: boolean; action?: string;  // shots-av: force a wide; a buddy reaction clip
 };
-export type Look = "classic" | "cinema";  // reelforge/schema.py LOOKS
+export type AvCamera = { grammar?: "signature" | "reference"; seed?: number; rack?: boolean; drift?: number;
+  overrides?: Record<string, { kind?: string; move?: string; fstop?: number }> };
+export type Look = "classic" | "cinema" | "shotsav";  // reelforge/schema.py LOOKS
 export type RenderQuality = "preview" | "standard" | "cinema";  // QUALITIES; Draft renders force preview
 export type Performance = {
   version: 1; fps: number; ratio: Ratio; environment: string; lighting?: string; style?: string; ambience?: boolean;
   look?: Look; quality?: RenderQuality;
   characters: Record<string, PerfCharacter>; lines: PerfLine[];
+  camera?: AvCamera; sound?: { foley?: boolean };
+  captions?: { position?: "top" | "lower"; plate?: boolean; tint?: boolean; style?: SubtitleStyle };
 };
 
 // ---------- editor.json ----------
 
 export type ProjectKind = "generated" | "blank";
-export type StyleId = "blender3d" | "cinematic-ai";
+export type StyleId = "blender3d" | "cinematic-ai" | "shots-av";
 
 export type CastSlot = { characterId: string | null; outfitId: string | null; voiceName?: string };
 
@@ -83,7 +93,7 @@ export type ProjectFiles = {
 
 export type ProjectSummary = {
   id: string; folder: string; name: string; kind: ProjectKind; archived: boolean;
-  status: "draft" | "stills" | "rendered"; ratio: Ratio; lineCount: number; words: number;
+  status: "draft" | "stills" | "rendered"; ratio: Ratio; lineCount: number; words: number; style?: string;
   updatedAt: string; thumb: string | null; final: string | null;
 };
 
@@ -101,7 +111,7 @@ export type VoiceState = "imported" | "ready" | "generating" | "error" | "missin
 export type VoiceLine = { line: string; status: VoiceState; file?: string; error?: string };
 
 export type Job = {
-  id: string; projectId: string; stage: "stills" | "full"; draft: boolean;
+  id: string; projectId: string; stage: "stills" | "full"; draft: boolean; mode?: "run" | "animatic" | "assets";
   status: "running" | "done" | "failed" | "cancelled"; startedAt: number; endedAt?: number;
   log: string[]; error?: string;
 };

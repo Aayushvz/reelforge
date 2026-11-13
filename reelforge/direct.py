@@ -306,9 +306,14 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
             s = shots[i]
             kind = o.get("kind", s.kind)
             new_move = o.get("move", s.move)
+            rack = s.rack
+            if o.get("rack") is True and not rack and kind in AV_WIDES:  # the editor's per-shot focus pull
+                rack = {"at": 0, "frames": 10, "from": hero, "to": buddy}
+            elif o.get("rack") is False:
+                rack = {}
             shots[i] = replace(s, kind=kind, lens=float(AV_LENSES.get(kind, s.lens)), move=new_move,
                                move_params=s.move_params if new_move == s.move else {},
-                               fstop=float(o.get("fstop", s.fstop)))
+                               fstop=float(o.get("fstop", s.fstop)), rack=rack)
     return shots
 
 

@@ -187,6 +187,8 @@ def parse_performance(data: dict) -> Performance:
     if not isinstance(captions, dict) or not isinstance(sound, dict):
         errors.append("captions and sound must be objects")
         captions, sound = {}, {}
+    if "style" in captions and not isinstance(captions["style"], dict):
+        errors.append("captions.style must be an object (the editor's subtitle style)")
     if captions.get("position", "top") not in ("top", "lower"):
         errors.append("captions.position must be top or lower")
     for key, val in (("captions.plate", captions.get("plate", True)), ("captions.tint", captions.get("tint", True)),

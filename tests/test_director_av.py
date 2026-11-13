@@ -174,3 +174,12 @@ def test_editor_camera_options_rack_off_and_drift_scale():
         for k in ("amount", "metres", "degrees"):
             if k in b.move_params:
                 assert a.move_params[k] == pytest.approx(b.move_params[k] * 0.5, abs=1e-4)
+
+
+def test_overrides_from_the_shot_strip():
+    placed, n = fixture()
+    shots = plan_shots_av(placed, FPS, n, "me", "bot", grammar="reference",
+                          camera={"overrides": {"1": {"kind": "av_wide_front", "move": "drift"}, "5": {"rack": True},
+                                                "12": {"rack": False}}})
+    assert shots[1].kind == "av_wide_front" and shots[1].lens == 50 and shots[1].move == "drift"
+    assert shots[5].rack["to"] == "bot" and shots[12].rack == {}

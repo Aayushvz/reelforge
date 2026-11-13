@@ -18,6 +18,7 @@ const UPLOAD_DIRS = ["out/audio", "media"];
 const SETTINGS = path.join(REPO, ".reelforge.local.json");
 const ASSETS = path.join(REPO, "assets", "build");
 const THUMBS = path.join(ASSETS, "thumbs");
+const AV_THUMBS = path.join(ASSETS, "shotsav", "thumbs");
 const DEFAULT_MODEL = "eleven_v4";
 
 const MIME: Record<string, string> = {
@@ -122,7 +123,7 @@ function projectFiles(dir: string) {
 
 function summary(root: string, name: string) {
   const dir = path.join(REPO, root, name);
-  const perf = readJsonFile<{ ratio?: string; lines?: { text: string }[] }>(path.join(dir, "performance.json"));
+  const perf = readJsonFile<{ ratio?: string; style?: string; lines?: { text: string }[] }>(path.join(dir, "performance.json"));
   const ed = readJsonFile<EditorDoc>(path.join(dir, "editor.json")) ?? {};
   const files = projectFiles(dir);
   const stat = fs.statSync(dir);
@@ -137,6 +138,7 @@ function summary(root: string, name: string) {
     archived: Boolean(ed.archived),
     status,
     ratio: (ed.output as { ratio?: string } | undefined)?.ratio ?? perf?.ratio ?? "9:16",
+    style: perf?.style ?? "blender3d",
     lineCount: perf?.lines?.length ?? 0,
     words: perf?.lines?.reduce((n, l) => n + l.text.replace(/\[[^\]]*\]/g, "").split(/\s+/).filter(Boolean).length, 0) ?? 0,
     updatedAt: new Date(Math.max(stat.mtimeMs, ...mtimes)).toISOString(),
@@ -294,7 +296,7 @@ function systemStatus() {
 }
 
 type Job = {
-  id: string; projectId: string; stage: "stills" | "full"; draft: boolean;
+  id: string; projectId: string; stage: "stills" | "full"; draft: boolean; mode?: "run" | "animatic" | "assets";
   status: "running" | "done" | "failed" | "cancelled"; startedAt: number; endedAt?: number;
   log: string[]; proc?: ChildProcess; listeners: Set<ServerResponse>; error?: string;
 };
@@ -309,7 +311,7 @@ function jobView(job: Job) {
   return rest;
 }
 
-function startJob(id: string, stage: "stills" | "full", draft: boolean): Job {
+function startJob(id: string, stage: "stills" | "full", draft: boolean, mode: "run" | "animatic" = "run"): Job {
   const dir = projectDir(id);
   const running = [...jobs.values()].find((j) => j.projectId === id && j.status === "running");
   if (running) return running;
@@ -321,10 +323,12 @@ function startJob(id: string, stage: "stills" | "full", draft: boolean): Job {
 
   const job: Job = {
     id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-    projectId: id, stage, draft, status: "running", startedAt: Date.now(), log: [], listeners: new Set(),
+    projectId: id, stage, draft, mode, status: "running", startedAt: Date.now(), log: [], listeners: new Set(),
   };
   jobs.set(job.id, job);
-  const args = ["run", dir, "--stage", stage, ...(draft ? ["--draft"] : [])];
+  const args = mode === "animatic"
+    ? ["animatic", dir, "--stage", stage, ...(draft ? [] : ["--final"])]
+    : ["run", dir, "--stage", stage, ...(draft ? ["--draft"] : [])];
   const proc = spawn(bin, args, { cwd: REPO, env: pipelineEnv() });
   job.proc = proc;
   const onData = (buf: Buffer) => {
@@ -353,9 +357,118 @@ function startJob(id: string, stage: "stills" | "full", draft: boolean): Job {
   return job;
 }
 
+// ---------- Shots-AV: catalog, shot plan, preview stills, asset builds, thumbnails ----------
+
+// Run a `reelforge` command that prints one "SHOTSAV_JSON {...}" line; resolve with that JSON.
+function reelforgeJson<T>(args: string[]): Promise<T> {
+  const bin = reelforgeBin();
+  if (!bin) throw new HttpError(409, "The reelforge pipeline isn't installed.");
+  return new Promise<T>((resolve, reject) => {
+    const proc = spawn(bin, args, { cwd: REPO, env: pipelineEnv() });
+    let out = "", tail = "";
+    proc.stdout?.on("data", (d: Buffer) => { out += d.toString("utf-8"); });
+    proc.stderr?.on("data", (d: Buffer) => { tail = (tail + d.toString("utf-8")).slice(-4000); });
+    proc.on("error", reject);
+    proc.on("close", (code) => {
+      const line = out.split(/\r?\n/).find((l) => l.startsWith("SHOTSAV_JSON "));
+      if (code === 0 && line) return resolve(JSON.parse(line.slice("SHOTSAV_JSON ".length)) as T);
+      const msg = (tail + "\n" + out).trim().split(/\r?\n/).filter(Boolean).slice(-20).join("\n");
+      reject(new HttpError(500, msg || `reelforge exited with code ${code}`));
+    });
+  });
+}
+
+let catalogCache: { at: number; value: unknown } | null = null;
+async function shotsavCatalog() {
+  if (catalogCache && Date.now() - catalogCache.at < 5_000) return catalogCache.value;
+  const value = await reelforgeJson(["shots-av", "catalog"]);
+  catalogCache = { at: Date.now(), value };
+  return value;
+}
+
+// One preview render per project at a time; later requests queue behind it.
+const previewQueue = new Map<string, Promise<unknown>>();
+function shotsavPreview(id: string, shot: number, final: boolean) {
+  const dir = projectDir(id);
+  if (!Number.isInteger(shot) || shot < 0) throw new HttpError(400, "Bad shot index");
+  const prev = previewQueue.get(id) ?? Promise.resolve();
+  const next = prev.catch(() => undefined).then(() =>
+    reelforgeJson<{ still: string }>(["shots-av", "preview", dir, "--shot", String(shot), ...(final ? ["--final"] : [])]))
+    .then((r) => ({ still: path.relative(dir, r.still).split(path.sep).join("/"), at: Date.now() }));
+  previewQueue.set(id, next.finally(() => { if (previewQueue.get(id) === next) previewQueue.delete(id); }));
+  return next;
+}
+
+// build-assets (hero, buddies, rooms) then the thumbnails, as one job with a live log
+function startAssetJob(): Job {
+  const running = [...jobs.values()].find((j) => j.projectId === "__shotsav_assets__" && j.status === "running");
+  if (running) return running;
+  const bin = reelforgeBin();
+  if (!bin) throw new HttpError(409, "The reelforge pipeline isn't installed.");
+  if (!blenderPath()) throw new HttpError(409, "Blender isn't set up. Put its path in tools/blender_path.txt.");
+  const job: Job = {
+    id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, projectId: "__shotsav_assets__",
+    stage: "full", draft: false, mode: "assets", status: "running", startedAt: Date.now(), log: [], listeners: new Set(),
+  };
+  jobs.set(job.id, job);
+  const steps = [["build-assets", "--style", "shots-av"], ["thumbnails", "--style", "shots-av"]];
+  const runStep = (i: number) => {
+    const proc = spawn(bin, steps[i], { cwd: REPO, env: pipelineEnv() });
+    job.proc = proc;
+    const onData = (buf: Buffer) => {
+      for (const line of buf.toString("utf-8").split(/\r?\n/)) {
+        if (!line.trim()) continue;
+        job.log.push(line);
+        if (job.log.length > 2000) job.log.shift();
+        broadcast(job, "log", line);
+      }
+    };
+    proc.stdout?.on("data", onData);
+    proc.stderr?.on("data", onData);
+    proc.on("close", (code) => {
+      if (job.status === "running" && code === 0 && i + 1 < steps.length) return runStep(i + 1);
+      if (job.status === "running") job.status = code === 0 ? "done" : "failed";
+      if (job.status === "failed") job.error = job.log.slice(-20).join("\n") || `Exited with code ${code}`;
+      job.endedAt = Date.now();
+      catalogCache = null;
+      broadcast(job, "status", jobView(job));
+      for (const res of job.listeners) res.end();
+      job.listeners.clear();
+    });
+  };
+  runStep(0);
+  return job;
+}
+
+const avThumbJobs = new Map<string, Promise<void>>();
+function shotsavThumb(name: string): Promise<string> {
+  const m = name.match(/^([a-z0-9_]+)\.jpg$/);
+  if (!m) throw new HttpError(400, "Bad thumbnail name");
+  const out = path.join(AV_THUMBS, name);
+  if (fs.existsSync(out)) return Promise.resolve(out);
+  const bin = reelforgeBin();
+  if (!bin) throw new HttpError(409, "The reelforge pipeline isn't installed.");
+  let job = avThumbJobs.get(m[1]);
+  if (!job) {
+    job = thumbSlot(() => runProc(bin, ["thumbnails", "--style", "shots-av", "--only", m[1]]))
+      .finally(() => avThumbJobs.delete(m[1]));
+    avThumbJobs.set(m[1], job);
+  }
+  return job.then(() => out);
+}
+
+function revealFolder(id: string) {
+  const dir = projectDir(id);
+  const target = fs.existsSync(path.join(dir, "out")) ? path.join(dir, "out") : dir;
+  const opener = process.platform === "win32" ? "explorer" : process.platform === "darwin" ? "open" : "xdg-open";
+  spawn(opener, [target], { detached: true, stdio: "ignore" }).unref();
+  return { ok: true, path: target };
+}
+
 // ---------- voices: ElevenLabs takes generated automatically per line ----------
 
-type PerfJson = { characters?: Record<string, { voice_id?: string }>; lines?: { id: string; speaker: string; text: string }[] };
+type PerfLineJson = { id: string; speaker: string; text: string; emotion?: string; intensity?: number };
+type PerfJson = { style?: string; characters?: Record<string, { voice_id?: string }>; lines?: PerfLineJson[] };
 type VoiceRun = { running: boolean; generating: Set<string>; errors: Map<string, { key: string; error: string }>; again: Set<string>; force: boolean };
 const voiceRuns = new Map<string, VoiceRun>();
 const voiceRun = (id: string) => {
@@ -365,8 +478,15 @@ const voiceRun = (id: string) => {
 };
 
 // Same name as reelforge/voice.py take_path(): <line>-<sha1(model|voice|text)[:10]>.mp3
-function takeName(lineId: string, voiceId: string, text: string) {
-  return `${lineId}-${crypto.createHash("sha1").update(`${elevenModel()}|${voiceId}|${text}`, "utf8").digest("hex").slice(0, 10)}.mp3`;
+// shots-av takes are directed (emotion -> ElevenLabs audio tags), so the delivery is part of the key.
+// Mirrors reelforge/voice.py delivery_key(): "<emotion>:<intensity to 2 places>".
+function deliveryOf(perf: PerfJson | null, l: PerfLineJson) {
+  return perf?.style === "shots-av" ? `${l.emotion ?? "neutral"}:${(l.intensity ?? 0.5).toFixed(2)}` : "";
+}
+
+function takeName(lineId: string, voiceId: string, text: string, delivery = "") {
+  const tail = delivery ? `|${delivery}` : "";
+  return `${lineId}-${crypto.createHash("sha1").update(`${elevenModel()}|${voiceId}|${text}${tail}`, "utf8").digest("hex").slice(0, 10)}.mp3`;
 }
 
 function voiceStatus(id: string) {
@@ -375,7 +495,7 @@ function voiceStatus(id: string) {
   const audio = path.join(dir, "out", "audio");
   const run = voiceRuns.get(id);
   return (perf?.lines ?? []).map((l) => {
-    const take = takeName(l.id, perf?.characters?.[l.speaker]?.voice_id ?? "", l.text);
+    const take = takeName(l.id, perf?.characters?.[l.speaker]?.voice_id ?? "", l.text, deliveryOf(perf, l));
     if (fs.existsSync(path.join(audio, `${l.id}.mp3`))) return { line: l.id, status: "imported", file: `out/audio/${l.id}.mp3` };
     if (run?.generating.has(l.id)) return { line: l.id, status: "generating" };
     if (fs.existsSync(path.join(audio, take)) && fs.existsSync(path.join(audio, take.replace(/\.mp3$/, ".json")))) {
@@ -402,7 +522,7 @@ function generateVoices(id: string, lines: string[] | undefined, force: boolean)
   const perf = readJsonFile<PerfJson>(path.join(dir, "performance.json"));
   const keyOf = (lineId: string) => {
     const l = perf?.lines?.find((x) => x.id === lineId);
-    return l ? takeName(l.id, perf?.characters?.[l.speaker]?.voice_id ?? "", l.text) : "";
+    return l ? takeName(l.id, perf?.characters?.[l.speaker]?.voice_id ?? "", l.text, deliveryOf(perf, l)) : "";
   };
   const args = ["voices", dir, ...want.flatMap((l) => ["--line", l]), ...(force ? ["--force"] : [])];
   const proc = spawn(bin, args, { cwd: REPO, env: pipelineEnv() });
@@ -522,6 +642,26 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (method === "GET") return send(res, 200, settingsView());
     if (method === "PUT") return send(res, 200, saveSettings(await readJson(req)));
   }
+  if (head === "shotsav") {
+    if (id === "catalog" && method === "GET") return send(res, 200, await shotsavCatalog());
+    if (id === "build-assets" && method === "POST") return send(res, 202, jobView(startAssetJob()));
+    if (id === "build-assets" && method === "GET") {
+      const j = [...jobs.values()].filter((x) => x.projectId === "__shotsav_assets__").pop();
+      return send(res, 200, j ? jobView(j) : null);
+    }
+    if (id === "thumbs" && action && method === "GET") {
+      const job = shotsavThumb(action);
+      const done = await Promise.race([job, new Promise<null>((r) => setTimeout(() => r(null), 50))]).catch(() => null);
+      if (!done) {
+        job.catch(() => undefined);
+        res.setHeader("Retry-After", "3");
+        return send(res, 503, { pending: true });
+      }
+      res.setHeader("Cache-Control", "max-age=600");
+      return serveFile(req, res, done);
+    }
+  }
+
   if (head === "thumbs" && method === "GET" && id && action && rest[0]) {
     // Never hold the request while Blender renders: browsers allow ~6 connections per host,
     // and parked thumbnail requests would stall saves. Answer 503 and let the image retry.
@@ -563,9 +703,19 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 201, { ok: true, path: path.relative(dir, file).split(path.sep).join("/") });
     }
     if (id && action === "run" && method === "POST") {
-      const body = await readJson<{ stage?: "stills" | "full"; draft?: boolean }>(req);
-      return send(res, 202, jobView(startJob(id, body.stage === "full" ? "full" : "stills", Boolean(body.draft))));
+      const body = await readJson<{ stage?: "stills" | "full"; draft?: boolean; animatic?: boolean }>(req);
+      return send(res, 202, jobView(startJob(id, body.stage === "full" ? "full" : "stills", Boolean(body.draft),
+        body.animatic ? "animatic" : "run")));
     }
+    if (id && action === "shotsav" && rest[0] === "plan" && method === "POST") {
+      projectDir(id);
+      return send(res, 200, await reelforgeJson(["shots-av", "plan", projectDir(id)]));
+    }
+    if (id && action === "shotsav" && rest[0] === "preview" && method === "POST") {
+      const body = await readJson<{ shot?: number; final?: boolean }>(req);
+      return send(res, 200, await shotsavPreview(id, Number(body.shot), Boolean(body.final)));
+    }
+    if (id && action === "reveal" && method === "POST") return send(res, 200, revealFolder(id));
     if (id && action === "voices") {
       if (method === "GET") return send(res, 200, voiceStatus(id));
       if (method === "POST") {

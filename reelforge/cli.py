@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .a2f import frames_to_tracks
 from .ambience import add_ambience, add_av_sound, find_music
-from .captions import build_ass, build_ass_shotsav
+from .captions import AV_TOP_ID, _css_color, build_ass, build_ass_shotsav, build_ass_styled
 from .direct import mood_keys, plan_shots, plan_shots_av, plan_shots_v2
 from .engines import DEFAULT, ENGINES, get_engine
 from .face import build_faces
@@ -69,6 +69,7 @@ def voices(project: Path, only: list[str], force: bool) -> int:
     audio = project / "out" / "audio"
     key = os.environ.get("ELEVENLABS_API_KEY")
     failed = 0
+    direct = perf.style == "shots-av"  # emotion performed through ElevenLabs audio tags
     for l in perf.lines:
         if only and l.id not in only:
             continue
@@ -79,15 +80,16 @@ def voices(project: Path, only: list[str], force: bool) -> int:
             status = {"status": "error", "error": "Empty line"}
         else:
             if force:
-                for f in (take_path(l, voice_id, audio), take_path(l, voice_id, audio).with_suffix(".json")):
+                for f in (take_path(l, voice_id, audio, direct=direct),
+                          take_path(l, voice_id, audio, direct=direct).with_suffix(".json")):
                     f.unlink(missing_ok=True)
-            if has_take(l, voice_id, audio):
+            if has_take(l, voice_id, audio, direct=direct):
                 status = {"status": "ready"}
             elif not key:
                 status = {"status": "error", "error": "No ElevenLabs API key. Add it in Settings."}
             else:
                 try:
-                    synthesize_line(l, voice_id, audio, key)
+                    synthesize_line(l, voice_id, audio, key, direct=direct)
                     status = {"status": "ready"}
                 except VoiceError as e:
                     status = {"status": "error", "error": str(e)}
@@ -105,8 +107,11 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     out = project / "out"
     key = os.environ.get("ELEVENLABS_API_KEY")
     audio = out / "audio"
+    direct = perf.style == "shots-av"
+
     def voiced_ok(l):
-        return (audio / f"{l.id}.mp3").exists() or has_take(l, perf.characters[l.speaker].voice_id, audio)
+        return (audio / f"{l.id}.mp3").exists() or has_take(l, perf.characters[l.speaker].voice_id, audio,
+                                                            direct=direct)
     if not key and not all(voiced_ok(l) for l in perf.lines):
         raise SystemExit(f"Set ELEVENLABS_API_KEY or put <line_id>.mp3 files in {audio}")
     out.mkdir(parents=True, exist_ok=True)
@@ -117,7 +122,7 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
             voiced[l.id] = import_line(l, audio)
             print(f"voice {l.id}: imported mp3")
         else:
-            voiced[l.id] = synthesize_line(l, perf.characters[l.speaker].voice_id, audio, key)
+            voiced[l.id] = synthesize_line(l, perf.characters[l.speaker].voice_id, audio, key, direct=direct)
             print(f"voice {l.id}: ElevenLabs API")
     durations = {i: probe_duration(v.audio_path) for i, v in voiced.items()}
     placed, total = place_lines(perf.lines, voiced, durations)
@@ -154,10 +159,15 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     w, h = RATIOS[perf.ratio]
     if engine.ID == "shots-av":
         cap = perf.captions
-        tints = engine.caption_tints(perf) if cap.get("tint", True) else None
-        (out / "captions.ass").write_text(build_ass_shotsav(placed, perf, w, h, perf.fps, total, tints,
-                                                            cap.get("plate", True), cap.get("position", "top")),
-                                          encoding="utf-8")
+        style = cap.get("style") or {}
+        if style.get("templateId", AV_TOP_ID) == AV_TOP_ID:  # the style's own whole-line template
+            tints = engine.caption_tints(perf) if cap.get("tint", True) else None
+            plate = _css_color(style.get("background")) or ("#1F1F1F", 0.45)
+            ass = build_ass_shotsav(placed, perf, w, h, perf.fps, total, tints, cap.get("plate", True),
+                                    cap.get("position", "top"), style.get("color", "#FFFFFF"), plate[0], plate[1])
+        else:  # one of the editor's subtitle templates, with the colours picked in the editor
+            ass = build_ass_styled(placed, perf, w, h, style)
+        (out / "captions.ass").write_text(ass, encoding="utf-8")
         if perf.ambience:
             blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps)
             if not perf.sound.get("foley", True):

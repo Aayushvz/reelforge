@@ -37,7 +37,12 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 5 | `shotsav_top` captions, room beds + buddy blip + keyboard foley + owner music, `shotsav_dark/light` grades, finish | done | b8abc33, cae3920 | `tests/test_shotsav_finish.py` (14 tests) |
 | 5 | Evidence clips (placeholder voices) | done | 37a6841 | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
 | 5 | Gate P5: the two clips | **passed** | — | Owner approved, 2026-11-13. Music and voice direction still to come from the owner |
-| 6 | Editor page "Shots-AV Animation" (spec below) | in progress | — | Started 2026-11-13 |
+| 6 | Python for the editor (`reelforge shots-av catalog/plan/preview`, `reelforge thumbnails`), camera.rack/drift, captions, sound | done | d6a3ece | |
+| 6 | Editor page: `/shots-av` list (New, three starter scripts), `/shots-av/:id` workspace (Script, Stage with shot strip, Look), server endpoints | done | P6 commit | typecheck and build clean; verified in the browser pane |
+| 6 | **ElevenLabs flow**: Voices section (you + buddy, defaults per buddy), **Generate reel** = voices with ElevenLabs then the video timed to that audio; emotion performed with audio tags + expressive stability; room depth on the dialogue | done | P6 commit | owner's key from Settings; Claude never handles it |
+| 6 | **Captions use the editor's template gallery** (11: Shots-AV Top + the 10 editor templates) with colour, font, size, position, animation controls; rendered by `captions.build_ass_styled` with the real fonts | done | P6 commit | `p6/caption_templates.png` |
+| 6 | Walkthrough evidence | done | P6 commit | starter script -> plan (9 shots) -> `p6/preview_still_shot5.png` -> `p6/walkthrough_silent_animatic.mp4` (22.8 s, draft) |
+| 6 | **Gate P6: owner tries Generate reel (spends ElevenLabs credits)** | **waiting on owner** | — | |
 | 7-8 | Benchmark, docs | not started | — | |
 
 ## P2 spec (buddies)
@@ -154,6 +159,10 @@ Honest notes:
 ## Decisions
 | Date | Decision | Why |
 |---|---|---|
+| 2026-11-13 | **Voices come from ElevenLabs through the editor**: the page's Generate reel makes every missing take with the owner's API key (entered by him in Settings), then renders on that audio. Lines are **directed**: emotion becomes an audio tag (`[cheerfully]`, `[nervously]`, `[on the verge of tears]` at high intensity…), intense lines use stability 0.0 (Creative), others 0.5 (Natural); a writer's own `[tag]` wins. Directed takes are cached by emotion and intensity too, so changing a line's emotion makes a new take; other styles' cache keys are unchanged (no paid re-generation) | Owner: "the sound will be generated through ElevenLabs… the sounds should have depth and emotion… put a script on the editor, then it will generate the audio using ElevenLabs, then the video based on audio". This replaces the earlier "web app through Chrome" route for this style; an `out/audio/<line>.mp3` still always wins |
+| 2026-11-13 | **Depth**: the dialogue gets presence EQ, gentle compression and the room's early reflections (sized per room) before the mix | Same request: voices should sit in the room, not on top of it |
+| 2026-11-13 | **Captions follow the editor's subtitle templates** with colour pickers, plus this style's own Shots-AV Top (default). Caption fonts (OFL, Google Fonts) live in `tools/fonts/` and travel with each finish | Owner: "keep the subtitles editor same as these with option to select colors as well" |
+| 2026-11-13 | Shot-strip edge dragging is not built: shot lengths follow the voice takes, so a tile changes length when its line changes | Prompt 9 allowed it only where a line permits; with voice-timed cuts no line does |
 | 2026-11-13 | Gate P5 passed: the two graded clips approved | Owner: "Approve, start P6" |
 | 2026-11-13 | Gate P4 passed: set-ups, director, acting and the silent animatic approved | Owner: "Approve, start P5" |
 | 2026-11-13 | Captions use **Geist Bold** from `tools/fonts/Geist-Bold.ttf` (SIL OFL, 73 KB, fetched from Google Fonts; git-ignored like the rest of `tools/`); Segoe UI Bold if the file is missing | The prompt names Geist 700; the editor only loads it in the browser, and burned-in captions need the font file |

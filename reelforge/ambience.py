@@ -113,14 +113,28 @@ def write_wav(path: Path, samples: list[float], rate: int = FOLEY_RATE) -> Path:
 
 
 def find_music(project: Path) -> Path | None:
-    """The owner's own music file in the project folder (never downloaded)."""
-    for name in ("music.wav", "music.mp3", "music.m4a", "music.flac"):
-        if (Path(project) / name).exists():
-            return Path(project) / name
+    """The owner's own music file in the project folder or its media/ (the editor uploads there); never downloaded."""
+    for folder in (Path(project), Path(project) / "media"):
+        for name in ("music.wav", "music.mp3", "music.m4a", "music.flac"):
+            if (folder / name).exists():
+                return folder / name
     return None
 
 
 MUSIC_LUFS = -24  # under speech, over the room
+# Voice depth per room: (delays ms, decays) of early reflections. Small rooms are tight; the office is bigger.
+ROOM_VERB = {"av_studio_night": ("24|41", "0.12|0.07"), "av_neon_den": ("19|33", "0.10|0.06"),
+             "av_late_office": ("38|67", "0.14|0.09"), "av_studio_morning": ("26|44", "0.11|0.06"),
+             "av_cafe_day": ("31|55", "0.12|0.08"), "av_cyc_lilac": ("45|80", "0.09|0.06")}
+
+
+def voice_chain(environment: str) -> str:
+    """Presence and depth for the dialogue: rumble out, a little chest warmth and articulation, gentle glue, and the
+    room's early reflections."""
+    delays, decays = ROOM_VERB.get(environment, ("26|44", "0.11|0.06"))
+    return ("highpass=f=75,equalizer=f=180:t=q:w=1.0:g=1.5,equalizer=f=3200:t=q:w=1.2:g=1.5,"
+            "acompressor=threshold=-20dB:ratio=2.5:attack=8:release=120:makeup=1.5,"
+            f"aecho=0.88:0.9:{delays}:{decays}")
 
 
 def add_av_sound(dialogue: Path, environment: str, seconds: float, blips: list[float],
@@ -145,8 +159,9 @@ def add_av_sound(dialogue: Path, environment: str, seconds: float, blips: list[f
     dry = out.with_name("dialogue_dry.wav")
     shutil.copyfile(out, dry)
     ins = ["-i", str(dry)] + [a for p in layers for a in ("-i", str(p))]
-    mix = "".join(f"[{i}:a]" for i in range(len(layers) + 1))
+    mix = "[v]" + "".join(f"[{i}:a]" for i in range(1, len(layers) + 1))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *ins, "-filter_complex",
+                    f"[0:a]{voice_chain(environment)}[v];"
                     f"{mix}amix=inputs={len(layers) + 1}:duration=first:normalize=0[a]", "-map", "[a]", str(out)],
                    check=True)
     return True

@@ -137,3 +137,10 @@ def test_halation_never_tints_skin(skin):
     h0 = colorsys.rgb_to_hsv(*(v / 255 for v in want))[0] * 360
     h1 = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)[0] * 360
     assert abs(h1 - h0) <= 2.0 and max(abs(x - y) for x, y in zip((r, g, b), want)) <= 4
+
+
+def test_voice_chain_gives_every_room_depth():
+    for room in AV_ROOMS:
+        chain = ambience.voice_chain(room)
+        assert "aecho=" in chain and "acompressor" in chain and "highpass=f=75" in chain
+    assert ambience.voice_chain("av_late_office") != ambience.voice_chain("av_neon_den")  # bigger room, longer echo

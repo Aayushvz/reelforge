@@ -117,11 +117,10 @@ def measure_lufs(path: Path) -> float:
 
 def finish(workdir: Path, fps: int, out_name: str, environment: str = "", look: str = "classic") -> Path:
     # Relative paths + cwd avoid Windows drive-letter escaping inside the ass= filter.
-    if look == "shotsav":  # the caption font travels with the job (fontsdir=fonts)
-        font = Path(__file__).resolve().parents[1] / "tools" / "fonts" / "Geist-Bold.ttf"
+    if look == "shotsav":  # the caption fonts travel with the job (fontsdir=fonts)
+        import shutil
         (Path(workdir) / "fonts").mkdir(exist_ok=True)
-        if font.exists():
-            import shutil
+        for font in (Path(__file__).resolve().parents[1] / "tools" / "fonts").glob("*.ttf"):
             shutil.copyfile(font, Path(workdir) / "fonts" / font.name)
     subprocess.run(build_ffmpeg_cmd(fps, out_name, environment, look), cwd=workdir, check=True)
     out = Path(workdir) / out_name

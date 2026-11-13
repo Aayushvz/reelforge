@@ -188,14 +188,15 @@ AV_LOWER = 0.70  # "lower" captions start here: above the bottom platform band (
 
 
 def build_ass_shotsav(placed: list[Placed], perf: Performance, width: int, height: int, fps: int, total: float,
-                      tints: dict[str, str] | None = None, plate: bool = True, position: str = "top") -> str:
+                      tints: dict[str, str] | None = None, plate: bool = True, position: str = "top",
+                      color: str = "#FFFFFF", plate_color: str = AV_PLATE, plate_alpha: float = AV_PLATE_ALPHA) -> str:
     """The shotsav_top template: one caption line (or two) at a time, top centre, on a faint rounded ink plate,
     with a small dot in the speaker's colour."""
     fs = round(AV_FONT_PX * width / 1080)
     lh = round(fs * 1.18)
     x, y = width // 2, round(height * (AV_LOWER if position == "lower" else AV_TOP))
     pad_x, pad_y, radius, dot = round(fs * 0.55), round(fs * 0.28), round(10 * width / 1080), round(6 * width / 1080) + 4
-    plate_c, plate_a = ass_alpha_color(AV_PLATE, AV_PLATE_ALPHA)
+    plate_c, plate_a = ass_alpha_color(plate_color, plate_alpha)
     rows = [av_header(width, height)]
     for start, end, lines, who in av_events(placed, fps, total):
         tw = max(len(line) for line in lines) * fs * AV_CHAR_W
@@ -215,5 +216,117 @@ def build_ass_shotsav(placed: list[Placed], perf: Performance, width: int, heigh
                         f"\\c{c}\\bord0\\shad0{fade}\\p1}}{_circle(dot)}{{\\p0}}")
         body = "\\N".join(_clean(line) for line in lines)
         tx = x + extra / 2
-        rows.append(f"Dialogue: 2,{ts(start)},{ts(end)},AV,,0,0,0,,{{\\an8\\pos({tx:.0f},{y:.0f}){fade}}}{body}")
+        rows.append(f"Dialogue: 2,{ts(start)},{ts(end)},AV,,0,0,0,,{{\\an8\\pos({tx:.0f},{y:.0f})\\c{ass_color(color)}{fade}}}{body}")
+    return "\n".join(rows) + "\n"
+
+
+# --- editor subtitle templates for shots-av (editor/src/data/catalog.ts SUBTITLE_TEMPLATES) ----------------------
+# style: the editor's SubtitleStyle {templateId, font, size (px at 1080 wide), weight, color, highlight, background
+# (None | "rgba(r,g,b,a)" | "#rrggbb" | "highlight"), outline, shadow, position upper|middle|lower, align, lineSpacing,
+# wordsPerLine, animation pop|fade|karaoke|slide|none, uppercase, italic}. "shotsav-top" is this style's own template.
+AV_TOP_ID = "shotsav-top"
+STYLE_DEFAULTS = {"templateId": "punchline-pop", "font": "Geist", "size": 64, "weight": 700, "color": "#FFFFFF",
+                  "highlight": "#FFD23F", "background": None, "outline": 4, "shadow": 2, "position": "lower",
+                  "align": "center", "lineSpacing": 1.1, "wordsPerLine": 4, "animation": "pop", "uppercase": False,
+                  "italic": False}
+FONT_FAMILIES = {"Geist", "Anton", "Archivo Black", "DM Serif Display", "Space Grotesk", "IBM Plex Mono"}
+
+
+def _css_color(value: str | None) -> tuple[str, float] | None:
+    """'#rrggbb' or 'rgba(r,g,b,a)' -> ('#RRGGBB', opacity)."""
+    if not value or value == "highlight":
+        return None
+    v = value.strip()
+    if v.startswith("#") and len(v) == 7:
+        return v.upper(), 1.0
+    if v.startswith("rgba(") or v.startswith("rgb("):
+        parts = [p.strip() for p in v[v.index("(") + 1:v.rindex(")")].split(",")]
+        r, g, b = (max(0, min(255, int(float(x)))) for x in parts[:3])
+        a = float(parts[3]) if len(parts) > 3 else 1.0
+        return f"#{r:02X}{g:02X}{b:02X}", max(0.0, min(1.0, a))
+    return None
+
+
+def _anchor(style: dict, width: int, height: int) -> tuple[int, int, int]:
+    """(\\an alignment, x, y) for the style's position and align, inside the 9:16 safe zones."""
+    pos, align = style["position"], style["align"]
+    row = {"upper": 7, "middle": 4, "lower": 1}[pos if pos in ("upper", "middle", "lower") else "lower"]
+    col = {"left": 0, "center": 1, "right": 2}.get(align, 1)
+    x = {0: round(width * 0.08), 1: width // 2, 2: round(width * 0.92)}[col]
+    y = {7: round(height * 0.09), 4: round(height * 0.5), 1: round(height * 0.79)}[row]
+    return row + col, x, y
+
+
+def build_ass_styled(placed: list[Placed], perf: Performance, width: int, height: int, style: dict) -> str:
+    """Captions in one of the editor's subtitle templates, timed by the spoken words."""
+    s = {**STYLE_DEFAULTS, **{k: v for k, v in (style or {}).items() if v is not None or k == "background"}}
+    k = width / 1080
+    fs = round(float(s["size"]) * k)
+    font = s["font"] if s["font"] in FONT_FAMILIES else "Geist"
+    bold = -1 if int(s["weight"]) >= 600 else 0
+    bar = _css_color(s["background"])
+    outline, shadow = max(0, round(float(s["outline"]) * k)), max(0, round(float(s["shadow"]) * k))
+    an, x, y = _anchor(s, width, height)
+    base, hi = ass_color(s["color"]), ass_color(s["highlight"])
+    sbase = base.rstrip("&")  # style lines take &HAABBGGRR without the closing &
+    if bar:  # a box behind the text: BorderStyle 3 draws the outline colour as the box
+        bc, ba = bar
+        box = ass_color(bc).rstrip("&").replace("&H00", "&H{:02X}".format(round(255 * (1 - ba))))
+        # libass draws a BorderStyle 3 box in BackColour, VSFilter in OutlineColour: set both
+        style_line = (f"Style: AVS,{font},{fs},{sbase},{sbase},{box},{box},{bold},{-1 if s['italic'] else 0},"
+                      f"0,0,100,100,0,0,3,{round(fs * 0.22)},0,{an},40,40,0,1")
+    else:
+        style_line = (f"Style: AVS,{font},{fs},{sbase},{sbase},&H00101010,&H96000000,{bold},{-1 if s['italic'] else 0},"
+                      f"0,0,100,100,0,0,1,{outline},{shadow},{an},40,40,0,1")
+    rows = [
+        "[Script Info]\nScriptType: v4.00+\n"
+        f"PlayResX: {width}\nPlayResY: {height}\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+        "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+        "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        f"{style_line}\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"]
+    groups: list[tuple[Placed, list[Word]]] = []
+    per = max(1, int(s["wordsPerLine"]))
+    for p in placed:
+        words = [Word(w.text, p.start + w.start, p.start + w.end) for w in words_from_chars(p.voiced.chars)]
+        groups += [(p, g) for g in group_words(words, max_words=per)]
+    anim = s["animation"]
+    block = s["background"] == "highlight"
+    up = (lambda t: t.upper()) if s["uppercase"] else (lambda t: t)  # noqa: E731
+    for gi, (p, group) in enumerate(groups):
+        nxt = groups[gi + 1][1][0].start if gi + 1 < len(groups) else None
+        g_end = group[-1].end + HOLD if nxt is None else min(group[-1].end + HOLD, nxt)
+        pos = f"\\an{an}\\pos({x},{y})"
+        texts = [_clean(up(w.text)) for w in group]
+        if anim in ("none", "fade", "slide") and not block:
+            fx = ""
+            if anim == "fade":
+                fx = "\\fad(120,80)"
+            elif anim == "slide":
+                fx = f"\\move({x},{y + round(30 * k)},{x},{y},0,160)\\fad(100,80)"
+                pos = f"\\an{an}"
+            rows.append(f"Dialogue: 0,{ts(group[0].start)},{ts(g_end)},AVS,,0,0,0,,{{{pos}{fx}}}{' '.join(texts)}")
+            continue
+        for j, w in enumerate(group):  # word by word: the active word changes colour
+            start = w.start
+            end = group[j + 1].start if j + 1 < len(group) else g_end
+            if nxt is not None:
+                end = min(end, nxt)
+            parts = []
+            for m, t in enumerate(texts):
+                on = m == j or (anim == "karaoke" and m <= j)
+                if block and m == j:
+                    parts.append(f"{{\\c&H111111&\\3c{hi}\\bord{max(4, round(fs * 0.16))}}}{t}{{\\c{base}\\3c&H101010&\\bord{outline}}}")
+                elif on and not block:
+                    parts.append(f"{{\\c{hi}}}{t}{{\\c{base}}}")
+                else:
+                    parts.append(t)
+            fx = ""
+            if anim == "pop" and j == 0:
+                fx = PUNCH_POP if p.line.punchline else POP
+            elif anim == "pop" and p.line.punchline:
+                fx = PUNCH_HOLD
+            rows.append(f"Dialogue: 0,{ts(start)},{ts(end)},AVS,,0,0,0,,{{{pos}}}{fx}{' '.join(parts)}")
     return "\n".join(rows) + "\n"
