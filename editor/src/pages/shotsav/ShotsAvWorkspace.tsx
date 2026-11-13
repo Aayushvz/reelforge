@@ -603,7 +603,8 @@ export function ShotsAvWorkspace() {
             <FieldRow label="Drift"><Slider ariaLabel="Camera drift" min={0} max={2} step={0.1} value={perf.camera?.drift ?? 1}
               format={(v) => `${v.toFixed(1)}×`} onChange={(v) => setCamera({ drift: Math.round(v * 10) / 10 })} /></FieldRow>
             <FieldRow label="Focus pull"><Switch label="Focus pull in the first wide" checked={perf.camera?.rack !== false} onChange={(v) => setCamera({ rack: v })} /></FieldRow>
-            <FieldRow label="Connected move"><span className="row"><Switch label="Connected move (coming later)" checked={false} onChange={() => undefined} /><span className="meta">Coming later</span></span></FieldRow>
+            <FieldRow label="Connected move"><Switch label="One shot arcs from you to the buddy instead of cutting" checked={perf.camera?.connect !== false}
+              onChange={(v) => setCamera({ connect: v })} /></FieldRow>
           </Section>
           <Section title="Voices">
             <FieldRow label="You"><Select size="sm" ariaLabel="Your voice" value={perf.characters[HERO]?.voice_id || HERO_VOICE}

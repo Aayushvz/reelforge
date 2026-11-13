@@ -23,7 +23,8 @@ export type PerfLine = {
   beat?: boolean; action?: string;  // shots-av: force a wide; a buddy reaction clip
 };
 export type AvCamera = { grammar?: "signature" | "reference"; seed?: number; rack?: boolean; drift?: number;
-  angles?: "varied" | "classic";  // the 36-angle library (reelforge/angles.py), or the reference's five set-ups
+  angles?: "varied" | "classic";
+  connect?: boolean;  // one hero-to-buddy connected move (signature grammar)  // the 36-angle library (reelforge/angles.py), or the reference's five set-ups
   overrides?: Record<string, { kind?: string; move?: string; fstop?: number; angle?: string; rack?: boolean }> };
 // Where the desk sits in the room: each -1..1 (pan sideways, height, turn); empty = one of the room's good spots
 export type RoomView = { pan?: number; height?: number; turn?: number };

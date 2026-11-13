@@ -33,7 +33,7 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | 4 | **Match pass** | **done, all within tolerance** | 776c0f3 | `p4/match_pass.jpg` (reference top, ours below), `p4/match_measure.json`; table below |
 | 4 | Silent animatic (draft, 540x960, 16 samples) | done | 737579e | `p4/animatic_silent.mp4` (48.7 s), `p4/animatic_strip.jpg`. **Render time 9 min 18 s for 48.7 s (0.36 s/frame)**: over the prompt's 6-minute draft budget; see notes |
 | 4 | Gate P4: match pass and animatic | **passed** | — | Owner approved, 2026-11-13 |
-| 4 | Connected move (arc from `av_hero_34` to `av_buddy`) | deferred | — | see Decisions |
+| 4 | Connected move (arc from a hero single to the buddy) | **done (2026-11-14)**, kept: it reads clean | connected-move commit | `p7/connected_move.mp4`, `p7/connected_move.jpg`; see the note below the bench table |
 | 5 | `shotsav_top` captions, room beds + buddy blip + keyboard foley + owner music, `shotsav_dark/light` grades, finish | done | b8abc33, cae3920 | `tests/test_shotsav_finish.py` (14 tests) |
 | 5 | Evidence clips (placeholder voices) | done | 37a6841 | `p5/clip_dark_av_studio_night.mp4` (13.5 s, Claude), `p5/clip_light_av_studio_morning.mp4` (14.0 s, ChatGPT), `p5/frames.jpg` |
 | 5 | Gate P5: the two clips | **passed** | — | Owner approved, 2026-11-13. Music and voice direction still to come from the owner |
@@ -59,6 +59,15 @@ Update this file after every task. A new session reads it and `git log`, and nev
 | Preview still | one shot, Final settings | — | — | 15-25 s each | — |
 Balanced vs Final on six frames of the owner's reel: SSIM 0.987, PSNR 40 dB; the faces match by eye. Render
 settings only: no character geometry, texture or shape-key change (CLAUDE.md rule).
+
+## Connected move (2026-11-14)
+One per reel in the signature grammar (`camera.connect`, default on; the editor's Camera section has the switch):
+the first hero single after a third of the runtime that is followed by a short buddy reply (at most 2.6 s, not the
+closing wide) becomes one shot. The camera holds on him, then from 0.2 s before the reply arcs over 18 frames (0.6 s)
+to the buddy's framing (`camera_rig.connect_pose`: the aim slides, the viewing direction slerps, distance and lens
+blend geometrically), and focus travels from him to the buddy. Tested on the hardest case, his extreme close-up into
+Claude's close (`projects/p7-bench-connect`, draft, 10.8 min): no jump in scale, no clipping, the middle frames read as
+a quick whip down the jacket. Kept; the rack focus in the first wide stays too. Rubric row 7 now has both.
 
 ## P2 spec (buddies)
 1. `blender/shotsav/buddies.py`: table `BUDDIES` (claude, chatgpt, figma, nova), built by `build_shotsav.py -- <out> buddy <id>`.

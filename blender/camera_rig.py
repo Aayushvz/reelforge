@@ -106,6 +106,32 @@ def base_pose(kind, eye_pos, head_height, width, height, side=1.0, az_pick=0.5, 
             "roll": math.radians(fr.get("roll", 0.0)) * side}
 
 
+def connect_pose(p1, p2, t):
+    """A connected move: blend pose p1 into p2 at t (0..1, already eased) along an arc, not a straight line. The aim
+    slides, the camera's offset from the aim turns (its direction interpolated on the sphere) while its length and
+    the lens blend, so the subject's size changes as part of the move instead of jumping on a cut."""
+    if t <= 0.0:
+        return p1
+    if t >= 1.0:
+        return p2
+    aim = tuple(a + (b - a) * t for a, b in zip(p1["aim"], p2["aim"]))
+    v1 = [a - b for a, b in zip(p1["pos"], p1["aim"])]
+    v2 = [a - b for a, b in zip(p2["pos"], p2["aim"])]
+    l1, l2 = math.sqrt(sum(x * x for x in v1)), math.sqrt(sum(x * x for x in v2))
+    u1, u2 = [x / l1 for x in v1], [x / l2 for x in v2]
+    cos = max(-1.0, min(1.0, sum(a * b for a, b in zip(u1, u2))))
+    ang = math.acos(cos)
+    if ang < 1e-4:
+        d = u1
+    else:  # slerp the viewing direction
+        s1, s2 = math.sin((1 - t) * ang) / math.sin(ang), math.sin(t * ang) / math.sin(ang)
+        d = [s1 * a + s2 * b for a, b in zip(u1, u2)]
+    length = l1 + (l2 - l1) * t
+    pos = tuple(a + x * length for a, x in zip(aim, d))
+    lens = p1["lens"] * (p2["lens"] / p1["lens"]) ** t  # geometric: the zoom feels even
+    return {"pos": pos, "aim": aim, "roll": p1["roll"] + (p2["roll"] - p1["roll"]) * t, "lens": lens}
+
+
 def two_shot_aim(speaker_eye, listener_eye, bias=0.35):
     """Aim point for the raking two-shot: between the faces, nearer the listener, which from the raking camera
     puts the two faces evenly left and right of centre."""

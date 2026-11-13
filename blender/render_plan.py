@@ -261,6 +261,13 @@ def rig_camera(i, s):
     base = rig.base_pose(kind, tuple(eye), height, w, h, side, s.get("az_pick", 0.5), room,
                          s.get("lens") or None, 0.0 if kind == "two" or av else subj["min_head"], s.get("framing") or None)
     base["dist"] = min(base["dist"], MAX_DIST[kind])
+    con, base2 = s.get("connect") or {}, None
+    if con.get("to") in CH:  # shots-av connected move: the second framing the camera arcs into
+        o = CH[con["to"]]
+        side2 = 1.0 if subj["face_pos"].x > o["face_pos"].x else -1.0
+        base2 = rig.base_pose("av_buddy", tuple(o["focus"].matrix_world.translation), o["frame_h"], w, h, side2, 0.5,
+                              0.0, None, 0.0, con.get("framing") or None)
+        base2["dist"] = min(base2["dist"], MAX_DIST["av_buddy"])
     cd = bpy.data.cameras.new(f"Cam{i}")
     cd.lens = base["lens"]
     cd.dof.use_dof = True
@@ -274,6 +281,9 @@ def rig_camera(i, s):
     for f in range(a, b + 1):
         u = (f - a) / max(1, b - a)
         p = rig.pose(base, move, u, s.get("move_params"), s.get("ease", 0.35))
+        tc = rig.smoothstep((f - a - con.get("at", 0)) / max(1, con.get("frames", 18))) if base2 else 0.0
+        if base2:
+            p = rig.connect_pose(p, rig.pose(base2, "static", 0.0), tc)
         (dx, dy, dz), (pitch, yaw, roll) = rig.handheld(f, fps, s.get("seed", 0), s.get("handheld", 0.0), b - a + 1, a)
         cam.location = Vector(p["pos"]) + Vector((dx, dy, dz))
         q = (Vector(p["aim"]) - cam.location).to_track_quat("-Z", "Y")
@@ -282,6 +292,15 @@ def rig_camera(i, s):
         prev = cam.rotation_euler.copy()
         cam.keyframe_insert("location", frame=f)
         cam.keyframe_insert("rotation_euler", frame=f)
+        if base2:  # focus travels with the move, from the subject to the buddy
+            fwd = q @ Vector((0.0, 0.0, -1.0))
+            d0 = (subj["focus"].matrix_world.translation - cam.location).dot(fwd)
+            d1 = (CH[con["to"]]["focus"].matrix_world.translation - cam.location).dot(fwd)
+            cd.dof.focus_object = None
+            cd.dof.focus_distance = d0 + (d1 - d0) * tc
+            cd.dof.keyframe_insert("focus_distance", frame=f)
+            cd.lens = p["lens"]
+            cd.keyframe_insert("lens", frame=f)
         rack = s.get("rack") or {}
         if rack and rack.get("from") in CH and rack.get("to") in CH:  # pull focus from one character to the other
             fwd = q @ Vector((0.0, 0.0, -1.0))

@@ -33,6 +33,9 @@ class Shot:
     speaker: str = ""  # who is talking, when it is not the subject (shots-av wides); empty = the subject
     angle: str = ""  # shots-av: the angle library id (reelforge/angles.py); empty = the kind's own framing
     framing: dict = field(default_factory=dict)  # shots-av: that angle's framing, read by the renderer
+    # shots-av: one connected move per reel: from `at` (frames into the shot) the camera arcs over `frames` from this
+    # framing to the buddy's ({"to": name, "at": n, "frames": n, "angle": id, "framing": {...}}), pulling focus across
+    connect: dict = field(default_factory=dict)
 
 
 def plan_shots(placed: list[Placed], fps: int, n_frames: int) -> list[Shot]:
@@ -201,6 +204,7 @@ AV_CUT_LEAD = 3
 AV_REACTION_S = (1.0, 1.2, 1.4)
 AV_CONCESSIONS = ("fine", "okay", "ok", "true", "alright", "sure", "yeah", "fair", "right", "deal")
 AV_GRAMMARS = ("signature", "reference")
+AV_CONNECT_FRAMES, AV_CONNECT_LEAD, AV_CONNECT_MAX_S = 18, 6, 2.6  # the arc: 0.6 s, starting 0.2 s before the reply
 
 
 def _words(text: str) -> list[str]:
@@ -291,8 +295,11 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
     drift = float(camera.get("drift", 1.0))  # the editor's drift dial scales every move
     varied = sig and camera.get("angles", "varied") == "varied"  # the reference grammar keeps its five set-ups
     director = _angles.Director(seed)
+    join = _connect_point(merged, fps, n_frames) if sig and camera.get("connect", True) is not False else None
     shots: list[Shot] = []
     for i, (a, b, kind, subject, line, reaction) in enumerate(merged):
+        if join is not None and i == join + 1:
+            continue  # folded into the connected shot before it
         last = i == len(merged) - 1
         if varied and not last:  # the director picks one of 36 angles for the shot's role and the line's mood
             angle = director.pick(i, _angles.ROLE_OF[kind], _angles.mood_of(line.emotion, line.intensity), reaction)
@@ -307,10 +314,18 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
             line_start = next((int(round(p.start * fps)) for p in placed if p.line is line), a)
             rack = {"at": max(0, line_start - a), "frames": 10, "from": hero, "to": buddy}
             rack_done = True
+        connect = {}
+        if i == join:  # hold on him, then arc across to the buddy as the reply starts: no cut, no jump in scale
+            nb = merged[i + 1]
+            to_angle = (director.pick(i + 1, "buddy", _angles.mood_of(nb[4].emotion, nb[4].intensity))
+                        if varied else _angles.CLASSIC["av_buddy"])
+            connect = {"to": buddy, "at": max(0, nb[0] - a - AV_CONNECT_LEAD), "frames": AV_CONNECT_FRAMES,
+                       "angle": to_angle, "framing": _angles.framing(to_angle)}
+            b, move, params = nb[1], "drift", {"metres": 0.01, "degrees": 0.3}
         shots.append(Shot(a, b, kind, float(fr["lens"]), subject, 0.0, move, params, 0.0,
                           0.04 if sig else 0.0, (seed * 7919 + i * 104729) & 0x7FFFFFFF,
                           round(_hash(seed, i, "az") / 0xFFFFFFFF, 3), 0.15 if sig else 0.0, rack,
-                          line.speaker, angle, fr))
+                          line.speaker, angle, fr, connect))
     for key, o in (camera.get("overrides") or {}).items():
         i = int(key)
         if 0 <= i < len(shots):
@@ -335,6 +350,17 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
                                fstop=float(o.get("fstop", s.fstop)), rack=rack, angle=angle, framing=fr,
                                subject=subject)
     return shots
+
+
+def _connect_point(merged: list, fps: int, n_frames: int) -> int | None:
+    """Where the one connected move goes: the first hero single after a third of the reel that is followed by a short
+    buddy reply (both spoken lines, not reactions, never into the closing wide). None when no pair fits."""
+    for k in range(len(merged) - 2):
+        a, b = merged[k], merged[k + 1]
+        if (a[2] in AV_HERO_KINDS and b[2] == "av_buddy" and not a[5] and not b[5] and a[0] >= n_frames / 3
+                and (b[1] - b[0]) <= AV_CONNECT_MAX_S * fps):
+            return k
+    return None
 
 
 def screen_time(shots: list[Shot]) -> dict[str, float]:

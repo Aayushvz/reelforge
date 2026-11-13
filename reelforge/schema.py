@@ -186,6 +186,8 @@ def parse_performance(data: dict) -> Performance:
         camera, look_params = {}, {}
     if "rack" in camera and not isinstance(camera["rack"], bool):
         errors.append("camera.rack must be true or false")
+    if "connect" in camera and not isinstance(camera["connect"], bool):
+        errors.append("camera.connect must be true or false")
     drift = camera.get("drift", 1.0)
     if isinstance(drift, bool) or not isinstance(drift, (int, float)) or not 0.0 <= drift <= 2.0:
         errors.append("camera.drift must be a number 0..2")
