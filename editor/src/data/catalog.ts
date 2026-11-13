@@ -69,7 +69,7 @@ export type Character = {
 export const CHARACTERS: Character[] = [
   {
     id: "kai", name: "Kai", gender: "male", vibe: "Chill creative, deadpan", tone: "#7c8a9a",
-    signature: "Tight black curls, thin chain, earring", status: "planned", suggestedVoice: "Josh",
+    signature: "Tight black curls, thin chain, earring", status: "available", suggestedVoice: "Josh",
     personality: "Says the funniest thing in the room without changing his face. Never in a hurry.",
     outfits: [
       { id: "kai-1", name: "Boxy black", items: { top: "boxy-shirt", bottom: "black-jeans", shoes: "skate-shoes", accessories: "thin-chain" } },
@@ -79,7 +79,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "rey", name: "Rey", gender: "male", vibe: "Loud and funny, big laugh", tone: "#a08a6a",
-    signature: "Curly hair, full beard, glasses", status: "planned", suggestedVoice: "Adam",
+    signature: "Curly hair, full beard, glasses", status: "available", suggestedVoice: "Adam",
     personality: "Laughs before the punchline lands. Turns small inconveniences into epics.",
     outfits: [
       { id: "rey-1", name: "Grey sweats", items: { outer: "sweatsuit", bottom: "joggers", shoes: "chunky-sneakers", accessories: "chunky-chain" } },
@@ -89,7 +89,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "dev", name: "Dev", gender: "male", vibe: "Confident coder, smirk", tone: "#b08a5a",
-    signature: "Fade with swoop top, stubble, watch", status: "planned", suggestedVoice: "Antoni",
+    signature: "Fade with swoop top, stubble, watch", status: "available", suggestedVoice: "Antoni",
     personality: "Ships on Friday at 4:59 and is somehow right about it.",
     outfits: [
       { id: "dev-1", name: "Camel & black", items: { top: "camel-tee", bottom: "black-jeans", shoes: "chunky-sneakers", accessories: "watch" } },
@@ -99,7 +99,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "mo", name: "Mo", gender: "male", vibe: "Anxious overthinker", tone: "#7a6a58",
-    signature: "Messy hair, round glasses, slight slouch", status: "planned", suggestedVoice: "Sam",
+    signature: "Messy hair, round glasses, slight slouch", status: "available", suggestedVoice: "Sam",
     personality: "Has already imagined eleven ways this goes wrong. Two of them happen.",
     outfits: [
       { id: "mo-1", name: "Cardigan", items: { top: "graphic-tee", outer: "baggy-cardigan", bottom: "wide-pants", accessories: "round-glasses" } },
@@ -109,7 +109,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "aria", name: "Aria", gender: "female", vibe: "Witty lead, sarcastic", tone: "#8a6a7a",
-    signature: "Long dark hair, hoop earrings", status: "planned", suggestedVoice: "Jessica",
+    signature: "Long dark hair, hoop earrings", status: "available", suggestedVoice: "Jessica",
     personality: "Runs the scene. Every reply is a closing argument.",
     outfits: [
       { id: "aria-1", name: "Cropped knit", items: { top: "cropped-knit", bottom: "wide-leg-jeans", shoes: "chunky-sneakers", accessories: "hoop-earrings" } },
@@ -119,7 +119,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "zoe", name: "Zoe", gender: "female", vibe: "Bubbly, dramatic reactions", tone: "#c08a6a",
-    signature: "High ponytail, freckles, blush", status: "planned", suggestedVoice: "Elli",
+    signature: "High ponytail, freckles, blush", status: "available", suggestedVoice: "Elli",
     personality: "Reacts at full volume. Means every word of it.",
     outfits: [
       { id: "zoe-1", name: "Sporty zip", items: { outer: "sporty-zip", bottom: "leggings", shoes: "chunky-sneakers" } },
@@ -129,7 +129,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "noor", name: "Noor", gender: "female", vibe: "Calm, stylish, dry humour", tone: "#9a8a6a",
-    signature: "Sleek bob or braids, gold jewellery", status: "planned", suggestedVoice: "Rachel",
+    signature: "Sleek bob or braids, gold jewellery", status: "available", suggestedVoice: "Rachel",
     personality: "Unbothered. Delivers the line everyone repeats later.",
     outfits: [
       { id: "noor-1", name: "Trench", items: { top: "turtleneck", outer: "trench-coat", bottom: "wide-pants", shoes: "loafers" } },
@@ -137,11 +137,27 @@ export const CHARACTERS: Character[] = [
       { id: "noor-3", name: "Sweater & beret", items: { top: "oversized-sweater", bottom: "wide-leg-jeans", shoes: "boots", accessories: "beret" } },
     ],
   },
+  // Imported, full-detail models (blender/imported.py): realistic faces, standing, one authored outfit each.
+  {
+    id: "matt", name: "Matt", gender: "male", vibe: "Easy-going, sincere", tone: "#c89a70",
+    signature: "Swept ginger hair, light-blue oxford shirt", status: "available", suggestedVoice: "Josh",
+    personality: "Says the honest thing a beat too early. Full face rig: every ARKit shape.",
+    outfits: [{ id: "matt-1", name: "Oxford & jeans", items: {} }],
+  },
+  {
+    id: "freya", name: "Freya", gender: "female", vibe: "Cool, confident", tone: "#b08c78",
+    signature: "Long two-tone hair, black corset top", status: "available", suggestedVoice: "Rachel",
+    personality: "Never raises her voice. Doesn't need to.",
+    outfits: [{ id: "freya-1", name: "All black", items: {} }],
+  },
+  {
+    id: "cute_girl", name: "Mina", gender: "female", vibe: "Warm, playful", tone: "#d0a090",
+    signature: "Bangs and a loose ponytail, tied white shirt", status: "available", suggestedVoice: "Elli",
+    personality: "Laughs first, explains later.",
+    outfits: [{ id: "cute_girl-1", name: "Tied shirt & denim", items: {} }],
+  },
 ];
 export const character = (id: string | null | undefined) => CHARACTERS.find((c) => c.id === id);
-
-// The only character the pipeline renders today is the M1 procedural stand-in.
-export const STAND_IN = { id: "stand-in", name: "Stand-in", note: "M1 procedural character. Rendered for every speaker until the cast is built." };
 
 // ---------- environments ----------
 
@@ -158,35 +174,67 @@ export const ENVIRONMENTS: Environment[] = [
   { id: "night-city-desk", name: "Night-city desk", category: "Interior", status: "available", pipelineId: "night_city",
     description: "Desk by a window over a city at night. Glowing screens, holo panel, haze.",
     presets: [P("blue-night", "Blue night", "#e8a060", "#4070ff", "#ff8c33", "#0a1428"), P("neon-pink", "Neon pink", "#f0a0c0", "#ff3c8c", "#ff5ab4", "#1a0a1e"), P("rainy", "Rainy", "#a0b4c8", "#5a7a9a", "#8ab4d8", "#0c1218")] },
-  { id: "bedroom", name: "Bedroom / gaming room", category: "Interior", status: "planned",
+  { id: "bedroom", pipelineId: "bedroom", name: "Bedroom / gaming room", category: "Interior", status: "available",
     description: "Lived-in bedroom with a gaming setup, shelves and soft practicals.",
     presets: [P("warm-lamp", "Warm lamp", "#f0b070", "#c08050", "#ffb060", "#1a120a"), P("rgb-leds", "RGB LEDs", "#c0a0e0", "#40d0ff", "#ff40a0", "#0e0a18"), P("morning-sun", "Morning sun", "#fff0d0", "#ffd8a0", "#ffe0b0", "#3a3020")] },
-  { id: "rooftop", name: "Rooftop skyline", category: "Exterior", status: "planned",
+  { id: "rooftop", pipelineId: "rooftop", name: "Rooftop skyline", category: "Exterior", status: "available",
     description: "Rooftop ledge with a skyline behind, string lights and water tanks.",
     presets: [P("golden-hour", "Golden hour", "#ffc070", "#ff9040", "#ffb050", "#4a2a14"), P("blue-hour", "Blue hour", "#a0b0e0", "#6080d0", "#ffb070", "#141a30"), P("night-lights", "Night lights", "#e0b080", "#5070c0", "#ffd080", "#0a0c16")] },
-  { id: "cafe", name: "Café window", category: "Interior", status: "planned",
+  { id: "cafe", pipelineId: "cafe", name: "Café window", category: "Interior", status: "available",
     description: "Window seat in a small café. Steam, wood, a street outside the glass.",
     presets: [P("rainy-day", "Rainy day", "#b0c0d0", "#7090b0", "#e0b080", "#141a20"), P("sunny-afternoon", "Sunny afternoon", "#ffe0b0", "#ffc080", "#ffd090", "#3a2c1a"), P("fairy-lights", "Evening fairy lights", "#f0c080", "#a07040", "#ffd070", "#140e08")] },
-  { id: "lantern-street", name: "Lantern old-town street", category: "Exterior", status: "planned",
+  { id: "lantern-street", pipelineId: "lantern_street", name: "Lantern old-town street", category: "Exterior", status: "available",
     description: "Narrow old-town street strung with paper lanterns. The ink.industries mood.",
     presets: [P("sunset", "Sunset", "#ffb070", "#ff7040", "#ffa050", "#3a1a10"), P("lantern-night", "Lantern night", "#ffb060", "#c05020", "#ff9040", "#100a08"), P("foggy-dawn", "Foggy dawn", "#c8ccd0", "#a0a8b0", "#e0c8a0", "#2a2c30")] },
-  { id: "subway", name: "Subway platform", category: "Transit", status: "planned",
+  { id: "subway", pipelineId: "subway", name: "Subway platform", category: "Transit", status: "available",
     description: "Tiled metro platform, tunnel mouth, signage and a waiting bench.",
     presets: [P("fluorescent", "Fluorescent", "#d8f0e0", "#a0d0b0", "#e0ffe8", "#141a16"), P("late-night", "Late-night empty", "#90a0b0", "#4060a0", "#c0d0e0", "#080a10"), P("rush-hour", "Rush-hour warm", "#f0c890", "#c09060", "#ffd8a0", "#1a1410")] },
-  { id: "campus", name: "Campus / classroom", category: "Work", status: "planned",
+  { id: "campus", pipelineId: "classroom", name: "Campus / classroom", category: "Work", status: "available",
     description: "Lecture room with tall windows, desks and a chalkboard.",
     presets: [P("daylight", "Daylight", "#fff4e0", "#d0e0f0", "#ffffff", "#30363c"), P("overcast", "Overcast", "#c8d0d8", "#909aa4", "#d8dde2", "#22262a"), P("after-hours", "After-hours", "#e0a870", "#405880", "#ffc080", "#0c0e14")] },
-  { id: "office", name: "Startup office", category: "Work", status: "planned",
+  { id: "office", pipelineId: "office", name: "Startup office", category: "Work", status: "available",
     description: "Open-plan office with glass walls, monitors and a whiteboard.",
     presets: [P("daylight", "Daylight", "#f8f4ec", "#c0d4e8", "#ffffff", "#2a3038"), P("late-crunch", "Late-night crunch", "#90b0e0", "#4070d0", "#80c0ff", "#080c14"), P("spotlight", "Presentation spotlight", "#fff0d0", "#806040", "#ffe0a0", "#060606")] },
-  { id: "night-mart", name: "Night convenience store", category: "Interior", status: "planned",
+  { id: "night-mart", pipelineId: "night_mart", name: "Night convenience store", category: "Interior", status: "available",
     description: "Late-night convenience store aisle, fridges humming, a sign outside.",
     presets: [P("fluorescent-night", "Fluorescent night", "#e0f0f0", "#80c0c0", "#f0ffff", "#0a1010"), P("neon-sign", "Neon sign", "#f0a0b0", "#ff4060", "#ff6080", "#100808"), P("rain-outside", "Rain outside", "#a0b8c8", "#5080a0", "#c0e0f0", "#080c10")] },
-  { id: "pier", name: "Beach pier", category: "Exterior", status: "planned",
+  { id: "pier", pipelineId: "pier", name: "Beach pier", category: "Exterior", status: "available",
     description: "Boardwalk pier over the water, railings and a ferris wheel far off.",
     presets: [P("sunset", "Sunset", "#ffa868", "#ff6848", "#ffb070", "#3a1a20"), P("pastel-morning", "Pastel morning", "#f8e0e0", "#c0d8f0", "#ffe8d8", "#3a3440"), P("carnival", "Night carnival lights", "#f0b080", "#4060ff", "#ff60a0", "#08080e")] },
+  // Imported, modelled rooms (blender/imported.py); best with the standing imported cast.
+  { id: "neon-tunnel", pipelineId: "neon_tunnel", name: "Neon tunnel", category: "Interior", status: "available",
+    description: "Glossy black corridor with cyan floor strips and pink neon panels.",
+    presets: [P("neon", "Neon", "#f0a0d0", "#40e0ff", "#ff50b0", "#0a080e"), P("blackout", "Blackout", "#f0ece4", "#40e0ff", "#ff50b0", "#020203")] },
+  { id: "gaming-den", pipelineId: "gaming_den", name: "Gaming den", category: "Interior", status: "available",
+    description: "Real-scale gaming room: desk, LED coves, PlayStation-symbol neon wall.",
+    presets: [P("rgb-night", "RGB night", "#f0b890", "#6078ff", "#ff9040", "#080a10"), P("late-session", "Late session", "#90a8ff", "#e040c8", "#60a0ff", "#040408")] },
+  { id: "cozy-gaming-room", pipelineId: "cozy_gaming_room", name: "Cozy gaming room", category: "Interior", status: "available",
+    description: "Stylised room with sofas, a coffee table, a big TV wall and a gaming desk.",
+    presets: [P("purple-neon", "Purple neon", "#f0b8a0", "#b060ff", "#ff60a0", "#0a0614"), P("chill-evening", "Chill evening", "#ffb070", "#5080ff", "#ffb060", "#100c12")] },
 ];
 export const environment = (id: string | null | undefined) => ENVIRONMENTS.find((e) => e.id === id);
+
+// Editor preset ids → blender/sets.py preset names, where they differ beyond "-" vs "_".
+const PRESET_PIDS: Record<string, string> = {
+  "subway/rush-hour": "rush_hour_warm", "cafe/fairy-lights": "evening_fairy", "office/late-crunch": "late_night_crunch",
+  "office/spotlight": "presentation_spotlight", "pier/carnival": "night_carnival",
+};
+export const presetPid = (env: Environment, presetId: string) => PRESET_PIDS[`${env.id}/${presetId}`] ?? presetId.replace(/-/g, "_");
+
+// What performance.json needs for a set pick: the built set and its lighting preset.
+export function pipelineSet(envId: string, presetId: string) {
+  const e = environment(envId) ?? ENVIRONMENTS[0];
+  const p = e.presets.find((x) => x.id === presetId) ?? e.presets[0];
+  return { environment: e.pipelineId ?? "night_city", lighting: presetPid(e, p.id) };
+}
+
+// What performance.json needs for a cast pick: the cast member and its wardrobe index.
+export function pipelineCast(characterId: string | null | undefined, outfitId: string | null | undefined) {
+  const c = character(characterId);
+  if (!c) return null;
+  const i = c.outfits.findIndex((o) => o.id === outfitId);
+  return { model: c.id, outfit: Math.max(0, i) };
+}
 
 // Mood light colours from reelforge/moods.py (linear RGB → display hex, approximate).
 export const MOOD_COLORS: Record<Mood, string> = {
@@ -204,6 +252,11 @@ export const STYLES: StyleEngine[] = [
     renderTime: "Minutes per reel on a GPU laptop",
     summary: "Stylized 3D characters in moody, glowing sets. Rendered on this machine.",
     details: ["Lip sync from 52 ARKit face channels", "Mood lighting crossfades", "Depth of field cameras", "Deterministic: same script, same result"] },
+  { id: "shots-av", name: "Shots-AV Animation", status: "available", processing: "local", cost: "Free",
+    renderTime: "About 20 min for 15 s at final quality; a draft is a few minutes",
+    summary: "You, in brand purple, at a desk talking to a small AI buddy. Cut like a polished 3D short.",
+    details: ["Two speakers: you and Claude, ChatGPT, Figma or Nova", "Five camera set-ups cut on the line",
+      "Six rooms, three dark and three light", "Whole-line captions at the top"] },
   { id: "cinematic-ai", name: "Cinematic AI", status: "planned", processing: "paid-api", cost: "Paid, your own provider key",
     renderTime: "Depends on provider",
     summary: "Pixar-like shots from AI keyframes, image-to-video and lip sync.",
@@ -251,6 +304,20 @@ export const VOICES: Voice[] = [
   { name: "Arnold", id: "VR6AewLTigWG4xSOukaG", tags: ["male", "crisp"] },
 ];
 export const voiceById = (id: string) => VOICES.find((v) => v.id === id);
+
+// A new speaker gets the next cast member nobody plays yet, in that member's suggested voice.
+const CAST_ORDER = ["aria", "kai", "zoe", "dev", "noor", "rey", "mo"];
+export function autoCast(taken: (string | undefined)[], speaker = "") {
+  // a speaker named after a cast member ("KAI") gets that member
+  const named = character(speaker.toLowerCase());
+  const c = named && !taken.includes(named.id) ? named
+    : character(CAST_ORDER.find((id) => !taken.includes(id)) ?? CAST_ORDER[taken.length % CAST_ORDER.length])!;
+  const voice = VOICES.find((v) => v.name === c.suggestedVoice) ?? VOICES[0];
+  return {
+    perf: { voice_id: voice.id, caption_color: "#FFFFFF", highlight_color: "#FFD23F", model: c.id, outfit: 0 },
+    slot: { characterId: c.id, outfitId: c.outfits[0].id },
+  };
+}
 export const voiceByName = (name: string) => VOICES.find((v) => v.name === name);
 
 // ---------- music (none bundled yet) ----------

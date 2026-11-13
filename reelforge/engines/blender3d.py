@@ -26,8 +26,14 @@ ASSETS = REPO / "assets" / "build"
 BLENDER_DIR = REPO / "blender"
 
 
+def imported() -> dict:
+    """Third-party characters/sets wired by import_character.py / import_set.py (blender/imported.py)."""
+    return runpy.run_path(str(BLENDER_DIR / "imported.py"))
+
+
 def cast_outfits() -> dict[str, int]:
-    return {k: len(v.get("outfits", [{}])) for k, v in runpy.run_path(str(BLENDER_DIR / "cast.py"))["CAST"].items()}
+    cast = {k: len(v.get("outfits", [{}])) for k, v in runpy.run_path(str(BLENDER_DIR / "cast.py"))["CAST"].items()}
+    return cast | {k: len(v.get("outfits", [{}])) for k, v in imported()["CHARACTERS"].items()}
 
 
 def cast_ids() -> list[str]:
@@ -35,17 +41,32 @@ def cast_ids() -> list[str]:
 
 
 def set_presets() -> dict[str, list[str]]:
-    return {k: list(v["presets"]) for k, v in runpy.run_path(str(BLENDER_DIR / "sets.py"))["SETS"].items()}
+    sets = {k: list(v["presets"]) for k, v in runpy.run_path(str(BLENDER_DIR / "sets.py"))["SETS"].items()}
+    return sets | {k: list(v["presets"]) for k, v in imported()["SETS"].items()}
+
+
+def _out_name(cid: str, o: int) -> str:
+    return f"{cid}__o{o}.blend" if o else f"{cid}.blend"
 
 
 def build_assets() -> None:
+    imp = imported()
     for cid, n in cast_outfits().items():
+        spec = imp["CHARACTERS"].get(cid)
+        if spec and not (imp["SRC_ROOT"] / spec["src"]).exists():
+            print(f"skip {cid}: source not found under {imp['SRC_ROOT']} (set REELFORGE_IMPORTS)")
+            continue
+        script = "import_character.py" if spec else "build_character.py"
         for o in range(n):
-            name = f"{cid}__o{o}.blend" if o else f"{cid}.blend"
-            run_blender(BLENDER_DIR / "build_character.py", [str(ASSETS / name), cid, str(o)])
+            run_blender(BLENDER_DIR / script, [str(ASSETS / _out_name(cid, o)), cid, str(o)])
     for sid, presets in set_presets().items():
+        spec = imp["SETS"].get(sid)
+        if spec and not (imp["SRC_ROOT"] / spec["src"]).exists():
+            print(f"skip {sid}: source not found under {imp['SRC_ROOT']} (set REELFORGE_IMPORTS)")
+            continue
+        script = "import_set.py" if spec else "build_set.py"
         for preset in presets:
-            run_blender(BLENDER_DIR / "build_set.py", [str(ASSETS / f"{sid}__{preset}.blend"), sid, preset])
+            run_blender(BLENDER_DIR / script, [str(ASSETS / f"{sid}__{preset}.blend"), sid, preset])
         shutil.copyfile(ASSETS / f"{sid}__{presets[0]}.blend", ASSETS / f"{sid}.blend")  # default lighting
 
 
@@ -80,7 +101,8 @@ def render_key(plan_text: str, plan: dict) -> str:
     """Plan + the blend files and scripts it renders with (size + mtime: hashing blends is slow)."""
     h = hashlib.sha1(plan_text.encode())
     for f in [plan["environment_blend"], *(c["blend"] for c in plan["characters"]),
-              BLENDER_DIR / "render_plan.py"]:
+              BLENDER_DIR / "render_plan.py", BLENDER_DIR / "camera_rig.py",
+              *sorted((BLENDER_DIR / "looks").glob("*.py"))]:
         st = Path(f).stat()
         h.update(f"{f}:{st.st_size}:{st.st_mtime_ns}".encode())
     return h.hexdigest()

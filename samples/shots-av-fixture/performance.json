@@ -1,0 +1,183 @@
+{
+  "style": "shots-av",
+  "fps": 30,
+  "ratio": "9:16",
+  "environment": "av_studio_night",
+  "ambience": false,
+  "characters": {
+    "me": {
+      "model": "av_hero"
+    },
+    "claude": {
+      "model": "buddy_claude"
+    }
+  },
+  "camera": {
+    "grammar": "reference",
+    "seed": 7
+  },
+  "lines": [
+    {
+      "id": "l01",
+      "speaker": "me",
+      "text": "Claude, the client finally signed off.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l02",
+      "speaker": "claude",
+      "text": "That's great!",
+      "emotion": "happy",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l03",
+      "speaker": "me",
+      "text": "Took six rounds of feedback though.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l04",
+      "speaker": "claude",
+      "text": "Six rounds is normal. Two of them were yours.",
+      "emotion": "deadpan",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l05",
+      "speaker": "me",
+      "text": "I mean, that's mostly fair...",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l06",
+      "speaker": "claude",
+      "text": "You also named the file final final.",
+      "emotion": "smug",
+      "intensity": 0.5,
+      "mood": "calm",
+      "beat": true
+    },
+    {
+      "id": "l07",
+      "speaker": "me",
+      "text": "It was a naming system.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l08",
+      "speaker": "claude",
+      "text": "It was a cry for help.",
+      "emotion": "deadpan",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l09",
+      "speaker": "me",
+      "text": "You counted my files?",
+      "emotion": "surprised",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l10",
+      "speaker": "claude",
+      "text": "I count everything.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l11",
+      "speaker": "me",
+      "text": "That is honestly unsettling to hear.",
+      "emotion": "surprised",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l12",
+      "speaker": "claude",
+      "text": "It is also why your deck shipped on time tonight.",
+      "emotion": "happy",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l13",
+      "speaker": "me",
+      "text": "...That's true.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l14",
+      "speaker": "claude",
+      "text": "So, who gets the credit this time?",
+      "emotion": "smug",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l15",
+      "speaker": "me",
+      "text": "Did you want credit?",
+      "emotion": "confused",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l16",
+      "speaker": "claude",
+      "text": "I want you asleep before two, for once in your life.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l17",
+      "speaker": "me",
+      "text": "Deal. Right after one tiny fix.",
+      "emotion": "happy",
+      "intensity": 0.5,
+      "mood": "calm",
+      "punchline": true
+    },
+    {
+      "id": "l18",
+      "speaker": "claude",
+      "text": "There is no tiny fix!",
+      "emotion": "surprised",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l19",
+      "speaker": "me",
+      "text": "It is two pixels.",
+      "emotion": "deadpan",
+      "intensity": 0.5,
+      "mood": "calm"
+    },
+    {
+      "id": "l20",
+      "speaker": "me",
+      "text": "Two pixels, Claude.",
+      "emotion": "deadpan",
+      "intensity": 0.5,
+      "mood": "calm"
+    }
+  ]
+}

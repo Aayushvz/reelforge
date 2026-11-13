@@ -65,6 +65,7 @@ export type RenderPlanShot = { start_frame: number; end_frame: number; kind: Sho
 export function buildFromScript(
   p: Performance, audioDur: Record<string, number>, wordsPerLine: number,
   plan?: { fps: number; n_frames: number; shots: RenderPlanShot[] },
+  audioSrc: Record<string, string> = {},
 ): Timeline {
   const fps = p.fps || 30;
   let t = LEAD_IN;
@@ -83,7 +84,7 @@ export function buildFromScript(
     const l = p.lines[i];
     const hasAudio = l.id in audioDur;
     clips.push({ id: uid("c"), trackId: "dialogue", start: pl.start, duration: pl.duration, label: `${l.speaker} · ${l.id}`,
-      lineId: l.id, text: l.text, src: hasAudio ? `out/audio/${l.id}.mp3` : undefined, offset: 0, volume: 1,
+      lineId: l.id, text: l.text, src: hasAudio ? (audioSrc[l.id] ?? `out/audio/${l.id}.mp3`) : undefined, offset: 0, volume: 1,
       status: hasAudio ? "rendered" : "estimated" });
     clips.push({ id: uid("c"), trackId: "animation", start: pl.start, duration: pl.duration, label: l.emotion,
       lineId: l.id, emotion: l.emotion, intensity: l.intensity, subject: l.speaker });

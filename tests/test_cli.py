@@ -106,3 +106,46 @@ def test_every_cast_member_has_three_outfits_and_the_wardrobe_has_25_items():
                       m["earring"], m["chain"], m["glasses"], "watch" if m["watch"] else None}
     items.discard(None)
     assert len(items) >= 25, sorted(items)
+
+
+def test_voices_command_reports_each_line(monkeypatch, tmp_path, capsys):
+    import json as _json
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    shutil.copy(cli.REPO / "samples" / "look-test" / "performance.json", tmp_path / "performance.json")
+    with pytest.raises(SystemExit) as e:
+        cli.main(["voices", str(tmp_path)])
+    assert e.value.code == 1
+    rows = [_json.loads(x) for x in capsys.readouterr().out.splitlines()]
+    assert [r["line"] for r in rows] == ["l01", "l02"] and all(r["status"] == "error" for r in rows)
+
+
+def test_cached_api_take_runs_without_key(monkeypatch, tmp_path):
+    from reelforge.schema import load_performance
+    from reelforge.voice import take_path
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    shutil.copy(cli.REPO / "samples" / "look-test" / "performance.json", tmp_path / "performance.json")
+    perf = load_performance(tmp_path / "performance.json")
+    audio = tmp_path / "out" / "audio"
+    audio.mkdir(parents=True)
+    for l in perf.lines:
+        mp3 = take_path(l, perf.characters[l.speaker].voice_id, audio)
+        subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                        "-t", "1", "-c:a", "libmp3lame", str(mp3)], check=True)
+        mp3.with_suffix(".json").write_text(_align(l.text), encoding="utf-8")
+
+    class Stop(Exception):
+        pass
+
+    def stop(*a, **k):
+        raise Stop
+
+    monkeypatch.setattr(cli.ENGINES["blender3d"], "render", stop)
+    with pytest.raises(Stop):
+        cli.main(["run", str(tmp_path), "--stage", "stills"])
+
+
+def _align(text):
+    import json as _json
+    st = [i * 0.05 for i in range(len(text))]
+    return _json.dumps({"characters": list(text), "character_start_times_seconds": st,
+                        "character_end_times_seconds": [s + 0.05 for s in st]})

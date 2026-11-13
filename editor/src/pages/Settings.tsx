@@ -1,5 +1,8 @@
-import { useEffect } from "react";
-import { Check, X, RefreshCw, Keyboard, FolderTree } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, X, RefreshCw, Keyboard, FolderTree, KeyRound, ExternalLink } from "lucide-react";
+import { api } from "@/lib/api";
+import type { LocalSettings } from "@/lib/types";
+import { toast } from "@/stores/ui";
 import { useSystem, pipelineReady } from "@/stores/system";
 import { useUI } from "@/stores/ui";
 import { Badge, Spinner } from "@/components/ui/Feedback";
@@ -15,7 +18,7 @@ export function SettingsPage() {
     [status?.blender, "Blender 4.5 LTS", <>Portable build in <code>tools/blender-4.5/</code>, its executable path in <code>tools/blender_path.txt</code>. The download is about 400 MB.</>],
     [status?.ffmpeg, "ffmpeg and ffprobe", <>Installed and on PATH.</>],
     [status?.assetsBuilt, "Base assets built", <>Run <code>reelforge build-assets</code> once Blender is set up.</>],
-    [status?.elevenlabsKey, "ElevenLabs API key (optional)", <>Not needed. Voices are generated in the ElevenLabs web app and imported as mp3s.</>],
+    [status?.elevenlabsKey, "ElevenLabs API key", <>Voices every script line automatically. Add it below.</>],
   ];
   return (
     <div className="page">
@@ -33,6 +36,7 @@ export function SettingsPage() {
           ))}
           <div className="hint">The editor only reads these. It never installs or downloads anything on its own.</div>
         </section>
+        <VoiceKey onChange={() => void load()} />
         <section className="panel" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
           <div className="row"><FolderTree size={16} className="faint" /><h2 className="h2 grow">Storage</h2></div>
           <dl className="kv">
@@ -47,5 +51,44 @@ export function SettingsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+// The user's own ElevenLabs key. Saved only in .reelforge.local.json on this machine (git-ignored)
+// and handed to the pipeline as an environment variable; the editor never shows it back in full.
+function VoiceKey({ onChange }: { onChange: () => void }) {
+  const [s, setS] = useState<LocalSettings | null>(null);
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api.settings().then(setS).catch(() => undefined); }, []);
+  const save = async (value: string | null) => {
+    setBusy(true);
+    try {
+      setS(await api.saveSettings({ elevenlabsKey: value }));
+      setKey("");
+      toast(value ? "ElevenLabs key saved on this machine" : "ElevenLabs key removed");
+      onChange();
+    } catch (e) { toast((e as Error).message, "err"); }
+    setBusy(false);
+  };
+  return (
+    <section className="panel" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+      <div className="row"><KeyRound size={16} className="faint" /><h2 className="h2 grow">ElevenLabs voices</h2>
+        {s && <Badge tone={s.elevenlabsKey ? "ok" : "warn"} pip>{s.elevenlabsKey ? `Key ${s.elevenlabsKeyHint ?? "from environment"}` : "No key"}</Badge>}</div>
+      <div className="meta settings-help">
+        Paste your own API key and every script line is voiced automatically. Get one at ElevenLabs: Profile, then API Keys
+        (the free tier includes API access). The key stays in <code>.reelforge.local.json</code> on this machine, is git-ignored and never shown again in full.
+      </div>
+      <form className="row" style={{ gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (key.trim()) void save(key.trim()); }}>
+        <input className="input grow mono" type="password" autoComplete="off" spellCheck={false} aria-label="ElevenLabs API key"
+          placeholder={s?.elevenlabsKey ? "Paste a new key to replace it" : "Paste your ElevenLabs API key"} value={key} onChange={(e) => setKey(e.target.value)} />
+        <button className="btn btn-primary" type="submit" disabled={busy || !key.trim()}>Save key</button>
+        {s?.elevenlabsKeySource === "settings" && <button className="btn" type="button" disabled={busy} onClick={() => void save(null)}>Remove</button>}
+      </form>
+      <div className="row meta" style={{ gap: 12 }}>
+        <span>Model <span className="mono">{s?.elevenlabsModel ?? "eleven_v4"}</span> (falls back to eleven_v3)</span>
+        <a className="row" style={{ gap: 4 }} href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noreferrer"><ExternalLink size={12} />Open ElevenLabs API keys</a>
+      </div>
+    </section>
   );
 }

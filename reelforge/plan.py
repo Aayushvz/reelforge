@@ -27,6 +27,9 @@ def build_render_plan(perf: Performance, n_frames: int, faces: dict, shots: list
         "shots": [asdict(s) for s in shots],
         "moods": [[f, m] for f, m in moods],
         "mood_presets": MOOD_PRESETS,
+        "look": perf.look,
+        "quality": perf.quality,
+        "look_params": dict(perf.look_params),
         "out_frames": str(Path(out_dir) / "frames"),
         "out_stills": str(Path(out_dir) / "stills"),
     }

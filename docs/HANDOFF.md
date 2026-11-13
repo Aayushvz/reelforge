@@ -1,4 +1,4 @@
-# reelforge: project handoff (as of 2026-10-31)
+# reelforge: project handoff (as of 2026-11-13; Shots-AV in section 9)
 
 Read this first in any new session. It covers what exists, how to run it, the decisions already made, and what to do next.
 
@@ -132,3 +132,67 @@ The user's ultimate references are the **ink.industries "First kiss effect V2"**
 - **Sound + grade per set:** `reelforge/ambience.py` mixes a procedural ffmpeg bed (room tone, wind, waves, murmur, hum; plus rain for rain presets) at -24 dB under the dialogue (`"ambience": false` turns it off; the dry mix stays in `dialogue_dry.wav`). `finish.GRADES` adds a per-set colour-balance push, which plays the role of the brief's LUT.
 - Verdict vs `references/characters/style/`: rig and expressions work across the cast; look is "clean stylized toy", below the references (soft face planes, simple tube bodies, mitten hands, no outfit layering yet). Sets are procedural boxes lit well rather than modelled; see `docs/review/cast-sets-v1/REVIEW.md`.
 - **Next steps (suggested):** (1) swap the placeholder Windows-TTS voices in `samples/*/out/audio` for real ElevenLabs takes and re-run (`pip install -e ".[align]"` for Whisper); (2) the face quality pass in `docs/review/cast-sets-v1/REVIEW.md` (crisper planes, bigger smile range); (3) wrist/finger poses and a proper body rig; (4) fold/seam detail on clothes; (5) the editor's cast/outfit/set/lighting pickers now have real data to bind to (`blender/cast.py`, `blender/sets.py`); (6) the `cinematic-ai` engine. This folder is not a git repo: nothing from this session is committed.
+
+## 8. Session 2026-11-04 (imported cast + sets)
+The owner supplied third-party Blender files (`~/Downloads/BLENDER FILES`; RARs extracted to `extracted/`). They're wired to the existing contracts and live next to the procedural cast and sets.
+- **Rule (in CLAUDE.md):** never reduce character quality. No decimation, texture downscaling or shape-key pruning. Facial detail is the target.
+- `blender/imported.py` holds the data: source paths (`SRC_ROOT`, override with `REELFORGE_IMPORTS`), rig bone maps, and ARKit → face maps. The face maps are CC4 shape keys for Matt, Rigify controls for Freya, and Auto-Rig Pro controls for cute girl ("Mina" in the editor).
+- `blender/import_character.py -- <out> <id>` does the following:
+  - removes widgets, lights, cameras and unused armatures, and prefixes object names;
+  - resets the pose, then relaxes the arms down from the A/T pose;
+  - builds `CHAR_root` → `Body` → `Head`/`ElbowL`/`ElbowR`, which steer bones through Copy Rotation from pivot empties;
+  - adds `FaceCtrl` (52 ARKit props) with simple-expression drivers that work without autoexec, plus `FaceAnchor`/`EyeFocus` on the head bone;
+  - fixes FBX material slips (Reflection→Metallic, sRGB data maps, glossy alpha cards, opaque hair shadows);
+  - saves into a clean scene, because Freya's source scene settings darkened half her face.
+- `blender/import_set.py -- <out> <set> <preset>` scales each room to metres facing -Y (the tunnel ×1.4, the cozy room ×0.36, the den rotated -90°). It keeps the authored practicals (energy × scale²), adds the Key/Rim/Fill/Glow contract and `Mark_A`/`Mark_B`, and switches to EEVEE + AgX.
+- The engine (`cast_ids`, `set_presets`, `build_assets`) merges these assets in. The editor catalog lists Matt, Freya, Mina and the 3 rooms. `tests/test_imported.py` covers the registry. 71 tests pass.
+- Demo: `samples/imported-test` (Matt + Mina, neon_tunnel) renders through `render_plan.py`.
+- **Known gaps:**
+  - **Tasha has no rig**, so she isn't wired. The owner can auto-rig her (for example Mixamo, which needs their own account), then add her spec.
+  - `matt.blend` is 1.6 GB (a 900k-vertex body × 149 morphs). That's expected, and it loads slowly.
+  - The Rigify and ARP face moves are hand-tuned bone offsets. Freya's smile range is subtle.
+  - Wide-shot framing was tuned for the seated stand-in, so standing characters sit low in frame.
+  - The procedural (seated) cast doesn't suit the imported rooms.
+
+## 9. Shots-AV Animation (style `shots-av`, 2026-11-11 to 2026-11-13, branch `feat/shots-av`)
+A desk two-hander: you (a low-poly hero with the owner's likeness, Aayush Visuals purple `#7C3AED`) talking to an
+AI buddy robot. Brief: `docs/prompts/03-shots-av-animation.md`. Ledger, decisions and evidence:
+`docs/production/shots-av/PROGRESS.md` (read it first; it is the source of truth). Rubric: `RUBRIC.md` there.
+**Status: P0-P8 done; the P7 benchmark won 10 of 10 rubric rows** (`docs/production/shots-av/p7/score.md`).
+
+**Use it (editor):** `/shots-av` in the editor (dev server `reelforge-editor`, port 5190). Paste a script ("Me: ...",
+"Claude: ..."), pick the buddy, room, your spot in the room, look and captions, then **Generate reel**: ElevenLabs
+voices (the owner's key in Settings; each line's emotion becomes an audio tag), then the video timed to that audio.
+Quality: Draft (about 0.36 s/frame), **Balanced** (default, about 1 s/frame, 1080x1920), Final (about 3.3 s/frame).
+Restarting the dev server kills running render jobs.
+
+**Use it (CLI):** `reelforge build-assets --style shots-av` (hero, 4 buddies, 12 rooms);
+`reelforge run <project> --stage full [--draft | --quality cinema]`; `reelforge animatic <project>` (silent,
+estimated timing); `reelforge shots-av catalog|plan|preview <project>`; `reelforge thumbnails --style shots-av`.
+
+**Where things live:**
+- Characters: `blender/shotsav/hero.py` (hero, every option in the `HERO` table: 6 hairs, 7 skins, glasses, beards,
+  outfits), `buddies.py` (claude, chatgpt, figma, nova), `geo.py`; built on demand per option set by
+  `engines/shots_av.ensure_hero`.
+- Rooms: `blender/shotsav/rooms.py` (12: six original + six 3D gamer/editor rooms in `gamer_rooms.py`); everything
+  behind the desk hangs off `RoomPivot`, moved by `performance.room_view` {pan, height, turn}; `room_pano.py` renders
+  the editor's panorama picker into `assets/build/shotsav/thumbs/<room>_pano.jpg`.
+- Camera: `reelforge/angles.py` (36 angles + the director that picks them per shot from mood, role and reuse; seeded
+  per project, Reroll in the editor, per-shot override), `reelforge/direct.py::plan_shots_av` (cutting grammar,
+  "reference" keeps the reference reel's five set-ups), `blender/camera_rig.py` (framing maths, moves).
+- Acting, sound, captions, finish: `reelforge/buddy.py`, `engines/shots_av.py` (lip smoothing, loudness jaw,
+  acting), `ambience.py` (beds, foley, voice reflections), `captions.py` (`build_ass_shotsav`, the 10 editor
+  templates, hand placement and size, end card), `finish.py` (purple-safe grade, halo, vignette, -14 LUFS).
+- Render tiers: `engines/shots_av.TIERS` read by `blender/looks/shotsav.py`; `render_plan.py ... bench` times frames.
+- Editor: `editor/src/pages/shotsav/` (list, workspace, `Placers.tsx` for the room frame and caption placement).
+
+**Decisions to keep:** Khronos PBR Neutral, not AgX (purple accuracy); neutral-warm key, never orange; buddies read
+as their products with no traced logos; reference art is inspiration only, never a backdrop; Balanced is the default
+full-size render; never reduce character quality (render settings only).
+
+**Projects:** `projects/i-just-asked-you-to-fix-one-thing` (the owner's script, Editor night),
+`projects/p7-bench-{reference,signature,morning}` (benchmark). Projects are git-ignored.
+
+**Next steps (from the P7 score):** a connected camera move that hides the hero-to-buddy scale change (deferred at P4;
+drop it if it cannot be clean, keep the rack focus); moving background life (cars, signs, monitor activity); stronger
+subsurface at phone size; draft speed toward the 6-minute budget (haze resolution and shadow rays are the levers).

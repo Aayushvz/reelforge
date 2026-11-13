@@ -26,15 +26,20 @@ import "./editor.css";
 export async function buildTimeline(id: string, perf: Performance | null, files: ProjectFiles, ed: EditorDoc): Promise<TL> {
   if (!perf || !perf.lines.length) return T.blankTimeline();
   const durs: Record<string, number> = {};
-  await Promise.all(perf.lines.filter((l) => files.audio.includes(`${l.id}.mp3`)).map(async (l) => {
-    const d = await mediaDuration(fileUrl(id, `out/audio/${l.id}.mp3`));
+  // each line's take: the imported mp3, else the generated ElevenLabs take
+  const srcs: Record<string, string> = {};
+  const voices = await api.voices(id).catch(() => []);
+  for (const v of voices) if (v.file) srcs[v.line] = v.file;
+  for (const l of perf.lines) if (!srcs[l.id] && files.audio.includes(`${l.id}.mp3`)) srcs[l.id] = `out/audio/${l.id}.mp3`;
+  await Promise.all(perf.lines.filter((l) => srcs[l.id]).map(async (l) => {
+    const d = await mediaDuration(fileUrl(id, srcs[l.id]));
     if (d > 0) durs[l.id] = d;
   }));
   let plan: Parameters<typeof T.buildFromScript>[3];
   if (files.renderPlan) {
     try { plan = await (await fetch(fileUrl(id, "out/render_plan.json"))).json(); } catch { plan = undefined; }
   }
-  const tl = T.buildFromScript(perf, durs, ed.subtitles.wordsPerLine, plan);
+  const tl = T.buildFromScript(perf, durs, ed.subtitles.wordsPerLine, plan, srcs);
   const final = files.finals[0];
   if (final) {
     const d = await mediaDuration(fileUrl(id, `out/${final}`), "video");

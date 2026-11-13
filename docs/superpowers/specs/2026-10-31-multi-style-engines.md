@@ -30,7 +30,7 @@ script ─► performance pass (Claude) ─► performance.json   (shared, style
 |---|---|---|---|---|---|
 | 1 | `blender3d` | @canwebuildthis / NMXWZ: stylized 3D characters at a desk, glowing moody sets | Blender 4.5 headless (Milestone 1) | Free, local | **Built** (stand-in character); characters and environments from references are next |
 | 2 | `cinematic-ai` | ink.industries "First kiss effect V2": Pixar-like faces, strand hair, knit fabric, lantern and sunset streets, aerial and VFX shots | AI image keyframes (consistent character sheets) → AI image-to-video → lip sync | **Paid** for top quality (Kling, Veo, Seedance or similar, about $10–30 a month); free option is open-source Wan 2.2 (lower quality, slow on 8 GB) | Planned |
-| 3–6 | TBD | The owner will supply references | TBD | TBD | Future |
+| 4–6 | TBD | The owner will supply references | TBD | TBD | Future |
 
 ### Style 2 (`cinematic-ai`) notes
 - **Consistency:** generate a character sheet per character from the owner's references, and reuse it as a reference image in every keyframe prompt. Lock a style line and a voice or performance line per character, the way the NMXWZ guide does. Add an automatic consistency check that compares each keyframe with the sheet (face embedding or a vision check), and regenerate when a keyframe drifts.

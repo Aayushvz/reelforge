@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "fps": 60,
+  "ratio": "3:4",
+  "environment": "neon_tunnel",
+  "lighting": "neon",
+  "characters": {
+    "LEAD": {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "caption_color": "#FFFFFF",
+      "highlight_color": "#FFD23F",
+      "model": "freya",
+      "outfit": 0
+    },
+    "MINA": {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "caption_color": "#FFFFFF",
+      "highlight_color": "#7FE3FF",
+      "model": "matt",
+      "outfit": 0
+    }
+  },
+  "lines": [
+    {
+      "id": "l01",
+      "speaker": "LEAD",
+      "text": "[sighs] The client said it's great.",
+      "emotion": "deadpan",
+      "intensity": 0.5,
+      "mood": "calm",
+      "pause_after": 0.5
+    },
+    {
+      "id": "l02",
+      "speaker": "LEAD",
+      "text": "[excited] Wait. They actually approved it!",
+      "emotion": "happy",
+      "intensity": 0.9,
+      "mood": "success",
+      "pause_after": 0.7,
+      "punchline": true
+    }
+  ]
+}

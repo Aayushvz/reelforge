@@ -1,0 +1,50 @@
+{
+  "target": "#7C3AED",
+  "view": [
+    "Khronos PBR Neutral",
+    "None",
+    -0.75
+  ],
+  "neutral_warm_4300K": {
+    "card": {
+      "hex": "#9649F1",
+      "dE76": 9.4
+    },
+    "jacket_lit": {
+      "hex": "#8632E4",
+      "dE76": 4.6
+    },
+    "jacket_shadow": {
+      "hex": "#7A29DD",
+      "dE76": 5.3
+    }
+  },
+  "screen_cool_7500K": {
+    "card": {
+      "hex": "#835AF8",
+      "dE76": 15.0
+    },
+    "jacket_lit": {
+      "hex": "#7442F3",
+      "dE76": 3.7
+    },
+    "jacket_shadow": {
+      "hex": "#6A37EE",
+      "dE76": 4.9
+    }
+  },
+  "daylight_5600K": {
+    "card": {
+      "hex": "#9058F6",
+      "dE76": 14.1
+    },
+    "jacket_lit": {
+      "hex": "#8240F1",
+      "dE76": 2.1
+    },
+    "jacket_shadow": {
+      "hex": "#7734EB",
+      "dE76": 2.3
+    }
+  }
+}

@@ -62,6 +62,47 @@ You're the lead technical artist and engineer on **reelforge**: script in, cinem
 - **The bake-off (Phase 1) is judged primarily on the face.** Score: face likeness to the style refs at 40%, expressiveness at 25%, eye quality at 15%, then everything else.
 - **The face gets an independent review by Opus** on every character before that character can pass.
 
+# REALISM UPGRADES (owner-approved direction, 2026-11-04)
+The owner wants the **face and background to look much more realistic and cinematic**, closer to the ink.industries references. These four upgrades are in scope. Do them in this order, each behind a bake-off and the owner's approval:
+
+**R1. AI-painted backgrounds plus 3D foreground** (biggest win for backgrounds)
+- Generate a cinematic background plate per set and lighting preset with a **free local image model**:
+  - **FLUX.1-schnell** (Apache-2.0); a quantized or GGUF build fits 8 GB VRAM, if you use CPU offload where needed;
+  - or **SDXL** (+ a style LoRA if useful).
+
+  Run it through **ComfyUI** or diffusers.
+- Prompts come from `blender/sets.py` (set and preset), plus a locked style line matching the references (warm practical lights, atmospheric haze, film depth of field, rich colour), and must keep the top quarter clear for captions.
+- Convert each plate to 3D with **Depth Anything V2**: a depth-displaced mesh or layered cards, giving real parallax and depth of field against the camera moves.
+- Keep **real 3D foreground** (floor, desk, props, practical lights) where the characters stand. Match the plate's light direction and colour with the `Key`, `Rim`, `Fill` and `Glow` contract lights, so the characters sit *in* the image and the mood crossfades still work.
+- Generate plates at 2× resolution. Seed and prompt are saved per plate (reproducible). Plates are cached in `assets/build/plates/`.
+- **Bake-off:** the current procedural night-city set against the AI plate version, both with Kai in wide, medium and close-up shots. Show the owner.
+
+**R2. Face realism**
+- **Cycles for close-ups and medium shots** (Eevee stays for wides and drafts). Use path-traced SSS skin, refractive eyes, soft contact shadows, OptiX denoise, and adaptive sampling. The shot director already knows the shot kind; route by kind.
+- Faces built from reference images (image-to-3D, per the face section above), with 4K face textures and all the face-detail requirements.
+- **Portrait lighting rig** per shot: key at 30–45°, a soft fill, a rim or hair light, and an **eye catchlight**. Light from the plate's motivated direction. Never flat.
+
+**R3. Optional AI enhancement pass (experimental; keep only if it doesn't flicker)**
+- After the Blender render, run a free local video-to-video pass that adds painterly detail while preserving motion:
+  - **ControlNet** (depth, lineart or tile) on keyframes, plus **EbSynth** or **AnimateDiff** propagation; **IP-Adapter** with the character sheet to lock identity.
+- Hard requirements: no flicker, no identity drift, and lip sync preserved. Measure a per-frame face-embedding similarity against the sheet; reject any drift.
+- Ship it as an opt-in toggle (`--enhance`), off by default, and decide after an A/B with the owner.
+
+**R4. Finishing touches**
+- 2× upscale (Real-ESRGAN, or Blender rendering at 2× then downsampling) for crisp faces.
+- A film-style grade: a per-set LUT, highlight roll-off, halation and bloom on practicals, subtle chromatic aberration and lens vignette, fine grain. All of it stays in the ffmpeg or compositor finish step.
+
+**Budgets:** ask the owner before each download over 2 GB (FLUX/SDXL weights about 6–12 GB, Hunyuan3D, Depth Anything, ControlNet models). Record every model, licence and source in `ASSETS_CREDITS.md`. Render-time targets in Phase 4 may relax for Cycles close-ups; report the real numbers.
+
+# OWNER ACTIONS (tell the owner exactly when each is needed; never block silently)
+The owner can't code. Ask them, one item at a time and at the moment it's needed, to:
+1. **Approve each large download** (model name, size, licence) before you fetch it.
+2. **Review and pick in each bake-off:** characters (Phase 1), backgrounds (R1), the enhancement pass (R3). Send the side-by-side images.
+3. **Provide voices** for new test lines if the auto-voice flow (PR #3) needs their logged-in ElevenLabs session, or approve using existing takes.
+4. **Optionally supply background references** (screenshots of looks they love) in `references/environments/` before R1 prompts are written.
+5. **Pull and rebuild or download** after each merged phase: `git pull`, then download the GitHub Release assets (or run `reelforge build-assets`), then re-render. Give them the exact commands.
+6. **Approve merges.** Show the REVIEW.md, the images and the PR link, then merge only on their yes.
+
 # Read first (in this order)
 1. `CLAUDE.md` (ground rules), `docs/HANDOFF.md`, `docs/superpowers/specs/2026-11-01-cast-sets-editor-brief.md`, `docs/superpowers/specs/2026-10-31-multi-style-engines.md`, `docs/superpowers/notes/m1-followups.md`, `editor/README.md`.
 2. **Look at these images with the Read tool:**

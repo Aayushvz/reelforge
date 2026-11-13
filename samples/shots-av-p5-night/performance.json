@@ -1,0 +1,57 @@
+{
+  "style": "shots-av",
+  "fps": 30,
+  "ratio": "9:16",
+  "environment": "av_studio_night",
+  "ambience": true,
+  "characters": {
+    "me": {
+      "model": "av_hero"
+    },
+    "buddy": {
+      "model": "buddy_claude"
+    }
+  },
+  "camera": {
+    "grammar": "signature",
+    "seed": 7
+  },
+  "lines": [
+    {
+      "id": "l01",
+      "speaker": "me",
+      "text": "Claude, the client finally signed off.",
+      "emotion": "neutral",
+      "intensity": 0.5,
+      "mood": "calm",
+      "pause_after": 0.25
+    },
+    {
+      "id": "l02",
+      "speaker": "buddy",
+      "text": "That's great! Ship it tonight.",
+      "emotion": "happy",
+      "intensity": 0.7,
+      "mood": "success",
+      "pause_after": 0.25
+    },
+    {
+      "id": "l03",
+      "speaker": "me",
+      "text": "Took six rounds of feedback, though.",
+      "emotion": "deadpan",
+      "intensity": 0.5,
+      "mood": "calm",
+      "pause_after": 0.25
+    },
+    {
+      "id": "l04",
+      "speaker": "buddy",
+      "text": "Two of them were yours...",
+      "emotion": "smug",
+      "intensity": 0.4,
+      "mood": "awkward",
+      "pause_after": 0.2
+    }
+  ]
+}
