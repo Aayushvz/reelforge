@@ -194,6 +194,28 @@ Honest notes:
 | 2026-11-12 | The mouth interior is a dish that follows the face 11-21 mm behind the skin | A cavity sphere poked out through the chin, which curves back faster than any sphere |
 | 2026-11-12 | The preview desk in the sheets is a plain stand-in | The real desk and chair belong to the P3 rooms; the side view shows the hero seated on nothing |
 
+## 2026-11-13: hero fixes, six 3D gamer rooms, the angle director, placement and captions
+Owner asks: proportional hands and legs, a better mouth; dark gamer/editor rooms built in 3D from his references
+(not flat backdrops) with a picker for the part behind him; many more camera angles so reels don't look alike;
+different placements in the room; captions placed and sized by hand.
+- **Hero** (commit 0284327): hands about 1.4x with rounded capsule fingers, the think fist on the jaw; seated legs
+  with knees, jeans and sneakers, a desk front panel; a cartoon mouth with lip tone, teeth and tongue; visemes
+  smoothed and the jaw follows the voice's loudness.
+- **Rooms** (`blender/shotsav/gamer_rooms.py`): Editor night, Streamer den, Neon shelf room, Moon window, Retro bedroom,
+  Studio apartment. All modelled in Blender (city towers with lit windows, blinds, rain, hex panels, ring light, RGB PC,
+  shelves with figures, a cat, a lava lamp, a CRT, a LEVEL UP neon sign, curtains, a sofa, a floor lamp). Jacket ΔE76
+  stays in the existing rooms' range (wide 14.5-16.8, close 1.5-9.8). Each room has a sound bed and voice reflections.
+- **Your spot in the room**: everything behind the desk hangs off `RoomPivot`; `room_view` {pan, height, turn}
+  slides and turns it (±1.5 m, ±0.35 m, ±12°). The editor shows a panorama (`room_pano.py`) with a draggable 9:16
+  frame; empty `room_view` = one of the room's curated spots, picked by the reel's seed.
+- **Angles** (`reelforge/angles.py`): 36 angles (16 hero, 9 buddy, 11 wide: low, high, profile, dutch, ECU, over the
+  shoulder, top down, hands insert, room reveal…). The director scores each per shot from the line's mood, the shot's
+  role, what was just used and how often, plus seeded taste; opens on an establishing angle; never repeats a set-up
+  back to back; picks a move that suits the angle. New projects get a random seed, "Reroll angles" picks another;
+  each shot's menu can pin any angle. "Classic 5" and the reference grammar keep the five set-ups.
+- **Captions**: size 50-200% for every template; "Place by hand" drags the caption on a 9:16 frame (`captions.x/y`);
+  an End card field.
+
 ## P1 hero (what was built)
 - **Proportions:** head 0.36 tall by 0.31 wide, oval with a squarish jaw (the owner's), eyes at 1.18 m seated, desk top at 0.74, shoulders 0.46 wide over the sleeves, short thick arms, hands about 0.10.
 - **Face:** black oval eyes (0.024 by 0.040, 0.115 apart) with one fixed highlight; upper and lower lids (blink, half-lid, squint, wide, cheek push); brows that raise, lower, angle and pinch; a small wedge nose; ears; per-vertex blush on cheeks, ears and nose tip; a stubble band (dial 0 to 1, default 0.3).

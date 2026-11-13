@@ -23,7 +23,10 @@ export type PerfLine = {
   beat?: boolean; action?: string;  // shots-av: force a wide; a buddy reaction clip
 };
 export type AvCamera = { grammar?: "signature" | "reference"; seed?: number; rack?: boolean; drift?: number;
-  overrides?: Record<string, { kind?: string; move?: string; fstop?: number }> };
+  angles?: "varied" | "classic";  // the 36-angle library (reelforge/angles.py), or the reference's five set-ups
+  overrides?: Record<string, { kind?: string; move?: string; fstop?: number; angle?: string; rack?: boolean }> };
+// Where the desk sits in the room: each -1..1 (pan sideways, height, turn); empty = one of the room's good spots
+export type RoomView = { pan?: number; height?: number; turn?: number };
 export type Look = "classic" | "cinema" | "shotsav";  // reelforge/schema.py LOOKS
 export type RenderQuality = "preview" | "standard" | "cinema";  // QUALITIES; Draft renders force preview
 export type Performance = {
@@ -31,7 +34,9 @@ export type Performance = {
   look?: Look; quality?: RenderQuality;
   characters: Record<string, PerfCharacter>; lines: PerfLine[];
   camera?: AvCamera; sound?: { foley?: boolean };
-  captions?: { position?: "top" | "lower"; plate?: boolean; tint?: boolean; style?: SubtitleStyle };
+  captions?: { position?: "top" | "lower" | "custom"; plate?: boolean; tint?: boolean; style?: SubtitleStyle;
+    x?: number; y?: number; size?: number };  // custom: the caption block's centre (frame fractions); size 0.5..2
+  room_view?: RoomView; end_text?: string;
 };
 
 // ---------- editor.json ----------

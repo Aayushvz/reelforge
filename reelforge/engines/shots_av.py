@@ -8,6 +8,7 @@ animatic() renders a silent preview from estimated timing, so a script can be ch
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import re
@@ -17,6 +18,7 @@ import subprocess
 from dataclasses import asdict
 from pathlib import Path
 
+from ..angles import ANGLES
 from .. import buddy as acting
 from ..blender_run import run_blender
 from ..plan import build_render_plan
@@ -199,12 +201,22 @@ def buddy_acting(placed: list, buddy: str, n_frames: int, fps: int, envelope: li
     return {"BuddyCtrl": acting.animate(n_frames, fps, segs, seed=seed, hero_side=1.0)}
 
 
+def room_view(perf, seed: int) -> dict:
+    """Where the desk sits in the room: the project's room_view, else one of the room's good spots, picked by the
+    reel's seed so two projects in the same room are not staged the same way."""
+    if perf.room_view:
+        return dict(perf.room_view)
+    spots = room_tables().get("VIEW_SPOTS", {}).get(perf.environment) or [{}]
+    return dict(spots[seed % len(spots)])
+
+
 def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope=None, seed=0) -> dict:
     plan = build_render_plan(perf, n_frames, faces, shots, moods, ASSETS, out, 16 if draft else 64)
     plan["look"] = LOOK
     plan["resolution_percentage"] = 50 if draft else 100
     hero, buddy = cast(perf)
     plan["environment_blend"] = str(room_blend(perf.environment))
+    plan["room_view"] = room_view(perf, seed)
     for c in plan["characters"]:
         if c["name"] == hero:
             c["blend"] = str(ensure_hero(perf.characters[hero].options))
@@ -294,7 +306,7 @@ def _estimated(project: Path):
     last = placed[-1]
     n_frames = math.ceil((last.start + last.duration + (3.0 if perf.end_text else 0.9)) * perf.fps)
     hero, buddy = cast(perf)
-    shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, int(perf.camera.get("seed", 0)),
+    shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, reel_seed(perf, project),
                           perf.camera.get("grammar", "signature"), perf.camera)
     return perf, placed, n_frames, shots
 
@@ -315,7 +327,9 @@ def catalog() -> dict:
         "brand": h["BRAND"],
         "buddies": [{"model": f"buddy_{k}", "label": v["label"], "readsAs": v["reads_as"], "shell": v["shell"],
                      "glow": v["glow"], "signature": v["signature"]} for k, v in b["BUDDIES"].items()],
-        "rooms": [{"id": k, "label": v["label"], "tone": v["tone"], "look": v["look"]} for k, v in r["ROOMS"].items()],
+        "rooms": [{"id": k, "label": v["label"], "tone": v["tone"], "look": v["look"], "gamer": bool(v.get("gamer")),
+                   "pano": _pano(k), "spots": r.get("VIEW_SPOTS", {}).get(k, [])} for k, v in r["ROOMS"].items()],
+        "angles": [{"id": k, "role": a["role"], "label": a["label"]} for k, a in ANGLES.items()],
         "actions": list(acting.CLIPS), "built": built,
         "allBuilt": built["hero"] and all(built["buddies"].values()) and all(built["rooms"].values()),
         "timing": TIMING, "target": {"hero": 0.37, "buddy": 0.46, "wide": 0.17},
@@ -336,7 +350,7 @@ def plan_for(project: Path) -> dict:
         out.append({"index": i, "kind": s.kind, "start": s.start_frame / perf.fps, "end": s.end_frame / perf.fps,
                     "subject": "hero" if s.subject == hero else "buddy",
                     "speaker": "hero" if (s.speaker or s.subject) == hero else "buddy",
-                    "move": s.move, "rack": bool(s.rack), "line": lid})
+                    "move": s.move, "rack": bool(s.rack), "line": lid, "angle": s.angle})
     return {"shots": out, "runtime": n_frames / perf.fps, "frames": n_frames, "split": screen_time(shots),
             "target": {"hero": 0.37, "buddy": 0.46, "wide": 0.17}}
 
@@ -356,6 +370,20 @@ def preview_still(project: Path, index: int, draft: bool = True) -> Path:
 
 
 THUMBS = ASSETS / "thumbs"
+
+
+def _pano(room_id: str) -> dict | None:
+    """The room's panorama for the editor's frame picker (blender/shotsav/room_pano.py), when it is rendered."""
+    f = THUMBS / f"{room_id}_pano.json"
+    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else None
+
+
+def reel_seed(perf, project) -> int:
+    """camera.seed when the editor set one (Reroll angles), else one from the project folder's name: every project
+    is shot differently, and the preview, the animatic and the render agree."""
+    if "seed" in perf.camera:
+        return int(perf.camera["seed"])
+    return int(hashlib.sha1(Path(project).name.encode()).hexdigest()[:6], 16)
 
 
 def thumbnails(only: list | None = None) -> list[str]:
@@ -390,7 +418,7 @@ def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:
     n_frames = math.ceil((last.start + last.duration + (3.0 if perf.end_text else 0.9)) * perf.fps)  # hold 0.9 s after the final word
     faces = build_faces(perf, placed, perf.fps, n_frames)
     hero, buddy = cast(perf)
-    seed = int(perf.camera.get("seed", 0))
+    seed = reel_seed(perf, project)
     shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, seed, perf.camera.get("grammar", "signature"),
                           perf.camera)
     out = project / "out" / "animatic"

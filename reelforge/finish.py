@@ -59,7 +59,9 @@ AV_GRADES = {
     "shotsav_light": "curves=master='0/0.012 0.5/0.5 0.9/0.925 1/0.99',",
 }
 AV_ROOM_GRADE = {"av_studio_night": "shotsav_dark", "av_neon_den": "shotsav_dark", "av_late_office": "shotsav_dark",
-                 "av_studio_morning": "shotsav_light", "av_cafe_day": "shotsav_light", "av_cyc_lilac": "shotsav_light"}
+                 "av_studio_morning": "shotsav_light", "av_cafe_day": "shotsav_light", "av_cyc_lilac": "shotsav_light",
+                 **{r: "shotsav_dark" for r in ("av_editor_night", "av_streamer_den", "av_neon_shelf", "av_moon_window",
+                                                "av_retro_bedroom", "av_studio_apartment")}}
 AV_VIGNETTE = 0.22  # radians: measured, the corners land at 0.89 of the centre (11% darker; the cap is 12%)
 # The halo mask comes from brightness (one grey channel), not from each colour channel, and is added, not
 # screened: ffmpeg's 16-bit `screen` blend shifts one channel even over a black layer (measured: a skin tone's blue

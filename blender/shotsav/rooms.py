@@ -1,4 +1,4 @@
-"""The Shots-AV rooms: six desk two-hander stages, three dark and three light. Top of the file is pure data;
+"""The Shots-AV rooms: twelve desk two-hander stages (nine dark, three light). Top of the file is pure data;
 build(room_id) runs inside Blender and adds the room to the current scene.
 
 Contract (same as blender/sets.py, so render_plan.py needs no special case): lights Key, Rim, Fill, Glow, each with
@@ -66,6 +66,62 @@ ROOMS = {
         "key": ((1.0, 0.98, 0.96), 240, (0.2, -0.6, 3.0), 3.0), "rim": ("#A78BFA", 60, (0.0, 1.4, 1.6), 1.5),
         "fill": ((0.95, 0.94, 1.0), 70, (0.0, -1.4, 0.3), 3.0), "glow": ((0.75, 0.62, 1.0), 40, (0.0, 2.6, 0.8), 1.5),
         "look": "seamless sweep fading cream to lilac #DDD6FE, desk only: product-video clean"},
+
+    # Dark gamer/editor rooms (blender/shotsav/gamer_rooms.py): original 3D sets after the owner's reference boards.
+    "av_editor_night": {
+        "label": "Editor night", "tone": "dark", "exposure": -0.9, "haze": 0.010, "tint": 0.3, "gamer": True,
+        "world": (0.005, 0.005, 0.014), "wall": "#141626", "floor": "#16141A", "desk": "#2B2730",
+        "screen": (0.55, 0.6, 1.0),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#7DD3FC", 120, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.5, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "wide window onto a violet and cyan city, blinds half down, a wall monitor with an edit timeline"},
+    "av_streamer_den": {
+        "label": "Streamer den", "tone": "dark", "exposure": -0.85, "haze": 0.008, "tint": 0.3, "gamer": True,
+        "world": (0.004, 0.005, 0.01), "wall": "#111318", "floor": "#141418", "desk": "#222329",
+        "screen": (0.6, 0.9, 1.0),
+        "key": ((0.92, 0.95, 1.0), 48, (0.95, -0.95, 1.5), 0.45), "rim": ("#F472B6", 120, (-0.9, 0.8, 1.6), 0.7),
+        "fill": ((0.3, 0.45, 0.9), 7, (-1.3, -1.4, 1.2), 2.0), "glow": ((0.3, 0.9, 1.0), 6, (-0.9, 1.6, 1.1), 0.3),
+        "look": "acoustic foam behind you, hexagon light panels, a ring light, a rainy window onto a blue city"},
+    "av_neon_shelf": {
+        "label": "Neon shelf room", "tone": "dark", "exposure": -0.85, "haze": 0.008, "tint": 0.3, "gamer": True,
+        "world": (0.005, 0.004, 0.01), "wall": "#15121D", "floor": "#151217", "desk": "#2A2730",
+        "screen": (0.6, 0.85, 1.0),
+        "key": (NEUTRAL_WARM, 48, (0.95, -0.95, 1.55), 0.45), "rim": ("#FF7AB8", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.35, 0.45, 0.95), 7, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.5, 0.75), 6, (0.72, -0.22, 1.2), 0.1),
+        "look": "shelves of figures and plants under pink neon strips, an RGB PC and headphones on a cabinet"},
+    "av_moon_window": {
+        "label": "Moon window", "tone": "dark", "exposure": -0.9, "haze": 0.012, "tint": 0.3, "gamer": True,
+        "world": (0.004, 0.006, 0.018), "wall": "#0F1424", "floor": "#14151C", "desk": "#2E2A30",
+        "screen": (0.5, 0.65, 1.0),
+        "key": (NEUTRAL_WARM, 48, (0.95, -0.95, 1.55), 0.45), "rim": ("#9CC3FF", 130, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.4, 0.5, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.75, 0.45), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "a big window with the moon and clouds, fairy lights, a cat on the sill, a lava lamp, a bed corner"},
+    "av_retro_bedroom": {
+        "label": "Retro bedroom", "tone": "dark", "exposure": -0.85, "haze": 0.008, "tint": 0.3, "gamer": True,
+        "world": (0.004, 0.006, 0.01), "wall": "#101A26", "floor": "#17141A", "desk": "#3A2A22",
+        "screen": (0.5, 0.85, 1.0),
+        "key": (NEUTRAL_WARM, 48, (0.95, -0.95, 1.55), 0.45), "rim": ("#5EF2FF", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.4, 0.5, 0.95), 7, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "a CRT on a wooden cabinet, game shelves, a pink ceiling cove, a LEVEL UP neon sign, a bean bag"},
+    "av_studio_apartment": {
+        "label": "Studio apartment", "tone": "dark", "exposure": -0.85, "haze": 0.008, "tint": 0.3, "gamer": True,
+        "world": (0.006, 0.005, 0.008), "wall": "#1A1A1F", "floor": "#1E1916", "desk": "#3B2A21",
+        "screen": (0.55, 0.65, 1.0),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#FFB27A", 90, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.5, 0.9), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 9, (0.72, -0.22, 1.2), 0.08),
+        "look": "curtained window onto the city, a warm floor lamp, speakers and a record player, a big plant, a sofa"},
+}
+# "Frame to keep": the editor slides the room behind the hero. pan -1..1 moves it sideways (+1 shows more of the
+# right side), height -1..1 moves it down/up; the desk, the hero, the buddy and the light rig stay put.
+VIEW_PAN_M, VIEW_HEIGHT_M, VIEW_TURN_DEG = 1.5, 0.35, 12.0
+# Good views per room for the automatic pick (when the project has no room_view): each {pan, height, turn}.
+VIEW_SPOTS = {
+    "av_editor_night": [{"pan": 0.0}, {"pan": 0.45, "turn": -0.4}, {"pan": -0.35, "height": 0.2}, {"pan": 0.7, "turn": -0.6}],
+    "av_streamer_den": [{"pan": 0.0}, {"pan": 0.55, "turn": -0.5}, {"pan": -0.5, "height": 0.15}],
+    "av_neon_shelf": [{"pan": 0.0}, {"pan": -0.4, "height": 0.25}, {"pan": 0.6, "turn": -0.5}],
+    "av_moon_window": [{"pan": 0.0}, {"pan": -0.3, "height": 0.3}, {"pan": 0.7, "turn": -0.5}],
+    "av_retro_bedroom": [{"pan": 0.0}, {"pan": -0.55, "turn": 0.3}, {"pan": 0.5, "height": 0.1}],
+    "av_studio_apartment": [{"pan": 0.0}, {"pan": -0.6, "turn": 0.4}, {"pan": 0.55, "turn": -0.4}],
 }
 
 
@@ -191,7 +247,8 @@ def build(room_id: str):
     ball("LampBulb", (0.025, 0.025, 0.015), coll, emit("LampBulb", "#FFD9A0", 12.0), (0.68, -0.26, DESK_Z + 0.535),
          segs=12)
 
-    # --- the room behind --------------------------------------------------------------------------------------
+    # --- the room behind: everything from here hangs off RoomPivot (see apply_view) -----------------------------
+    before = set(bpy.data.objects)
     wall_m = mat("Wall", R["wall"], rough=0.85)
     Y = 2.2  # the back wall or window, 2.2 m behind the hero
 
@@ -348,6 +405,14 @@ def build(room_id: str):
         cyc = mesh("Cyc", verts, faces, coll, cyc_m, smooth=True)
         cyc.location.y = 0.0
 
+    if R.get("gamer"):
+        from .gamer_rooms import backdrop
+        backdrop(room_id, coll, rng)
+    pivot = empty("RoomPivot", (0, 0, 0), coll)
+    for o in set(bpy.data.objects) - before:
+        if o.parent is None and o is not pivot:
+            o.parent = pivot
+
     # --- marks, world, haze, render defaults --------------------------------------------------------------------
     empty("Mark_A", (0, 0, 0), coll)
     empty("Mark_B", MARK_B, coll)
@@ -373,3 +438,15 @@ def build(room_id: str):
     sc.view_settings.view_transform, sc.view_settings.look = "Khronos PBR Neutral", "None"
     sc.view_settings.exposure = R["exposure"]
     return coll
+
+
+def apply_view(view: dict | None):
+    """Slide the room behind the hero: view = {"pan": -1..1, "height": -1..1}. Needs a room built by build()."""
+    pivot = bpy.data.objects.get("RoomPivot")
+    if pivot is None or not view:
+        return
+    pan = max(-1.0, min(1.0, float(view.get("pan", 0.0))))
+    height = max(-1.0, min(1.0, float(view.get("height", 0.0))))
+    turn = max(-1.0, min(1.0, float(view.get("turn", 0.0))))
+    pivot.location = (-pan * VIEW_PAN_M, 0.0, -height * VIEW_HEIGHT_M)
+    pivot.rotation_euler.z = math.radians(turn * VIEW_TURN_DEG)  # the room turns around the desk

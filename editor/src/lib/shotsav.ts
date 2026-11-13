@@ -5,15 +5,18 @@ import type { Emotion, Performance, PerfLine, SubtitleStyle } from "./types";
 export type AvSetup = "av_hero_34" | "av_hero_front" | "av_buddy" | "av_wide_34" | "av_wide_front";
 export type AvShot = {
   index: number; kind: AvSetup; start: number; end: number; subject: "hero" | "buddy";
-  speaker: "hero" | "buddy"; move: string; rack: boolean; line: string;
+  speaker: "hero" | "buddy"; move: string; rack: boolean; line: string; angle?: string;
 };
+export type AvPano = { w: number; h: number; frame: { x: number; y: number; w: number; h: number }; pan_px: number; height_px: number };
 export type AvPlan = { shots: AvShot[]; runtime: number; frames: number; split: Record<"hero" | "buddy" | "wide", number>;
   target: Record<"hero" | "buddy" | "wide", number> };
 export type AvCatalog = {
   hero: Record<string, { default: unknown; options?: string[]; swatches?: string[]; min?: number; max?: number }>;
   skins: Record<string, string>; outfits: Record<string, string>; brand: Record<string, string>;
   buddies: { model: string; label: string; readsAs: string; shell: string; glow: string; signature: string }[];
-  rooms: { id: string; label: string; tone: "dark" | "light"; look: string }[];
+  rooms: { id: string; label: string; tone: "dark" | "light"; look: string; gamer?: boolean; pano?: AvPano | null;
+    spots?: { pan?: number; height?: number; turn?: number }[] }[];
+  angles?: { id: string; role: "hero" | "buddy" | "wide"; label: string }[];
   actions: string[];
   built: { hero: boolean; buddies: Record<string, boolean>; rooms: Record<string, boolean> }; allBuilt: boolean;
   timing: { preview_still_s: number; draft_s_per_frame: number; final_s_per_frame: number; scene_load_s: number };
@@ -61,9 +64,10 @@ export const SETUP_LABEL: Record<AvSetup, string> = {
 export const SETUP_SHORT: Record<AvSetup, string> = {
   av_hero_34: "A", av_hero_front: "D", av_buddy: "B", av_wide_34: "C", av_wide_front: "E",
 };
-export const MOVES = ["push_in", "pull_out", "pull_truck", "drift", "static"] as const;
+export const MOVES = ["push_in", "pull_out", "pull_truck", "slow_zoom", "orbit", "truck", "crane_down", "drift", "static"] as const;
 export const MOVE_LABEL: Record<string, string> = {
   push_in: "Push in", pull_out: "Pull out", pull_truck: "Pull out + truck", drift: "Drift", static: "Hold still",
+  slow_zoom: "Slow zoom", orbit: "Orbit", truck: "Truck sideways", crane_down: "Crane down",
 };
 export const ACTION_LABEL: Record<string, string> = {
   "": "Auto", hop: "Hop", tilt: "Tilt", dry: "Dry look", happy: "Happy", think: "Think", shrink: "Shrink",
@@ -129,7 +133,8 @@ export function newPerformance(buddy = "buddy_claude", room = "av_studio_night",
     // voices are generated with ElevenLabs (the owner's key, from Settings); an out/audio/<line>.mp3 always wins
     characters: { [HERO]: { voice_id: HERO_VOICE, model: "av_hero", outfit: "puffer", outfit_color: PURPLE },
       [BUDDY]: { voice_id: BUDDY_VOICE[buddy] ?? BUDDY_VOICE.buddy_claude, model: buddy } },
-    camera: { grammar: "signature", seed: 7, rack: true, drift: 1 },
+    // a fresh seed per project: the director shoots every reel differently (Reroll angles picks another)
+    camera: { grammar: "signature", seed: Math.floor(Math.random() * 1e6), rack: true, drift: 1, angles: "varied" },
     captions: { position: "top", plate: true, tint: true, style: { ...SHOTSAV_TOP_STYLE } }, sound: { foley: true },
     lines,
   };

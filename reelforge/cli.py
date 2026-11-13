@@ -147,7 +147,7 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     faces = build_faces(perf, placed, perf.fps, n_frames, lipsync_override=overrides)
     if engine.ID == "shots-av":
         hero, buddy = engine.cast(perf)
-        seed = int(perf.camera.get("seed", int(hashlib.sha1(project.name.encode()).hexdigest()[:6], 16)))
+        seed = engine.reel_seed(perf, project)
         shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, seed, perf.camera.get("grammar", "signature"),
                               perf.camera)
     elif perf.look == "classic":
@@ -160,13 +160,16 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     if engine.ID == "shots-av":
         cap = perf.captions
         style = cap.get("style") or {}
+        place = (cap.get("x", 0.5), cap.get("y", 0.12)) if cap.get("position") == "custom" else None
+        scale = float(cap.get("size", 1.0))
         if style.get("templateId", AV_TOP_ID) == AV_TOP_ID:  # the style's own whole-line template
             tints = engine.caption_tints(perf) if cap.get("tint", True) else None
             plate = _css_color(style.get("background")) or ("#1F1F1F", 0.45)
             ass = build_ass_shotsav(placed, perf, w, h, perf.fps, total, tints, cap.get("plate", True),
-                                    cap.get("position", "top"), style.get("color", "#FFFFFF"), plate[0], plate[1])
+                                    cap.get("position", "top"), style.get("color", "#FFFFFF"), plate[0], plate[1],
+                                    place, scale)
         else:  # one of the editor's subtitle templates, with the colours picked in the editor
-            ass = build_ass_styled(placed, perf, w, h, style)
+            ass = build_ass_styled(placed, perf, w, h, style, place, scale)
         last = placed[-1].start + placed[-1].duration
         ass = end_card(ass, perf.end_text, last + 0.4, total, w, h)
         (out / "captions.ass").write_text(ass, encoding="utf-8")

@@ -27,6 +27,12 @@ BEDS.update({
     "av_studio_morning": ROOM_DAY,
     "av_cafe_day": "anoisesrc=color=pink:amplitude=0.3,bandpass=f=900:width_type=h:w=1200,tremolo=f=3:d=0.3",
     "av_cyc_lilac": "anoisesrc=color=pink:amplitude=0.07,highpass=f=150,lowpass=f=1800",
+    "av_editor_night": ROOM_NIGHT + ",equalizer=f=60:t=q:w=2:g=4",  # a PC fan under the city
+    "av_streamer_den": "anoisesrc=color=pink:amplitude=0.22,highpass=f=900,lowpass=f=6000,tremolo=f=0.3:d=0.4",  # rain
+    "av_neon_shelf": ROOM_NIGHT + ",equalizer=f=120:t=q:w=2:g=6",  # neon transformer hum
+    "av_moon_window": "anoisesrc=color=brown:amplitude=0.22,lowpass=f=420,tremolo=f=0.08:d=0.5",  # a soft night breeze
+    "av_retro_bedroom": ROOM_NIGHT + ",equalizer=f=15000:t=q:w=1:g=3",  # a CRT's whine, very faint
+    "av_studio_apartment": "anoisesrc=color=brown:amplitude=0.28,lowpass=f=300",  # the fridge and the street
 })
 RAIN = "anoisesrc=color=white:amplitude=0.2,highpass=f=1500,lowpass=f=7000"
 BED_LUFS = -38  # bed sits well under speech (-14 LUFS) after the mix
@@ -125,7 +131,10 @@ MUSIC_LUFS = -24  # under speech, over the room
 # Voice depth per room: (delays ms, decays) of early reflections. Small rooms are tight; the office is bigger.
 ROOM_VERB = {"av_studio_night": ("24|41", "0.12|0.07"), "av_neon_den": ("19|33", "0.10|0.06"),
              "av_late_office": ("38|67", "0.14|0.09"), "av_studio_morning": ("26|44", "0.11|0.06"),
-             "av_cafe_day": ("31|55", "0.12|0.08"), "av_cyc_lilac": ("45|80", "0.09|0.06")}
+             "av_cafe_day": ("31|55", "0.12|0.08"), "av_cyc_lilac": ("45|80", "0.09|0.06"),
+             "av_editor_night": ("23|40", "0.12|0.07"), "av_streamer_den": ("16|28", "0.07|0.04"),  # foam: dry
+             "av_neon_shelf": ("20|35", "0.10|0.06"), "av_moon_window": ("22|39", "0.11|0.06"),
+             "av_retro_bedroom": ("18|31", "0.09|0.05"), "av_studio_apartment": ("27|47", "0.12|0.07")}
 
 
 def voice_chain(environment: str) -> str:

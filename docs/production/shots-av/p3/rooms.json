@@ -88,5 +88,95 @@
         "dE76": 2.2
       }
     }
+  },
+  "av_editor_night": {
+    "wide": {
+      "jacket": {
+        "hex": "#843FD3",
+        "dE76": 16.4
+      },
+      "desk_front_luma": 0.085
+    },
+    "close": {
+      "jacket": {
+        "hex": "#8232D7",
+        "dE76": 8.9
+      }
+    }
+  },
+  "av_streamer_den": {
+    "wide": {
+      "jacket": {
+        "hex": "#7844E5",
+        "dE76": 8.8
+      },
+      "desk_front_luma": 0.08
+    },
+    "close": {
+      "jacket": {
+        "hex": "#763AEC",
+        "dE76": 1.5
+      }
+    }
+  },
+  "av_neon_shelf": {
+    "wide": {
+      "jacket": {
+        "hex": "#833DD4",
+        "dE76": 14.5
+      },
+      "desk_front_luma": 0.086
+    },
+    "close": {
+      "jacket": {
+        "hex": "#802FD9",
+        "dE76": 7.7
+      }
+    }
+  },
+  "av_moon_window": {
+    "wide": {
+      "jacket": {
+        "hex": "#823ED0",
+        "dE76": 16.8
+      },
+      "desk_front_luma": 0.09
+    },
+    "close": {
+      "jacket": {
+        "hex": "#8031D5",
+        "dE76": 9.8
+      }
+    }
+  },
+  "av_retro_bedroom": {
+    "wide": {
+      "jacket": {
+        "hex": "#853FD4",
+        "dE76": 15.9
+      },
+      "desk_front_luma": 0.109
+    },
+    "close": {
+      "jacket": {
+        "hex": "#8231D7",
+        "dE76": 8.7
+      }
+    }
+  },
+  "av_studio_apartment": {
+    "wide": {
+      "jacket": {
+        "hex": "#8841D6",
+        "dE76": 15.6
+      },
+      "desk_front_luma": 0.112
+    },
+    "close": {
+      "jacket": {
+        "hex": "#8433DB",
+        "dE76": 7.8
+      }
+    }
   }
 }

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent a
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Camera, ClipboardPaste, Eye, Film, FolderOpen, MoreHorizontal, Plus, RefreshCw, Trash2,
-  Wand2, X, Music, AudioLines, Hammer, Sparkles, Settings as SettingsIcon, Captions as CaptionsIcon,
+  Wand2, X, Music, AudioLines, Hammer, Sparkles, Settings as SettingsIcon, Captions as CaptionsIcon, Dices,
 } from "lucide-react";
 import { api, avThumbUrl, fileUrl, jobEventsUrl } from "@/lib/api";
 import type { Emotion, Job, Performance, PerfLine, ProjectData, SubtitleStyle, SystemStatus, VoiceLine } from "@/lib/types";
@@ -20,10 +20,13 @@ import { Dialog, Tooltip, useMenu } from "@/components/ui/Overlay";
 import { ColorInput, FieldRow, IconButton, Section, Segmented, Select, Slider, Switch } from "@/components/ui/Form";
 import { toast } from "@/stores/ui";
 import { useProject } from "@/stores/project";
+import { CaptionPlacer, RoomFramePicker } from "./Placers";
 import "./shotsav.css";
 
 type Tab = "script" | "stage" | "look";
 type Live = { job: Job | null; log: string[]; frame: number };
+
+const roleOf = (kind: string): "hero" | "buddy" | "wide" => (kind === "av_buddy" ? "buddy" : kind.startsWith("av_wide") ? "wide" : "hero");
 
 function AvThumb({ id, alt }: { id: string; alt: string }) {
   const [tries, setTries] = useState(0);
@@ -232,6 +235,7 @@ export function ShotsAvWorkspace() {
   const animaticDone = data?.files && live.job?.mode === "animatic" && live.job.status === "done";
   const overrides = perf?.camera?.overrides ?? {};
   const mix = plan?.split;
+  const angleLabel = (a?: string) => cat?.angles?.find((x) => x.id === a)?.label;
 
   // ---------- script edits ----------
   const setLines = (fn: (ls: PerfLine[]) => PerfLine[]) => update((p) => ({ ...p, lines: renumber(fn(p.lines)) }));
@@ -279,8 +283,14 @@ export function ShotsAvWorkspace() {
     const s = plan!.shots[i];
     const ov = overrides[String(i)] ?? {};
     menu.openAt(rect, [
-      { heading: `Shot ${i + 1} · set-up` },
-      ...(Object.keys(SETUP_LABEL) as AvSetup[]).map((k) => ({ label: SETUP_LABEL[k], active: s.kind === k, onSelect: () => setOverride(i, { kind: k }) })),
+      { heading: `Shot ${i + 1} · angle` },
+      ...(perf.camera?.angles === "classic" || perf.camera?.grammar === "reference"
+        ? (Object.keys(SETUP_LABEL) as AvSetup[]).map((k) => ({ label: SETUP_LABEL[k], active: s.kind === k, onSelect: () => setOverride(i, { kind: k }) }))
+        : (cat?.angles ?? []).filter((a) => a.role === roleOf(s.kind)).map((a) => ({ label: a.label, active: s.angle === a.id, onSelect: () => setOverride(i, { angle: a.id }) }))),
+      ...(perf.camera?.angles === "classic" || perf.camera?.grammar === "reference" ? [] : [{ heading: "Switch to" },
+        ...(["hero", "buddy", "wide"] as const).filter((r) => r !== roleOf(s.kind)).map((r) => ({
+          label: r === "hero" ? "A shot of you" : r === "buddy" ? `A shot of ${buddyName}` : "A wide",
+          onSelect: () => setOverride(i, { angle: (cat?.angles ?? []).find((a) => a.role === r)?.id }) }))]),
       { separator: true as const },
       { heading: "Move" },
       ...MOVES.map((m) => ({ label: MOVE_LABEL[m], active: s.move === m, onSelect: () => setOverride(i, { move: m }) })),
@@ -485,16 +495,17 @@ export function ShotsAvWorkspace() {
               className={`av-tile${s.index === sel ? " sel" : ""}${overrides[String(s.index)] ? " edited" : ""}`}
               style={{ flexGrow: Math.max(1, s.end - s.start), ["--who" as string]: color(s.speaker === "hero" ? HERO : BUDDY) }}
               onClick={() => void runPreview(s.index)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); void runPreview(s.index); } }}
-              title={`${SETUP_LABEL[s.kind]} · ${MOVE_LABEL[s.move] ?? s.move}${s.rack ? " · focus pull" : ""}`}>
+              title={`${angleLabel(s.angle) ?? SETUP_LABEL[s.kind]} · ${MOVE_LABEL[s.move] ?? s.move}${s.rack ? " · focus pull" : ""}`}>
               <span className="av-tile-setup">{SETUP_SHORT[s.kind]}</span>
               <span className="av-tile-len mono">{(s.end - s.start).toFixed(1)}s</span>
+              {s.angle && <span className="av-angle-tag">{angleLabel(s.angle)}</span>}
               {previewing === s.index && <Spinner />}
               <button className="av-tile-menu" aria-label={`Shot ${s.index + 1} options`}
                 onClick={(e) => { e.stopPropagation(); shotMenu(s.index, e.currentTarget.getBoundingClientRect()); }}><MoreHorizontal size={12} /></button>
             </div>
           ))}
         </div>
-        {plan && <div className="meta av-legend">A, D: you · B: {buddyName} · C, E: wides. Shot lengths follow the voices; edit a line to change one.</div>}
+        {plan && <div className="meta av-legend">A, D: you · B: {buddyName} · C, E: wides. The director picks each shot's angle from the line's mood; a shot's menu lets you pick your own.</div>}
       </section>
 
       {/* ---------------- Look ---------------- */}
@@ -548,13 +559,13 @@ export function ShotsAvWorkspace() {
             </div>
           </Section>
           <Section title="Room">
-            {(["dark", "light"] as const).map((tone) => (
-              <div key={tone}>
-                <div className="eyebrow" style={{ margin: "4px 0 6px" }}>{tone === "dark" ? "Dark" : "Light"}</div>
+            {([["gamer", "Gamer and editor rooms"], ["dark", "Dark"], ["light", "Light"]] as const).map(([group, name]) => (
+              <div key={group}>
+                <div className="eyebrow" style={{ margin: "4px 0 6px" }}>{name}</div>
                 <div className="av-cards three">
-                  {cat.rooms.filter((r) => r.tone === tone).map((r) => (
+                  {cat.rooms.filter((r) => (group === "gamer" ? r.gamer : !r.gamer && r.tone === group)).map((r) => (
                     <button key={r.id} className="av-card tall" aria-pressed={perf.environment === r.id} title={r.look}
-                      onClick={() => update((p) => ({ ...p, environment: r.id }))}>
+                      onClick={() => update((p) => ({ ...p, environment: r.id, room_view: undefined }))}>
                       <AvThumb id={r.id} alt="" />
                       <span className="av-card-name">{r.label}</span>
                     </button>
@@ -563,7 +574,25 @@ export function ShotsAvWorkspace() {
               </div>
             ))}
           </Section>
+          {(() => {
+            const room = cat.rooms.find((r) => r.id === perf.environment);
+            return room && (
+              <Section title="Your spot in the room">
+                <RoomFramePicker roomId={room.id} label={room.label} pano={room.pano} view={perf.room_view} spots={room.spots ?? []}
+                  onChange={(v) => update((p) => ({ ...p, room_view: v ?? undefined }))} />
+              </Section>
+            );
+          })()}
           <Section title="Camera">
+            <FieldRow label="Angles"><Segmented size="sm" full value={perf.camera?.angles ?? "varied"} onChange={(v) => setCamera({ angles: v })}
+              options={[{ value: "varied", label: `Director (${cat.angles?.length ?? 36})`, title: "The director picks from 36 angles by each line's mood: low, high, profile, dutch, over the shoulder, inserts" },
+                { value: "classic", label: "Classic 5", title: "The reference reel's five set-ups" }]} /></FieldRow>
+            {(perf.camera?.angles ?? "varied") === "varied" && (
+              <FieldRow label="Take"><span className="row" style={{ gap: 8 }}>
+                <button className="btn btn-sm" onClick={() => setCamera({ seed: Math.floor(Math.random() * 1e6), overrides: {} })}
+                  title="Shoot the reel again with a different set of angles (clears your per-shot picks)"><Dices size={12} />Reroll angles</button>
+                <span className="meta mono">#{perf.camera?.seed ?? "auto"}</span></span></FieldRow>
+            )}
             <FieldRow label="Grammar"><Segmented size="sm" full value={perf.camera?.grammar ?? "signature"} onChange={(v) => setCamera({ grammar: v })}
               options={[{ value: "signature", label: "Signature", title: "The reference's cutting, plus a gentle ease, a little sway and a focus pull" },
                 { value: "reference", label: "Reference", title: "The reference reel's rules, exactly" }]} /></FieldRow>
@@ -583,6 +612,8 @@ export function ShotsAvWorkspace() {
           </Section>
           <Section title="Captions">
             <CaptionsPanel style={perf.captions?.style ?? SHOTSAV_TOP_STYLE} captions={perf.captions ?? {}} onOpen={() => setSubsOpen(true)}
+              still={preview?.url} sample={lines.find((l) => l.text.trim())?.text ?? "The client signed off."}
+              endText={perf.end_text ?? ""} onEndText={(v) => update((p) => ({ ...p, end_text: v }))}
               onStyle={(patch) => update((p) => ({ ...p, captions: { ...p.captions, style: { ...(p.captions?.style ?? SHOTSAV_TOP_STYLE), ...patch } } }))}
               onCaptions={(patch) => update((p) => ({ ...p, captions: { ...p.captions, ...patch } }))} />
           </Section>
@@ -641,10 +672,12 @@ function PasteDialog({ buddyName, hasLines, onClose, onUse }: { buddyName: strin
   );
 }
 
-function CaptionsPanel({ style, captions, onOpen, onStyle, onCaptions }: {
+function CaptionsPanel({ style, captions, onOpen, onStyle, onCaptions, still, sample, endText, onEndText }: {
   style: SubtitleStyle; captions: NonNullable<Performance["captions"]>; onOpen: () => void;
   onStyle: (patch: Partial<SubtitleStyle>) => void; onCaptions: (patch: Record<string, unknown>) => void;
+  still?: string; sample: string; endText: string; onEndText: (v: string) => void;
 }) {
+  const custom = captions.position === "custom";
   const top = style.templateId === SHOTSAV_TOP_ID;
   const plate = parseRgba(style.background);
   return (
@@ -662,11 +695,22 @@ function CaptionsPanel({ style, captions, onOpen, onStyle, onCaptions }: {
             <FieldRow label="Plate opacity"><Slider ariaLabel="Plate opacity" value={plate.a} min={0.1} max={1} step={0.05}
               format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => onStyle({ background: toRgba(plate.hex, v) })} /></FieldRow>
           </>}
-          <FieldRow label="Position"><Segmented size="sm" full value={captions.position ?? "top"} onChange={(v) => onCaptions({ position: v })}
-            options={[{ value: "top", label: "Top" }, { value: "lower", label: "Lower" }]} /></FieldRow>
+          {!custom && <FieldRow label="Position"><Segmented size="sm" full value={captions.position ?? "top"} onChange={(v) => onCaptions({ position: v })}
+            options={[{ value: "top", label: "Top" }, { value: "lower", label: "Lower" }]} /></FieldRow>}
           <FieldRow label="Speaker dot"><Switch label="Speaker colour dot" checked={captions.tint !== false} onChange={(v) => onCaptions({ tint: v })} /></FieldRow>
         </>
       ) : <SubtitleControls s={style} onChange={onStyle} />}
+      <FieldRow label="Size"><Slider ariaLabel="Caption size" min={0.5} max={2} step={0.05} value={captions.size ?? 1}
+        format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => onCaptions({ size: Math.round(v * 100) / 100 })} /></FieldRow>
+      <FieldRow label="Place by hand"><Switch label="Place the captions by hand" checked={custom}
+        onChange={(v) => onCaptions(v ? { position: "custom", x: captions.x ?? 0.5, y: captions.y ?? (top ? 0.12 : 0.79) } : { position: top ? "top" : "lower" })} /></FieldRow>
+      {custom && <>
+        <CaptionPlacer x={captions.x ?? 0.5} y={captions.y ?? 0.12} size={captions.size ?? 1} still={still} sample={sample}
+          onChange={(p) => onCaptions(p)} />
+        <div className="meta">Drag the caption, or use the arrow keys. The striped bands are where platform buttons sit{still ? "" : "; preview a shot to see it behind"}.</div>
+      </>}
+      <FieldRow label="End card"><input className="input input-sm" aria-label="End card text" maxLength={120} placeholder="A closing line over the last wide"
+        defaultValue={endText} onBlur={(e) => { if (e.target.value.trim() !== endText) onEndText(e.target.value.trim()); }} /></FieldRow>
     </div>
   );
 }

@@ -81,7 +81,7 @@ def frame_size(distance, lens, width, height):
 
 
 def base_pose(kind, eye_pos, head_height, width, height, side=1.0, az_pick=0.5, look_room=0.0,
-              lens=None, min_head=0.0):
+              lens=None, min_head=0.0, framing=None):
     """Framing for one shot: where the camera stands and what it aims at before any move.
 
     eye_pos: the subject's eye point. side: +1 puts the camera on the +X side of the subject (use the side of
@@ -89,8 +89,9 @@ def base_pose(kind, eye_pos, head_height, width, height, side=1.0, az_pick=0.5, 
     kind's azimuth range. look_room: fraction of the frame width to leave in front of the subject's gaze
     (sign = gaze direction on X). For "two", pass eye_pos between the two faces (see two_shot_aim).
     min_head: the smallest head fraction this character may be framed at (its widest flattering shot);
-    the eye line drops with it so the head keeps its headroom."""
-    fr = FRAMING[kind]
+    the eye line drops with it so the head keeps its headroom.
+    framing: a Shots-AV angle (reelforge/angles.py) that replaces the kind's row; its "roll" tilts the camera."""
+    fr = {**FRAMING[kind], **(framing or {})}
     lens = lens or fr["lens"]
     head = max(fr["head"], min_head)
     eyes = max(fr["eyes"], min(0.42, 0.30 + 0.24 * head)) if head > fr["head"] else fr["eyes"]
@@ -101,7 +102,8 @@ def base_pose(kind, eye_pos, head_height, width, height, side=1.0, az_pick=0.5, 
     aim = (ex + look_room * fw, ey, ez - (0.5 - eyes) * fh)
     az = math.radians(fr["az"][0] + (fr["az"][1] - fr["az"][0]) * az_pick) * side
     el = math.radians(fr["el"])
-    return {"aim": aim, "dist": dist, "az": az, "el": el, "lens": float(lens), "fstop": fr["fstop"], "kind": kind}
+    return {"aim": aim, "dist": dist, "az": az, "el": el, "lens": float(lens), "fstop": fr["fstop"], "kind": kind,
+            "roll": math.radians(fr.get("roll", 0.0)) * side}
 
 
 def two_shot_aim(speaker_eye, listener_eye, bias=0.35):
@@ -122,7 +124,7 @@ def pose(base, move, u, params=None, ease_strength=0.35):
     k = float(p.get("intensity", 1.0))
     e = ease(u, ease_strength)
     c = e - 0.5  # centred: the framing in base_pose is the middle of the move
-    aim, dist, az, el, lens, roll = list(base["aim"]), base["dist"], base["az"], base["el"], base["lens"], 0.0
+    aim, dist, az, el, lens, roll = list(base["aim"]), base["dist"], base["az"], base["el"], base["lens"], base.get("roll", 0.0)
     if move == "push_in":
         dist = base["dist"] * (1.0 + p["amount"] * k * (0.5 - e))
     elif move == "pull_out":
@@ -142,7 +144,7 @@ def pose(base, move, u, params=None, ease_strength=0.35):
         sign = 1.0 if move == "crane_down" else -1.0
         lift = p["metres"] * k * (1.0 - e) * sign  # ends on the base framing
         pos = _place(aim, dist, az, el)
-        return {"pos": (pos[0], pos[1], pos[2] + lift), "aim": tuple(aim), "roll": 0.0, "lens": lens}
+        return {"pos": (pos[0], pos[1], pos[2] + lift), "aim": tuple(aim), "roll": roll, "lens": lens}
     elif move == "slow_zoom":
         lens = base["lens"] * (1.0 + p["amount"] * k * c)
     elif move == "whip_pan":  # a transition: the aim sweeps in from the side and lands on the subject

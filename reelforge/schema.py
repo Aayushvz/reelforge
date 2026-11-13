@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from .angles import ANGLES
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -35,7 +36,10 @@ AV_GRAMMARS = ("signature", "reference")  # signature (default) = the reference 
 AV_ACTIONS = ("hop", "tilt", "dry", "happy", "think", "shrink", "nod", "lookaway")  # buddy reaction clips
 AV_PURPLE = "#7C3AED"  # Aayush Visuals brand purple: the default jacket
 AV_ROOM = "av_studio_night"
-AV_ROOMS = ("av_studio_night", "av_neon_den", "av_late_office", "av_studio_morning", "av_cafe_day", "av_cyc_lilac")
+AV_ROOMS = ("av_studio_night", "av_neon_den", "av_late_office", "av_studio_morning", "av_cafe_day", "av_cyc_lilac",
+            "av_editor_night", "av_streamer_den", "av_neon_shelf", "av_moon_window", "av_retro_bedroom",
+            "av_studio_apartment")
+AV_ANGLE_MODES = ("varied", "classic")  # camera.angles: the 36-angle library, or the reference reel's five set-ups
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
 
@@ -85,6 +89,7 @@ class Performance:
     captions: dict = field(default_factory=dict)  # shots-av: {"position": "top"|"lower", "plate": bool, "tint": bool}
     sound: dict = field(default_factory=dict)  # shots-av: {"foley": bool}
     end_text: str = ""  # shots-av: an end card over the closing wide ("Every designer's relationship with AI.")
+    room_view: dict = field(default_factory=dict)  # shots-av: {"pan", "height", "turn"} each -1..1; empty = picked
 
 
 def load_performance(path: Path) -> Performance:
@@ -190,8 +195,21 @@ def parse_performance(data: dict) -> Performance:
         captions, sound = {}, {}
     if "style" in captions and not isinstance(captions["style"], dict):
         errors.append("captions.style must be an object (the editor's subtitle style)")
-    if captions.get("position", "top") not in ("top", "lower"):
-        errors.append("captions.position must be top or lower")
+    if captions.get("position", "top") not in ("top", "lower", "custom"):
+        errors.append("captions.position must be top, lower or custom")
+    for key, lo, hi in (("x", 0.0, 1.0), ("y", 0.0, 1.0), ("size", 0.5, 2.0)):
+        v = captions.get(key)
+        if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float)) or not lo <= v <= hi):
+            errors.append(f"captions.{key} must be a number {lo}..{hi}")
+    if camera.get("angles", "varied") not in AV_ANGLE_MODES:
+        errors.append(f"camera.angles must be one of {AV_ANGLE_MODES}")
+    room_view = data.get("room_view") or {}
+    if not isinstance(room_view, dict):
+        errors.append("room_view must be an object")
+        room_view = {}
+    for key, v in room_view.items():
+        if key not in ("pan", "height", "turn") or isinstance(v, bool) or not isinstance(v, (int, float))                 or not -1.0 <= v <= 1.0:
+            errors.append(f"room_view.{key}: only pan, height and turn, each a number -1..1")
     for key, val in (("captions.plate", captions.get("plate", True)), ("captions.tint", captions.get("tint", True)),
                      ("sound.foley", sound.get("foley", True))):
         if not isinstance(val, bool):
@@ -217,6 +235,8 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"{where}: move must be one of {CAMERA_MOVES}")
         if "kind" in o and o["kind"] not in SHOT_KINDS:
             errors.append(f"{where}: kind must be one of {SHOT_KINDS}")
+        if "angle" in o and o["angle"] not in ANGLES:
+            errors.append(f"{where}: angle must be one of the library's {len(ANGLES)} angles")
         if "subject" in o and o["subject"] not in chars:
             errors.append(f"{where}: unknown subject {o['subject']}")
     if any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in look_params.values()):
@@ -226,7 +246,7 @@ def parse_performance(data: dict) -> Performance:
     return Performance(fps, ratio, data.get("environment", AV_ROOM if av else "night_city"), chars, lines,
                        style, data.get("lighting", ""),
                        bool(data.get("ambience", True)), look, quality, camera, look_params, captions, sound,
-                       end_text.strip())
+                       end_text.strip(), room_view)
 
 
 def _av_options(name: str, c: dict, errors: list[str]) -> dict:

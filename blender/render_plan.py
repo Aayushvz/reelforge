@@ -20,6 +20,9 @@ mode = args[1] if len(args) > 1 else "full"
 sc = bpy.context.scene
 fps, n = plan["fps"], plan["n_frames"]
 LOOK = looks.get(plan.get("look"))
+if plan.get("room_view") and bpy.data.objects.get("RoomPivot"):  # shots-av: the part of the room behind the desk
+    from shotsav import rooms as _rooms
+    _rooms.apply_view(plan.get("room_view"))
 
 # shot kind -> (distance m, f-stop, azimuth rad, elevation rad)
 SHOT = {"wide": (2.6, 0.5, math.radians(-15), math.radians(6)),  # f/0.5 cheat: wide shots get bokeh too
@@ -256,7 +259,7 @@ def rig_camera(i, s):
     if kind == "two":  # look down the line of both speakers: listener near and soft, speaker sharp
         eye = Vector(rig.two_shot_aim(tuple(eye), tuple(others[0]["focus"].matrix_world.translation)))
     base = rig.base_pose(kind, tuple(eye), height, w, h, side, s.get("az_pick", 0.5), room,
-                         s.get("lens") or None, 0.0 if kind == "two" or av else subj["min_head"])
+                         s.get("lens") or None, 0.0 if kind == "two" or av else subj["min_head"], s.get("framing") or None)
     base["dist"] = min(base["dist"], MAX_DIST[kind])
     cd = bpy.data.cameras.new(f"Cam{i}")
     cd.lens = base["lens"]

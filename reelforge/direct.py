@@ -4,6 +4,7 @@ import hashlib
 import math
 from dataclasses import dataclass, field, replace
 
+from . import angles as _angles
 from .timeline import Placed
 
 LENSES = {"wide": 35, "medium": 50, "closeup": 85}
@@ -30,6 +31,8 @@ class Shot:
     ease: float = 0.35  # 0 = constant speed (cut into a travelling move), 1 = starts and lands at rest
     rack: dict = field(default_factory=dict)  # shots-av: {"at": frame in shot, "frames": n, "from": name, "to": name}
     speaker: str = ""  # who is talking, when it is not the subject (shots-av wides); empty = the subject
+    angle: str = ""  # shots-av: the angle library id (reelforge/angles.py); empty = the kind's own framing
+    framing: dict = field(default_factory=dict)  # shots-av: that angle's framing, read by the renderer
 
 
 def plan_shots(placed: list[Placed], fps: int, n_frames: int) -> list[Shot]:
@@ -286,20 +289,28 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
             merged[-2][1] = merged[-1][0] = need
     rack_done = not sig or camera.get("rack", True) is False
     drift = float(camera.get("drift", 1.0))  # the editor's drift dial scales every move
+    varied = sig and camera.get("angles", "varied") == "varied"  # the reference grammar keeps its five set-ups
+    director = _angles.Director(seed)
     shots: list[Shot] = []
     for i, (a, b, kind, subject, line, reaction) in enumerate(merged):
         last = i == len(merged) - 1
-        move, params = ("static", {}) if reaction else _av_move(kind, (b - a) / fps, last)
+        if varied and not last:  # the director picks one of 36 angles for the shot's role and the line's mood
+            angle = director.pick(i, _angles.ROLE_OF[kind], _angles.mood_of(line.emotion, line.intensity), reaction)
+            move, params = ("static", {}) if reaction else _angles.move_for(angle, (b - a) / fps, seed, i)
+        else:
+            angle = _angles.CLASSIC[kind]
+            move, params = ("static", {}) if reaction else _av_move(kind, (b - a) / fps, last)
+        fr = _angles.framing(angle)
         params = {k: (round(v * drift, 4) if k in ("amount", "metres", "degrees") else v) for k, v in params.items()}
         rack = {}
         if not rack_done and kind in AV_WIDES and line.speaker == buddy:  # one rack focus: hero -> buddy
             line_start = next((int(round(p.start * fps)) for p in placed if p.line is line), a)
             rack = {"at": max(0, line_start - a), "frames": 10, "from": hero, "to": buddy}
             rack_done = True
-        shots.append(Shot(a, b, kind, float(AV_LENSES[kind]), subject, 0.0, move, params, 0.0,
+        shots.append(Shot(a, b, kind, float(fr["lens"]), subject, 0.0, move, params, 0.0,
                           0.04 if sig else 0.0, (seed * 7919 + i * 104729) & 0x7FFFFFFF,
                           round(_hash(seed, i, "az") / 0xFFFFFFFF, 3), 0.15 if sig else 0.0, rack,
-                          line.speaker))
+                          line.speaker, angle, fr))
     for key, o in (camera.get("overrides") or {}).items():
         i = int(key)
         if 0 <= i < len(shots):
@@ -311,9 +322,18 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
                 rack = {"at": 0, "frames": 10, "from": hero, "to": buddy}
             elif o.get("rack") is False:
                 rack = {}
-            shots[i] = replace(s, kind=kind, lens=float(AV_LENSES.get(kind, s.lens)), move=new_move,
+            angle = o.get("angle") or (_angles.CLASSIC.get(kind, s.angle) if kind != s.kind else s.angle)
+            subject = s.subject
+            if o.get("angle") in _angles.ANGLES:  # the editor picked an angle: its role decides kind and subject
+                role = _angles.ANGLES[angle]["role"]
+                if role != _angles.ROLE_OF.get(kind):
+                    kind = _angles.KIND_OF[role]
+                subject = buddy if role == "buddy" else hero
+            fr = _angles.framing(angle) if angle in _angles.ANGLES else s.framing
+            shots[i] = replace(s, kind=kind, lens=float(fr.get("lens", AV_LENSES.get(kind, s.lens))), move=new_move,
                                move_params=s.move_params if new_move == s.move else {},
-                               fstop=float(o.get("fstop", s.fstop)), rack=rack)
+                               fstop=float(o.get("fstop", s.fstop)), rack=rack, angle=angle, framing=fr,
+                               subject=subject)
     return shots
 
 

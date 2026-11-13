@@ -167,7 +167,9 @@ def test_room_table_matches_the_schema_and_the_contract():
     t = shots_av.room_tables()
     assert tuple(t["ROOMS"]) == schema.AV_ROOMS and schema.AV_ROOM in t["ROOMS"]
     tones = [r["tone"] for r in t["ROOMS"].values()]
-    assert tones.count("dark") == 3 and tones.count("light") == 3
+    assert tones.count("dark") == 9 and tones.count("light") == 3
+    assert [k for k, r in t["ROOMS"].items() if r.get("gamer")] == list(schema.AV_ROOMS[6:])  # the 3D gamer rooms
+    assert t["VIEW_PAN_M"] > 1.0 and 0 < t["VIEW_HEIGHT_M"] < 0.5
     for rid, r in t["ROOMS"].items():
         for light in ("key", "rim", "fill", "glow"):
             color, energy, pos, size = r[light]

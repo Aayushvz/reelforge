@@ -146,8 +146,8 @@ def ass_alpha_color(hex_rgb: str, opacity: float) -> tuple[str, str]:
     return ass_color(hex_rgb).replace("&H00", "&H"), f"&H{a:02X}&"
 
 
-def av_header(width: int, height: int) -> str:
-    fs = round(AV_FONT_PX * width / 1080)
+def av_header(width: int, height: int, scale: float = 1.0) -> str:
+    fs = round(AV_FONT_PX * width / 1080 * scale)
     return (
         "[Script Info]\nScriptType: v4.00+\n"
         f"PlayResX: {width}\nPlayResY: {height}\nWrapStyle: 2\nScaledBorderAndShadow: yes\n\n"
@@ -214,18 +214,25 @@ def end_card(ass: str, text: str, start: float, end: float, width: int, height: 
 
 def build_ass_shotsav(placed: list[Placed], perf: Performance, width: int, height: int, fps: int, total: float,
                       tints: dict[str, str] | None = None, plate: bool = True, position: str = "top",
-                      color: str = "#FFFFFF", plate_color: str = AV_PLATE, plate_alpha: float = AV_PLATE_ALPHA) -> str:
+                      color: str = "#FFFFFF", plate_color: str = AV_PLATE, plate_alpha: float = AV_PLATE_ALPHA,
+                      place: tuple[float, float] | None = None, scale: float = 1.0) -> str:
     """The shotsav_top template: one caption line (or two) at a time, top centre, on a faint rounded ink plate,
-    with a small dot in the speaker's colour."""
-    fs = round(AV_FONT_PX * width / 1080)
+    with a small dot in the speaker's colour. place: (x, y) as frame fractions for the centre of the caption block,
+    when the editor placed it by hand; scale: the editor's size dial (1 = 46 px at 1080 wide)."""
+    fs = round(AV_FONT_PX * width / 1080 * scale)
     lh = round(fs * 1.18)
     x, y = width // 2, round(height * (AV_LOWER if position == "lower" else AV_TOP))
-    pad_x, pad_y, radius, dot = round(fs * 0.55), round(fs * 0.28), round(10 * width / 1080), round(6 * width / 1080) + 4
+    pad_x, pad_y = round(fs * 0.55), round(fs * 0.28)
+    radius, dot = round(10 * width / 1080 * scale), round((6 * width / 1080 + 4) * scale)
     plate_c, plate_a = ass_alpha_color(plate_color, plate_alpha)
-    rows = [av_header(width, height)]
+    rows = [av_header(width, height, scale)]
     for start, end, lines, who in av_events(placed, fps, total):
         tw = max(len(line) for line in lines) * fs * AV_CHAR_W
         th = lh * len(lines)
+        if place:  # centre the whole block (plate included) on the hand-placed point, kept inside the frame
+            bw = tw + 2 * pad_x + dot + round(fs * 0.3)
+            x = round(min(max(place[0] * width, bw / 2 + 8), width - bw / 2 - 8))
+            y = round(min(max(place[1] * height - th / 2, pad_y + 8), height - th - pad_y - 8))
         tint = (tints or {}).get(who)
         extra = (dot + round(fs * 0.3)) if tint else 0
         w, h = tw + 2 * pad_x + extra, th + 2 * pad_y
@@ -282,16 +289,20 @@ def _anchor(style: dict, width: int, height: int) -> tuple[int, int, int]:
     return row + col, x, y
 
 
-def build_ass_styled(placed: list[Placed], perf: Performance, width: int, height: int, style: dict) -> str:
-    """Captions in one of the editor's subtitle templates, timed by the spoken words."""
+def build_ass_styled(placed: list[Placed], perf: Performance, width: int, height: int, style: dict,
+                     place: tuple[float, float] | None = None, scale: float = 1.0) -> str:
+    """Captions in one of the editor's subtitle templates, timed by the spoken words. place: (x, y) frame fractions
+    of the caption's centre when the editor placed it by hand; scale multiplies the template's size."""
     s = {**STYLE_DEFAULTS, **{k: v for k, v in (style or {}).items() if v is not None or k == "background"}}
     k = width / 1080
-    fs = round(float(s["size"]) * k)
+    fs = round(float(s["size"]) * k * scale)
     font = s["font"] if s["font"] in FONT_FAMILIES else "Geist"
     bold = -1 if int(s["weight"]) >= 600 else 0
     bar = _css_color(s["background"])
     outline, shadow = max(0, round(float(s["outline"]) * k)), max(0, round(float(s["shadow"]) * k))
     an, x, y = _anchor(s, width, height)
+    if place:  # centred on the hand-placed point
+        an, x, y = 5, round(place[0] * width), round(place[1] * height)
     base, hi = ass_color(s["color"]), ass_color(s["highlight"])
     sbase = base.rstrip("&")  # style lines take &HAABBGGRR without the closing &
     if bar:  # a box behind the text: BorderStyle 3 draws the outline colour as the box
