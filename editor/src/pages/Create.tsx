@@ -22,7 +22,8 @@ export function CreatePage() {
   const nav = useNavigate();
   const p = params.get("p");
   const isNew = params.get("new") === "1";
-  const { id, loading, error, editor, load, startDraft, setEditor, saveNow } = useProject();
+  const { id, loading, error, editor, performance, load, startDraft, setEditor, saveNow } = useProject();
+  const deskReel = editor.style === "shots-av" || performance?.style === "shots-av";
   const [recent, setRecent] = useState<ProjectSummary[] | null>(null);
   const [busy, setBusy] = useState(false);
   const menu = useMenu();
@@ -41,7 +42,16 @@ export function CreatePage() {
     return () => setOnProjectCreated(null);
   }, [setParams]);
 
-  useEffect(() => { if (id) { remember(id); if (p !== id) setParams({ p: id }, { replace: true }); } }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!id) return;
+    if (deskReel) {  // a desk reel has its own workspace; this page is the blender3d flow
+      remember(null);
+      nav(`/shots-av/${encodeURIComponent(id)}`, { replace: true });
+      return;
+    }
+    remember(id);
+    if (p !== id) setParams({ p: id }, { replace: true });
+  }, [id, deskReel]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { api.projects().then(setRecent).catch(() => setRecent([])); }, [id]);
 
   const generate = async () => {
@@ -56,6 +66,7 @@ export function CreatePage() {
   };
 
   const others = (recent ?? []).filter((r) => r.id !== id && !r.archived);
+  if (id && deskReel) return <div className="page"><div className="page-inner"><Spinner /></div></div>;
 
   return (
     <div className="create">
