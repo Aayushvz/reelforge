@@ -6,6 +6,13 @@ import type { AvPano } from "@/lib/shotsav";
 import { avThumbUrl } from "@/lib/api";
 import { FieldRow, Slider } from "@/components/ui/Form";
 
+// "a little right of centre, level": what the frame shows, in words (screen readers read it out)
+function describeView(pan: number, height: number) {
+  const side = Math.abs(pan) < 0.05 ? "centred" : `${Math.round(Math.abs(pan) * 100)}% to the ${pan > 0 ? "right" : "left"}`;
+  const up = Math.abs(height) < 0.05 ? "level" : `${Math.round(Math.abs(height) * 100)}% ${height > 0 ? "higher" : "lower"}`;
+  return `${side}, ${up}`;
+}
+
 const clamp = (v: number, lo = -1, hi = 1) => Math.min(hi, Math.max(lo, v));
 const r2 = (v: number) => Math.round(v * 100) / 100;
 const capture = (e: RPointerEvent) => { try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* not a live pointer */ } };
@@ -57,7 +64,8 @@ export function RoomFramePicker({ roomId, label, pano, view, spots, onChange }: 
       <div ref={box} className="av-pano" style={{ aspectRatio: `${pano.w} / ${pano.h}` }} onPointerDown={jump}>
         <img className="av-pano-img" src={avThumbUrl(`${roomId}_pano`)} alt={`${label}, the whole back wall`} draggable={false} />
         <div className="av-pano-frame" role="slider" tabIndex={0} aria-label="The part of the room behind you"
-          aria-valuetext={`pan ${pan.toFixed(2)}, height ${height.toFixed(2)}`}
+          aria-valuemin={-100} aria-valuemax={100} aria-valuenow={Math.round(pan * 100)} aria-valuetext={describeView(pan, height)}
+          aria-description="Arrow keys move the frame; Shift moves it further"
           style={{ left: `${left * 100}%`, top: `${top * 100}%`, width: `${(f.w / pano.w) * 100}%`, height: `${(f.h / pano.h) * 100}%` }}
           onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
           onKeyDown={(e) => {
@@ -110,7 +118,9 @@ export function CaptionPlacer({ x, y, size, still, sample, onChange }: {
       <div className="av-cap-safe top" title="Platform UI: keep faces and text out" />
       <div className="av-cap-safe bottom" />
       <div className="av-cap-chip" role="slider" tabIndex={0} aria-label="Caption position"
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pos.y * 100)}
         aria-valuetext={`${Math.round(pos.x * 100)}% across, ${Math.round(pos.y * 100)}% down`}
+        aria-description="Arrow keys move the caption"
         style={{ left: `${pos.x * 100}%`, top: `${pos.y * 100}%`, fontSize: `${Math.round(7.5 * size)}px` }}
         onKeyDown={(e) => {
           const d = { ArrowLeft: [-0.02, 0], ArrowRight: [0.02, 0], ArrowUp: [0, -0.02], ArrowDown: [0, 0.02] }[e.key];

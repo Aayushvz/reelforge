@@ -56,7 +56,7 @@ export function Sidebar() {
   return (
     <aside className={`sidebar${collapsed ? " collapsed" : ""}`} aria-label="Main navigation">
       <div className="sb-top">
-        {!collapsed && <div className="logo grow"><LogoMark /><span>ReelForge</span></div>}
+        {!collapsed && <div className="logo grow"><LogoMark /><span>{"Aayush's Editor"}</span></div>}
         <Tooltip label={collapsed ? "Expand sidebar" : "Collapse sidebar"} kbd="[" side="right">
           <button className="icon-btn sm" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
             {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}

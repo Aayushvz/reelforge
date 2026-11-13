@@ -1,4 +1,6 @@
-# reelforge
+# Aayush's Editor
+
+The codebase and its Python package are still called `reelforge`.
 
 **Turn a script into a cinematic, lip-synced, animated short**, built for Instagram Reels and Shorts (9:16 by default; 16:9, 3:4 and 1:1 are planned).
 
@@ -54,9 +56,9 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
 
 ## Open it like an app (Windows)
 Run `powershell -ExecutionPolicy Bypass -File tools/launcher/Install-Shortcut.ps1` once (add `-StartMenu` for the
-Start menu too). The **ReelForge** desktop icon starts the editor's server in the background, out of sight, and opens the
+Start menu too). The **Aayush's Editor** desktop icon starts the editor's server in the background, out of sight, and opens the
 editor in its own Chrome (or Edge) app window. Closing the window leaves the server running, so renders carry on;
-`tools/launcher/Stop-ReelForge.ps1` stops it. If it doesn't open, the server's log is `%TEMP%eelforge-editor.log`.
+`tools/launcher/Stop-Aayushs-Editor.ps1` stops it. If it doesn't open, the server's log is `%TEMP%\reelforge-editor.log`.
 
 ## Make a Shots-AV reel (you + an AI buddy)
 The easy way is the editor: `cd editor && npm install && npm run dev`, open `http://localhost:5190/shots-av`, paste a

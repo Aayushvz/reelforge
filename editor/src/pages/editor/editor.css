@@ -61,7 +61,7 @@
 .pv-subs { position: absolute; left: 0; right: 0; display: flex; pointer-events: none; }
 .pv-overlay { position: absolute; left: 6%; right: 6%; text-align: center; font-weight: 700; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); pointer-events: none; }
 .pv-guides { position: absolute; inset: 0; pointer-events: none; }
-.pv-guides .safe { position: absolute; border: 1px dashed rgba(240, 164, 58, 0.7); }
+.pv-guides .safe { position: absolute; border: 1px dashed rgba(228, 228, 232, 0.55); }
 .pv-guides .thirds { position: absolute; inset: 0; background:
   linear-gradient(to right, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.18) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.18) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.18) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.18) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)),
   linear-gradient(to bottom, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.18) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.18) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.18) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.18) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)); }

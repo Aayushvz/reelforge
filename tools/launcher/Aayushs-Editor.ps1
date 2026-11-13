@@ -1,6 +1,6 @@
-# ReelForge launcher: start the editor's server in the background (if it isn't running) and open the editor in its
-# own app window (Chrome or Edge app mode: no tabs, no address bar). Run hidden by ReelForge.vbs from the desktop
-# shortcut. The server keeps running after the window closes, so renders carry on; Stop-ReelForge.ps1 stops it.
+# Aayush's Editor launcher: start the editor's server in the background (if it isn't running) and open the editor in its
+# own app window (Chrome or Edge app mode: no tabs, no address bar). Run hidden by Aayushs-Editor.vbs from the desktop
+# shortcut. The server keeps running after the window closes, so renders carry on; Stop-Aayushs-Editor.ps1 stops it.
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)   # tools\launcher -> the repo
 $port = 5190
@@ -19,7 +19,7 @@ if (-not (Test-Up)) {
   for ($i = 0; $i -lt 90 -and -not (Test-Up); $i++) { Start-Sleep -Milliseconds 700 }
   if (-not (Test-Up)) {
     Add-Type -AssemblyName PresentationFramework
-    [System.Windows.MessageBox]::Show("ReelForge's editor didn't start within a minute.`nDetails: $log", "ReelForge") | Out-Null
+    [System.Windows.MessageBox]::Show("Aayush's Editor didn't start within a minute.`nDetails: $log", "Aayush's Editor") | Out-Null
     exit 1
   }
 }

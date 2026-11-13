@@ -11,7 +11,7 @@ import { SubtitleCard, SubtitleControls, SubtitleGrid } from "@/components/picke
 import { SUBTITLE_TEMPLATES, VOICES } from "@/data/catalog";
 import { EMOTIONS } from "@/lib/types";
 import {
-  ACTION_LABEL, BUDDY, HERO, MOVES, MOVE_LABEL, PURPLE, SETUP_LABEL, SETUP_SHORT, STARTERS, estimateRuntime, fmtDur, fmtSec,
+  ACTION_LABEL, BUDDY, HERO, MOVES, MOVE_LABEL, PURPLE, SETUP_LABEL, STARTERS, estimateRuntime, fmtDur, fmtSec,
   label, makeLine, parseScript, renumber, type AvCatalog, type AvPlan, type AvSetup,
   BUDDY_VOICE, HERO_VOICE, SHOTSAV_TOP_ID, SHOTSAV_TOP_STYLE, parseRgba, toRgba,
 } from "@/lib/shotsav";
@@ -26,6 +26,8 @@ import "./shotsav.css";
 type Tab = "script" | "stage" | "look";
 type Live = { job: Job | null; log: string[]; frame: number };
 
+const mins = (sec: number) => `${Math.max(1, Math.round(sec / 60))}m`;
+const ROLE_SHORT = { hero: "You", buddy: "Buddy", wide: "Wide" } as const;
 const roleOf = (kind: string): "hero" | "buddy" | "wide" => (kind === "av_buddy" ? "buddy" : kind.startsWith("av_wide") ? "wide" : "hero");
 
 function AvThumb({ id, alt }: { id: string; alt: string }) {
@@ -238,6 +240,18 @@ export function ShotsAvWorkspace() {
   const overrides = perf?.camera?.overrides ?? {};
   const mix = plan?.split;
   const angleLabel = (a?: string) => cat?.angles?.find((x) => x.id === a)?.label;
+  const [undoTake, setUndoTake] = useState<{ seed?: number; overrides: Record<string, unknown> } | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [stripMore, setStripMore] = useState(false);
+  const measureStrip = useCallback(() => {
+    const el = stripRef.current;
+    setStripMore(!!el && el.scrollWidth - el.scrollLeft - el.clientWidth > 4);
+  }, []);
+  useEffect(() => {
+    measureStrip();
+    window.addEventListener("resize", measureStrip);
+    return () => window.removeEventListener("resize", measureStrip);
+  }, [plan, measureStrip]);
 
   // ---------- script edits ----------
   const setLines = (fn: (ls: PerfLine[]) => PerfLine[]) => update((p) => ({ ...p, lines: renumber(fn(p.lines)) }));
@@ -399,9 +413,9 @@ export function ShotsAvWorkspace() {
           </button>
           <span className="grow" />
           <Segmented size="sm" value={quality} onChange={setQuality}
-            options={[{ value: "draft", label: "Draft", title: "Half size, quick: for checking timing and angles" },
-              { value: "balanced", label: "Balanced", title: "1080x1920, about 3x faster than Final; faces and colour match it by eye" },
-              { value: "final", label: "Final", title: "1080x1920, every render setting at its highest" }]} />
+            options={[{ value: "draft", label: `Draft${est ? ` ${mins(est.draft)}` : ""}`, title: "Half size, quick: for checking timing and angles" },
+              { value: "balanced", label: `Balanced${est ? ` ${mins(est.balanced)}` : ""}`, title: "1080x1920, about 3x faster than Final; faces and colour match it by eye" },
+              { value: "final", label: `Final${est ? ` ${mins(est.final)}` : ""}`, title: "1080x1920, every render setting at its highest" }]} />
           <button className="btn btn-primary" disabled={!lines.length || running || gen.phase === "voices" || gen.phase === "render"}
             onClick={() => void generateReel()} title="Make the voices with ElevenLabs, then the video on that audio">
             <Sparkles size={14} />Generate reel{est && <>{" "}<span className="meta">{fmtDur(est[quality])}</span></>}
@@ -493,23 +507,23 @@ export function ShotsAvWorkspace() {
           <span className="label grow">Shots</span>
           {planError ? <span className="err-text meta">Couldn't plan the shots</span> : plan && <span className="meta">{plan.shots.length} shots · cut on every line</span>}
         </div>
-        <div className="av-strip" role="listbox" aria-label="Shots">
+        <div ref={stripRef} className={`av-strip${stripMore ? " more" : ""}`} role="listbox" aria-label="Shots" onScroll={measureStrip}>
           {plan?.shots.map((s) => (
             <div key={s.index} role="option" aria-selected={s.index === sel} tabIndex={0}
               className={`av-tile${s.index === sel ? " sel" : ""}${overrides[String(s.index)] ? " edited" : ""}`}
               style={{ flexGrow: Math.max(1, s.end - s.start), ["--who" as string]: color(s.speaker === "hero" ? HERO : BUDDY) }}
               onClick={() => void runPreview(s.index)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); void runPreview(s.index); } }}
               title={`${angleLabel(s.angle) ?? SETUP_LABEL[s.kind]} · ${MOVE_LABEL[s.move] ?? s.move}${s.rack ? " · focus pull" : ""}`}>
-              <span className="av-tile-setup">{SETUP_SHORT[s.kind]}</span>
+              <span className="av-tile-setup">{ROLE_SHORT[roleOf(s.kind)]}</span>
               <span className="av-tile-len mono">{(s.end - s.start).toFixed(1)}s</span>
-              {s.angle && <span className="av-angle-tag">{angleLabel(s.angle)}</span>}
+              {s.angle && <span className="av-angle-tag">{angleLabel(s.angle) ?? SETUP_LABEL[s.kind]}</span>}
               {previewing === s.index && <Spinner />}
               <button className="av-tile-menu" aria-label={`Shot ${s.index + 1} options`}
                 onClick={(e) => { e.stopPropagation(); shotMenu(s.index, e.currentTarget.getBoundingClientRect()); }}><MoreHorizontal size={12} /></button>
             </div>
           ))}
         </div>
-        {plan && <div className="meta av-legend">A, D: you · B: {buddyName} · C, E: wides. The director picks each shot's angle from the line's mood; a shot's menu lets you pick your own.</div>}
+        {plan && <div className="meta av-legend">Each shot shows who is on screen, the angle and its length. The director picks angles from each line's mood; a shot's ⋯ menu picks your own.</div>}
       </section>
 
       {/* ---------------- Look ---------------- */}
@@ -575,27 +589,36 @@ export function ShotsAvWorkspace() {
                     </button>
                   ))}
                 </div>
+                {(() => {  // your spot in the room, right under the room you picked
+                  const room = cat.rooms.find((r) => r.id === perf.environment);
+                  if (!room || (group === "gamer" ? !room.gamer : room.gamer || room.tone !== group)) return null;
+                  return (
+                    <div className="av-spot">
+                      <div className="eyebrow" style={{ margin: "10px 0 6px" }}>Your spot in {room.label}</div>
+                      <RoomFramePicker roomId={room.id} label={room.label} pano={room.pano} view={perf.room_view} spots={room.spots ?? []}
+                        onChange={(v) => update((p) => ({ ...p, room_view: v ?? undefined }))} />
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </Section>
-          {(() => {
-            const room = cat.rooms.find((r) => r.id === perf.environment);
-            return room && (
-              <Section title="Your spot in the room">
-                <RoomFramePicker roomId={room.id} label={room.label} pano={room.pano} view={perf.room_view} spots={room.spots ?? []}
-                  onChange={(v) => update((p) => ({ ...p, room_view: v ?? undefined }))} />
-              </Section>
-            );
-          })()}
           <Section title="Camera">
             <FieldRow label="Angles"><Segmented size="sm" full value={perf.camera?.angles ?? "varied"} onChange={(v) => setCamera({ angles: v })}
-              options={[{ value: "varied", label: `Director (${cat.angles?.length ?? 36})`, title: "The director picks from 36 angles by each line's mood: low, high, profile, dutch, over the shoulder, inserts" },
+              options={[{ value: "varied", label: `Director · ${cat.angles?.length ?? 36} angles`, title: "The director picks from 36 angles by each line's mood: low, high, profile, dutch, over the shoulder, inserts" },
                 { value: "classic", label: "Classic 5", title: "The reference reel's five set-ups" }]} /></FieldRow>
             {(perf.camera?.angles ?? "varied") === "varied" && (
               <FieldRow label="Take"><span className="row" style={{ gap: 8 }}>
-                <button className="btn btn-sm" onClick={() => setCamera({ seed: Math.floor(Math.random() * 1e6), overrides: {} })}
-                  title="Shoot the reel again with a different set of angles (clears your per-shot picks)"><Dices size={12} />Reroll angles</button>
-                <span className="meta mono">#{perf.camera?.seed ?? "auto"}</span></span></FieldRow>
+                <button className="btn btn-sm" onClick={() => {
+                  setUndoTake({ seed: perf.camera?.seed, overrides: perf.camera?.overrides ?? {} });
+                  setCamera({ seed: Math.floor(Math.random() * 1e6), overrides: {} });
+                }} title="Shoot the reel again with a different set of angles"><Dices size={12} />Reroll angles</button>
+                {undoTake && <button className="btn btn-sm btn-ghost" onClick={() => { setCamera(undoTake); setUndoTake(null); }}
+                  title="Back to the previous angles and your per-shot picks">Undo</button>}
+              </span></FieldRow>
+            )}
+            {(perf.camera?.angles ?? "varied") === "varied" && Object.keys(overrides).length > 0 && (
+              <div className="meta">Rerolling also clears your {Object.keys(overrides).length} per-shot {Object.keys(overrides).length === 1 ? "pick" : "picks"}; Undo brings them back.</div>
             )}
             <FieldRow label="Grammar"><Segmented size="sm" full value={perf.camera?.grammar ?? "signature"} onChange={(v) => setCamera({ grammar: v })}
               options={[{ value: "signature", label: "Signature", title: "The reference's cutting, plus a gentle ease, a little sway and a focus pull" },
@@ -715,6 +738,7 @@ function CaptionsPanel({ style, captions, onOpen, onStyle, onCaptions, still, sa
         <div className="meta">Drag the caption, or use the arrow keys. The striped bands are where platform buttons sit{still ? "" : "; preview a shot to see it behind"}.</div>
       </>}
       <FieldRow label="End card"><input className="input input-sm" aria-label="End card text" maxLength={120} placeholder="A closing line over the last wide"
+        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
         defaultValue={endText} onBlur={(e) => { if (e.target.value.trim() !== endText) onEndText(e.target.value.trim()); }} /></FieldRow>
     </div>
   );
