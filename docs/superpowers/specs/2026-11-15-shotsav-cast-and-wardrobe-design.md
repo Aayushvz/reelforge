@@ -8,10 +8,10 @@ In the Shots-AV editor:
 - The stage stays empty until a shot is clicked, so changing the outfit shows nothing.
 
 ## Decisions (owner, 2026-11-15)
-- Both speaker slots (You and Buddy) can be any of these:
-  - the low-poly hero ("AV hero");
-  - Matt, Freya or Mina;
-  - one of the four bots.
+- Matt, Freya and Mina can take either slot.
+  - The desk chair also takes the low-poly hero ("AV hero").
+  - The other speaker also takes the four bots. A bot belongs on the desk, never in the chair.
+  - One person can't take both seats.
 - Matt, Freya and Mina **sit** at the desk, with a seated pose made for each of their rigs (CC4, Rigify, ARP).
 - The outfit becomes a grid of visual cards.
 - A live look preview shows the current cast in the current room.
@@ -23,7 +23,7 @@ In the Shots-AV editor:
 - **Kinds.** Each slot's model is one of three kinds:
   - `av_hero`: `ensure_hero(options)`, as today;
   - `buddy_*`: `buddy_blend(model)`, as today;
-  - an imported id (`matt`, `freya`, `cute_girl`): `ensure_seated(id, slot)`, below.
+  - an imported id (`matt`, `freya`, `cute_girl`): the built `assets/build/<id>.blend` plus its seat table and slot, below.
 - **Acting by kind.**
   - AV hero: `hero_acting` (blink on cuts, think → type pose, `HandL`/`HandR` stepped), `measure: head`.
   - Bot: `buddy_acting` (`BuddyCtrl`), `measure: body`.
@@ -35,22 +35,25 @@ In the Shots-AV editor:
     - On top of that: `smooth_mouth` on its lines, and blinks on cuts to it. It uses `measure: head`.
 - **Sound plan.** Key taps play only while an AV hero is cast and in his typing pose. Buddy blips play only for a bot.
 - **Caption tints.** The AV hero uses his jacket colour; a bot uses its shell colour; an imported character uses its catalog accent (`ACCENTS` in the engine: Matt `#6E8FB8`, Freya `#C9A27A`, Mina `#7FA36B`).
-- **Schema.** `schema.py` accepts these models for `shots-av` characters. A project with two bots or two AV heroes is allowed; it is the user's choice.
+- **Schema.** `schema.py` accepts one desk model (`AV_YOU`: AV hero or a person) and one other (`AV_OTHER`: a bot or a person). A reaction clip (`action`) is allowed only on a bot's line.
+- **Framing.** A person in the guest seat keeps each buddy angle's lens and direction, but gets the hero close-up's eye line and head size (`person_framing`). The buddy angles frame a small robot.
 
-## 2. Seated imported characters (`blender/shotsav/seated.py`, run through `build_shotsav.py`)
-- `ensure_seated(id, slot)` builds `assets/build/shotsav/seated_<id>__<slot>.blend` from `assets/build/<id>.blend`, once, and caches it like the hero builds.
-  - Slot `you`: the hero's chair (`Mark_A`), facing −Y.
-  - Slot `guest`: a second chair at the desk's left end (seen from the camera), turned toward the hero and the camera. The build adds its own guest chair to the character file, so rooms need no rebuild.
-- **The pose.** It is set in world space, so it works for any rig, using bone names per character from `imported.py`. New keys:
-  - `legs`: thigh, shin and foot for each side;
-  - `fk`: the property flips that put Rigify and ARP legs into FK;
-  - `seat_drop`.
-  - Steps:
-    1. Switch the leg IK to FK (Rigify `IK_FK`, ARP `ik_fk_switch`).
-    2. Rotate each thigh so it points forward (−Y) and slightly down.
-    3. Point each shin down.
-    4. Lower and move back the armature (a child of `CHAR_root`) so the pelvis sits on the seat (top 0.515 m) with the feet on the floor.
-    5. Rest the forearms forward on the desk through `delta_rotation_euler` on `ElbowL`/`ElbowR`. `render_plan.py` keys only `rotation_euler`, so the talk beats ride on top.
+## 2. Seated imported characters (`blender/shotsav/seated.py`, called by `render_plan.py`)
+- There are no extra files; Matt's alone is 1.6 GB.
+  - The render plan carries the character's seat table and slot.
+  - `render_plan.py` calls `seated.sit()` right after linking the built file.
+- **Slots.**
+  - `you`: the hero's chair (`Mark_A`), facing −Y.
+  - `guest`: its own chair past the desk's end (x −1.05, y −0.32), turned 23° toward the hero. It is created with the character, so rooms need no rebuild.
+- **The pose.** It is set in world space, so one routine serves all three rigs. Each character's `seat` table in `imported.py` names:
+  - `hips`: the control that carries the upper body (CC4 `CC_Base_BoneRoot`, Rigify `torso`, ARP `c_root_master.x`);
+  - `legs`: per side, either `("fk", thigh, shin, foot)` (Matt) or `("ik", thigh, foot_control)` (Freya, Mina).
+- **Steps.**
+  1. Move the hips control so the hip joints sit 8.5 cm above the seat (top 0.515 m), toward the backrest.
+  2. Legs:
+     - FK: aim joint to joint, so the thigh points forward, the shin down and the foot flat. CC4 bones stop short; twist bones fill the rest.
+     - IK: plant the foot control on the floor one thigh-length forward; the rig's forward pole bends the knee.
+  3. Rest the forearms forward through `delta_rotation_euler` on `ElbowL`/`ElbowR`. `render_plan.py` keys only `rotation_euler`, so the talk beats ride on top.
 - **Quality.** Pose only. No geometry, texture or shape-key change (CLAUDE.md).
 - **Check.** One still for each character in each slot, rendered in a room and looked at:
   - no knees through the desk;
@@ -58,9 +61,10 @@ In the Shots-AV editor:
   - face framed by `av_hero_34` / `av_buddy`.
 
 ## 3. Editor (`editor/src/pages/shotsav/ShotsAvWorkspace.tsx`)
-- **Cast section** at the top of the Look column, with two rows: **You** and **Buddy**.
-  - Each row is a strip of cards: AV hero, Matt, Freya, Mina, Claude, ChatGPT, Figma, Nova.
-  - The images are the existing thumbnails: `AvThumb` for the hero and bots; the editor's `char_<id>_o0.jpg` for the imported three.
+- **Cast section** at the top of the Look column, with two rows:
+  - **At the desk**: You (AV), Matt, Freya, Mina.
+  - **Talking to**: Claude, ChatGPT, Figma, Nova, Matt, Freya, Mina.
+  - The images: bots use their existing thumbnails; the AV hero uses `outfit_<current>`; people use `person_<id>`, a bust from `preview_character.py`.
   - Picking a card sets `characters[slot].model` and the default voice for that model. A voice the user chose by hand is kept.
 - **Hero dials** (outfit, jacket, hair, glasses, headphones, skin, beard, stubble) show only for the slot cast as the AV hero. Imported characters show a one-line note: "Realistic model, its own outfit."
 - **Outfit cards.** The Outfit select becomes a 3-column grid of cards, one per outfit, each with a thumbnail (`outfit_<id>`).

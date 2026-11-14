@@ -22,7 +22,7 @@ from ..angles import ANGLES
 from .. import buddy as acting
 from ..blender_run import run_blender
 from ..plan import build_render_plan
-from ..schema import AV_HERO
+from ..schema import AV_BUDDIES, AV_HERO
 from . import blender3d
 
 ID = "shots-av"
@@ -109,10 +109,45 @@ BLINK = (0.5, 1.0, 1.0, 0.6, 0.2)
 POSES = {"rest": 0, "think": 1, "point": 2, "open": 3, "type": 4}  # PoseCtrl HandL/HandR indices (hero.HAND_POSES)
 
 
+ACCENTS = {"matt": "#6E8FB8", "freya": "#C9A27A", "cute_girl": "#7FA36B"}  # caption dots for the realistic cast
+
+
 def cast(perf) -> tuple[str, str]:
-    """(hero speaker name, buddy speaker name)."""
-    hero = next(n for n, c in perf.characters.items() if c.model == AV_HERO)
-    return hero, next(n for n in perf.characters if n != hero)
+    """(speaker at the desk, the other speaker). The desk chair goes to the low-poly hero if one is cast, else to
+    "me" (the editor's name for you), else to whoever is not a bot, else to the first character."""
+    names = list(perf.characters)
+    model = {n: perf.characters[n].model for n in names}
+    hero = (next((n for n in names if model[n] == AV_HERO), None)
+            or ("me" if "me" in model and model["me"] not in AV_BUDDIES else None)
+            or next((n for n in names if model[n] not in AV_BUDDIES), names[0]))
+    return hero, next(n for n in names if n != hero)
+
+
+def kind(model: str) -> str:
+    """av_hero | bot | person (Matt, Freya, Mina: imported, seated by blender/shotsav/seated.py)."""
+    return "av_hero" if model == AV_HERO else "bot" if model in AV_BUDDIES else "person"
+
+
+def person_blend(model: str) -> Path:
+    return blender3d.ASSETS / f"{model}.blend"
+
+
+def person_acting(faces: dict, shots: list, name: str, close_kinds: tuple, n_frames: int, fps: int,
+                  env: list | None, ranges: list) -> None:
+    """A realistic speaker: smoothed mouth (loudness on its lines) and a blink on cuts to its close-up.
+    render_plan.py adds what every contract character gets: eyelines, head turns, breathing, talk beats."""
+    tracks = faces[name]
+    smooth_mouth(tracks, fps, env, ranges)
+    last = -10 ** 6
+    for s in shots:
+        if s.kind in close_kinds and s.start_frame - last >= int(2.8 * fps) and s.start_frame > 0:
+            for k, v in enumerate(BLINK):
+                f = s.start_frame + k
+                if f < n_frames:
+                    for side in ("eyeBlinkLeft", "eyeBlinkRight"):
+                        if side in tracks:
+                            tracks[side][f] = max(tracks[side][f], v)
+            last = s.start_frame
 
 
 MOUTH_SMOOTH = {"jawOpen": (1.6, 3.2), "mouthFunnel": (1.8, 3.5), "mouthPucker": (1.8, 3.5),
@@ -162,10 +197,14 @@ def pose_switch(shots: list, n_frames: int) -> int:
     return next((s.start_frame for s in shots if s.start_frame >= n_frames / 3), n_frames)
 
 
-def sound_plan(placed: list, shots: list, hero: str, buddy: str, n_frames: int, fps: int):
-    """(buddy line starts, keyboard intervals) in seconds: a blip as each buddy line starts; key taps while the
-    hero is in his typing pose and not talking."""
-    blips = [p.start for p in placed if p.line.speaker == buddy]
+def sound_plan(placed: list, shots: list, hero: str, buddy: str, n_frames: int, fps: int, perf=None):
+    """(buddy line starts, keyboard intervals) in seconds: a blip as each bot buddy line starts; key taps while the
+    low-poly hero is in his typing pose and not talking. With perf, only the cast that has them gets them."""
+    bot = perf is None or kind(perf.characters[buddy].model) == "bot"
+    types = perf is None or kind(perf.characters[hero].model) == "av_hero"
+    blips = [p.start for p in placed if p.line.speaker == buddy] if bot else []
+    if not types:
+        return blips, []
     t0, t1 = pose_switch(shots, n_frames) / fps, n_frames / fps
     talk = sorted((p.start, p.start + p.duration) for p in placed if p.line.speaker == hero)
     keys, t = [], t0
@@ -181,10 +220,17 @@ def sound_plan(placed: list, shots: list, hero: str, buddy: str, n_frames: int, 
 
 
 def caption_tints(perf) -> dict:
-    """Speaker dot colours: the hero's jacket, the buddy's shell."""
-    hero, buddy = cast(perf)
-    shell = buddy_tables()["BUDDIES"][perf.characters[buddy].model.replace("buddy_", "")]["shell"]
-    return {hero: perf.characters[hero].options.get("outfit_color", "#7C3AED"), buddy: shell}
+    """Speaker dot colours: the low-poly hero's jacket, a bot's shell, a realistic character's accent."""
+    return {n: tint(c) for n, c in perf.characters.items()}
+
+
+def tint(c) -> str:
+    k = kind(c.model)
+    if k == "av_hero":
+        return c.options.get("outfit_color", "#7C3AED")
+    if k == "bot":
+        return buddy_tables()["BUDDIES"][c.model.replace("buddy_", "")]["shell"]
+    return ACCENTS.get(c.model, "#B8B8C0")
 
 
 def buddy_acting(placed: list, buddy: str, n_frames: int, fps: int, envelope: list | None, seed: int) -> dict:
@@ -221,21 +267,57 @@ def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope
     hero, buddy = cast(perf)
     plan["environment_blend"] = str(room_blend(perf.environment))
     plan["room_view"] = room_view(perf, seed)
+    seats = None
     for c in plan["characters"]:
-        if c["name"] == hero:
-            c["blend"] = str(ensure_hero(perf.characters[hero].options))
-            ranges = [(int(round(p.start * perf.fps)), int(round((p.start + p.duration) * perf.fps)))
-                      for p in placed if p.line.speaker == hero]
-            c["props"] = hero_acting(faces, shots, hero, n_frames, perf.fps, envelope, ranges)
-            c["face"] = faces[hero]
+        name = c["name"]
+        model = perf.characters[name].model
+        at_desk = name == hero
+        c["mark"] = "Mark_A" if at_desk else "Mark_B"
+        ranges = [(int(round(p.start * perf.fps)), int(round((p.start + p.duration) * perf.fps)))
+                  for p in placed if p.line.speaker == name]
+        k = kind(model)
+        if k == "av_hero":
+            c["blend"] = str(ensure_hero(perf.characters[name].options))
+            c["props"] = hero_acting(faces, shots, name, n_frames, perf.fps, envelope, ranges)
+            c["face"] = faces[name]
             c["stepped"] = ["HandL", "HandR"]
             c["measure"] = "head"
-        else:
-            c["blend"] = str(buddy_blend(perf.characters[buddy].model))
-            c["props"] = buddy_acting(placed, buddy, n_frames, perf.fps, envelope, seed)
+        elif k == "bot":
+            c["blend"] = str(buddy_blend(model))
+            c["props"] = buddy_acting(placed, name, n_frames, perf.fps, envelope, seed)
             c["stepped"] = ["eye_shape"]
             c["measure"] = "body"
+        else:  # Matt, Freya, Mina: the built full-detail file, seated at render time
+            seats = seats or imported_seats()
+            c["blend"] = str(person_blend(model))
+            c["seat"] = {**seats[model], "slot": "you" if at_desk else "guest"}
+            person_acting(faces, shots, name, HERO_CU if at_desk else ("av_buddy",), n_frames, perf.fps, envelope,
+                          ranges)
+            c["face"] = faces[name]
+            c["measure"] = "head"
+            if not at_desk:
+                person_framing(plan["shots"], name)
     return plan
+
+
+def person_framing(shots: list, name: str) -> None:
+    """The buddy angles frame a small robot (eyes 62% down the frame). A person in that seat keeps each angle's
+    lens and direction but gets the hero close-up's eye line and head size."""
+    def fix(fr):
+        if fr:
+            fr["eyes"] = min(fr.get("eyes", 0.52), 0.52)
+            fr["head"] = min(fr.get("head", 0.46), 0.46)
+    for s in shots:
+        if s.get("subject") == name:
+            fix(s.get("framing"))
+        con = s.get("connect") or {}
+        if con.get("to") == name:
+            fix(con.get("framing"))
+
+
+def imported_seats() -> dict:
+    """{id: seat table} for the realistic cast (blender/imported.py "seat")."""
+    return {k: v["seat"] for k, v in blender3d.imported()["CHARACTERS"].items() if "seat" in v}
 
 
 def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path,
@@ -335,7 +417,8 @@ def catalog() -> dict:
     hero = {k: {kk: vv for kk, vv in v.items()} for k, v in h["HERO"].items()}
     built = {"hero": any(ASSETS.glob("av_hero__*.blend")),
              "buddies": {f"buddy_{k}": buddy_blend(f"buddy_{k}").exists() for k in b["BUDDIES"]},
-             "rooms": {k: room_blend(k).exists() for k in r["ROOMS"]}}
+             "rooms": {k: room_blend(k).exists() for k in r["ROOMS"]},
+             "people": {k: person_blend(k).exists() for k in imported_seats()}}
     return {
         "hero": hero, "skins": h["SKINS"], "outfits": {k: v["label"] for k, v in h["OUTFITS"].items()}, "outfitColors": h["OUTFIT_COLORS"],
         "brand": h["BRAND"],
@@ -384,6 +467,31 @@ def preview_still(project: Path, index: int, draft: bool = True) -> Path:
     return out / "stills" / f"shot_{index:02d}.png"
 
 
+LOOK_ANGLE = "hero_medium"  # waist-up: the face, the outfit and the room behind
+
+
+def look_still(project: Path) -> Path:
+    """The editor's look preview: a draft, waist-up still of whoever sits at the desk, in the project's room, with
+    the current cast and outfit, through the real render path. Into <project>/out/look/stills/."""
+    from dataclasses import replace as _replace
+    from ..angles import framing as _framing
+    from ..direct import mood_keys
+    from ..face import build_faces
+    from ..schema import load_performance
+    if not load_performance(Path(project) / "performance.json").lines:
+        raise SystemExit("Add a line to the script to preview the look.")
+    perf, placed, n_frames, shots = _estimated(project)
+    hero, _ = cast(perf)
+    i = next((k for k, s in enumerate(shots) if s.subject == hero and s.kind in HERO_CU), 0)
+    shots[i] = _replace(shots[i], kind="av_hero_34", subject=hero, speaker="", angle=LOOK_ANGLE,
+                        framing=_framing(LOOK_ANGLE), move="static", connect={}, rack={}, handheld=0.0)
+    faces = build_faces(perf, placed, perf.fps, n_frames)
+    out = Path(project).resolve() / "out" / "look"
+    out.mkdir(parents=True, exist_ok=True)
+    render(perf, n_frames, faces, shots, mood_keys(placed, perf.fps), out, "stills", True, placed, only=[i])
+    return out / "stills" / f"shot_{i:02d}.png"
+
+
 THUMBS = ASSETS / "thumbs"
 
 
@@ -402,13 +510,31 @@ def reel_seed(perf, project) -> int:
 
 
 def thumbnails(only: list | None = None) -> list[str]:
-    """Card images for the editor: one per buddy (a close single) and per room (a wide with the hero and Claude)."""
+    """Card images for the editor: one per buddy (a close single) and per room (a wide with the hero and Claude);
+    outfit_<id>: the low-poly hero in that outfit; person_<id>: Matt, Freya or Mina. The last two are busts made by
+    blender/preview_character.py and are only built when asked for (--only), not in a full pass."""
     ids = [f"buddy_{k}" for k in buddy_tables()["BUDDIES"]] + list(room_tables()["ROOMS"])
     ids = [i for i in ids if not only or i in only]
     THUMBS.mkdir(parents=True, exist_ok=True)
     if ids:
         run_blender(blender3d.BLENDER_DIR / "shotsav" / "thumbs.py", [str(THUMBS), *ids])
-    return [str(THUMBS / f"{i}.jpg") for i in ids]
+    made = [str(THUMBS / f"{i}.jpg") for i in ids]
+    for i in only or []:
+        blend = None
+        if i.startswith("outfit_") and i[len("outfit_"):] in hero_tables()["OUTFITS"]:
+            o = i[len("outfit_"):]
+            blend = ensure_hero({"outfit": o, "outfit_color": hero_tables()["OUTFIT_COLORS"].get(o, "#7C3AED")})
+        elif i.startswith("person_") and person_blend(i[len("person_"):]).exists():
+            blend = person_blend(i[len("person_"):])
+        if blend is None:
+            continue
+        png, jpg = THUMBS / f".{i}.png", THUMBS / f"{i}.jpg"
+        run_blender(blender3d.BLENDER_DIR / "preview_character.py", [str(png), "yaw=20", "shot=bust"], blend=blend)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(png), "-vf", "scale=360:-2", "-q:v", "4", str(jpg)],
+                       check=True)
+        png.unlink(missing_ok=True)
+        made.append(str(jpg))
+    return made
 
 
 def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:

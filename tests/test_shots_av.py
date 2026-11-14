@@ -102,7 +102,50 @@ def test_unknown_hero_options_are_rejected(key, value):
 ])
 def test_exactly_one_hero_and_one_buddy(cast):
     lines = [{"speaker": next(iter(cast)), "text": "hi"}]
-    _bad("exactly one hero", characters=cast, lines=lines)
+    _bad("two speakers", characters=cast, lines=lines)
+
+
+@pytest.mark.parametrize("me, other", [("matt", "buddy_claude"), ("av_hero", "freya"), ("cute_girl", "matt")])
+def test_realistic_cast_in_either_slot(me, other):
+    from reelforge.engines import shots_av
+    d = _av()
+    d["characters"] = {"me": {**d["characters"]["me"], "model": me}, "buddy": {**d["characters"]["buddy"], "model": other}}
+    for k in ("outfit", "outfit_color", "glasses", "headphones", "skin", "hair", "beard", "stubble"):
+        if me != "av_hero":
+            d["characters"]["me"].pop(k, None)
+    d["lines"] = [{k: v for k, v in l.items() if k != "action"} for l in d["lines"]]
+    perf = parse_performance(d)
+    assert shots_av.cast(perf) == ("me", "buddy")
+    tints = shots_av.caption_tints(perf)
+    assert set(tints) == {"me", "buddy"} and all(t.startswith("#") for t in tints.values())
+
+
+def test_no_key_taps_or_blips_without_their_cast():
+    from types import SimpleNamespace as NS
+    from reelforge.engines import shots_av
+    perf = NS(characters={"me": NS(model="matt"), "buddy": NS(model="freya")})
+    placed = [NS(line=NS(speaker="buddy"), start=0.5, duration=1.0), NS(line=NS(speaker="me"), start=2.0, duration=1.0)]
+    assert shots_av.sound_plan(placed, [], "me", "buddy", 120, 24, perf) == ([], [])
+    perf.characters["buddy"].model = "buddy_claude"
+    assert shots_av.sound_plan(placed, [], "me", "buddy", 120, 24, perf)[0] == [0.5]
+
+
+def test_build_plan_routes_each_kind(tmp_path, monkeypatch):
+    from types import SimpleNamespace as NS
+    from reelforge.engines import shots_av
+    monkeypatch.setattr(shots_av, "build_render_plan", lambda *a, **k: {"characters": [
+        {"name": "me", "mark": "Mark_B"}, {"name": "buddy", "mark": "Mark_A"}], "shots": [
+        {"subject": "buddy", "framing": {"eyes": 0.62, "head": 0.38}}]})
+    monkeypatch.setattr(shots_av, "room_view", lambda perf, seed: {})
+    perf = NS(characters={"me": NS(model="freya", options={}), "buddy": NS(model="matt", options={})},
+              environment="av_studio_night", quality="standard", fps=24)
+    faces = {"me": {"jawOpen": [0.0] * 4}, "buddy": {"jawOpen": [0.0] * 4}}
+    plan = shots_av.build_plan(perf, 4, faces, [], [], tmp_path, True, [])
+    me, bud = plan["characters"]
+    assert (me["mark"], me["seat"]["slot"], Path(me["blend"]).name) == ("Mark_A", "you", "freya.blend")
+    assert (bud["mark"], bud["seat"]["slot"], Path(bud["blend"]).name) == ("Mark_B", "guest", "matt.blend")
+    assert me["seat"]["legs"] and "props" not in me
+    assert plan["shots"][0]["framing"] == {"eyes": 0.52, "head": 0.38}  # a person in the guest seat: eyes up
 
 
 def test_line_fields_are_validated():

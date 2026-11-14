@@ -8,12 +8,13 @@ import {
 import { api, avThumbUrl, fileUrl, jobEventsUrl } from "@/lib/api";
 import type { Emotion, Job, Performance, PerfLine, ProjectData, SubtitleStyle, SystemStatus, VoiceLine } from "@/lib/types";
 import { SubtitleCard, SubtitleControls, SubtitleGrid } from "@/components/pickers";
-import { SUBTITLE_TEMPLATES, VOICES } from "@/data/catalog";
+import { CHARACTERS, SUBTITLE_TEMPLATES, VOICES } from "@/data/catalog";
 import { EMOTIONS } from "@/lib/types";
 import {
   ACTION_LABEL, BUDDY, HERO, MOVES, MOVE_LABEL, PURPLE, SETUP_LABEL, STARTERS, estimateRuntime, fmtDur, fmtSec,
   label, makeLine, parseScript, renumber, type AvCatalog, type AvPlan, type AvSetup,
   BUDDY_VOICE, HERO_VOICE, SHOTSAV_TOP_ID, SHOTSAV_TOP_STYLE, parseRgba, toRgba,
+  AV_HERO, PEOPLE, PERSON_ACCENT, isBot, isPerson,
 } from "@/lib/shotsav";
 import { Badge, Callout, Empty, Spinner } from "@/components/ui/Feedback";
 import { Dialog, Tooltip, useMenu } from "@/components/ui/Overlay";
@@ -29,6 +30,13 @@ type Live = { job: Job | null; log: string[]; frame: number };
 const mins = (sec: number) => `${Math.max(1, Math.round(sec / 60))}m`;
 const ROLE_SHORT = { hero: "You", buddy: "Buddy", wide: "Wide" } as const;
 const roleOf = (kind: string): "hero" | "buddy" | "wide" => (kind === "av_buddy" ? "buddy" : kind.startsWith("av_wide") ? "wide" : "hero");
+
+const personName = (model: string) => CHARACTERS.find((c) => c.id === model)?.name ?? model;
+const personVoice = (model: string) => {
+  const c = CHARACTERS.find((x) => x.id === model);
+  return VOICES.find((v) => v.name === c?.suggestedVoice)?.id ?? HERO_VOICE;
+};
+const defaultVoice = (model: string) => (model === AV_HERO ? HERO_VOICE : isBot(model) ? BUDDY_VOICE[model] : personVoice(model));
 
 function AvThumb({ id, alt }: { id: string; alt: string }) {
   const [tries, setTries] = useState(0);
@@ -62,6 +70,11 @@ export function ShotsAvWorkspace() {
   const [preview, setPreview] = useState<{ shot: number; url: string } | null>(null);
   const [previewing, setPreviewing] = useState<number | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [look, setLook] = useState<string | null>(null);  // the look still: cast and outfit in the room
+  const [lookBusy, setLookBusy] = useState(false);
+  const [lookError, setLookError] = useState<string | null>(null);
+  const [showLook, setShowLook] = useState(true);  // the stage shows the look until a shot is previewed
+  const lookSeq = useRef(0);
   const [live, setLive] = useState<Live>({ job: null, log: [], frame: 0 });
   const [assets, setAssets] = useState<Live>({ job: null, log: [], frame: 0 });
   const [tab, setTab] = useState<Tab>("script");
@@ -199,6 +212,7 @@ export function ShotsAvWorkspace() {
   const runPreview = useCallback(async (shot: number) => {
     if (!plan || !plan.shots[shot]) return;
     setSel(shot);
+    setShowLook(false);
     setPreviewing(shot);
     setPreviewError(null);
     try {
@@ -220,10 +234,17 @@ export function ShotsAvWorkspace() {
   // ---------- derived ----------
   const lines = perf?.lines ?? [];
   const hero = perf?.characters[HERO] ?? { voice_id: "" };
+  const meModel = perf?.characters[HERO]?.model ?? AV_HERO;
   const buddyModel = perf?.characters[BUDDY]?.model ?? "buddy_claude";
   const buddy = cat?.buddies.find((b) => b.model === buddyModel);
-  const buddyName = buddy?.label ?? "Buddy";
-  const color = (who: string) => (who === HERO ? hero.outfit_color ?? PURPLE : buddy?.shell ?? "#D97757");
+  const buddyName = isPerson(buddyModel) ? personName(buddyModel) : buddy?.label ?? "Buddy";
+  const meName = isPerson(meModel) ? personName(meModel) : "Me";
+  const tintOf = (model: string) => (model === AV_HERO ? hero.outfit_color ?? PURPLE
+    : isPerson(model) ? PERSON_ACCENT[model] : cat?.buddies.find((b) => b.model === model)?.shell ?? "#D97757");
+  const color = (who: string) => tintOf(who === HERO ? meModel : buddyModel);
+  const buddyIsBot = isBot(buddyModel);
+  // what the look preview depends on: who is cast, how the low-poly hero is dressed, the room and the spot in it
+  const lookKey = perf ? JSON.stringify([perf.characters, perf.environment, perf.room_view ?? null]) : "";
   const runtime = plan?.runtime ?? estimateRuntime(lines);
   const frames = Math.ceil(runtime * 30);
   const missing = lines.filter((l) => !["imported", "ready"].includes(voices[l.id]?.status ?? "missing")).length;
@@ -253,6 +274,25 @@ export function ShotsAvWorkspace() {
     return () => window.removeEventListener("resize", measureStrip);
   }, [plan, measureStrip]);
 
+  const runLook = useCallback(async () => {
+    const token = ++lookSeq.current;
+    setLookBusy(true);
+    setLookError(null);
+    try {
+      await flush();
+      const r = await api.avLook(id);
+      if (token === lookSeq.current) { setLook(fileUrl(id, r.still, r.at)); setShowLook(true); }
+    } catch (e) { if (token === lookSeq.current) setLookError((e as Error).message); }
+    finally { if (token === lookSeq.current) setLookBusy(false); }
+  }, [id, flush]);
+  const lookReady = !!lines.length && !!cat?.allBuilt;
+  useEffect(() => {
+    if (!lookReady || !lookKey) return;
+    setShowLook(true);
+    const t = setTimeout(() => void runLook(), 1200);
+    return () => clearTimeout(t);
+  }, [lookKey, lookReady]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---------- script edits ----------
   const setLines = (fn: (ls: PerfLine[]) => PerfLine[]) => update((p) => ({ ...p, lines: renumber(fn(p.lines)) }));
   const setLine = (i: number, patch: Partial<PerfLine>) => setLines((ls) => ls.map((l, k) => (k === i ? { ...l, ...patch } : l)));
@@ -275,6 +315,13 @@ export function ShotsAvWorkspace() {
     else if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); setLine(i, { speaker: lines[i].speaker === HERO ? BUDDY : HERO, action: "" }); }
     else if (e.key === "Escape") (e.target as HTMLInputElement).blur();
   };
+  const pickCast = (slot: typeof HERO | typeof BUDDY, model: string) => update((p) => {
+    const cur = p.characters[slot];
+    const keepVoice = cur.voice_id && cur.voice_id !== defaultVoice(cur.model ?? (slot === HERO ? AV_HERO : "buddy_claude"));
+    const next = { ...p, characters: { ...p.characters, [slot]: { ...cur, model, voice_id: keepVoice ? cur.voice_id : defaultVoice(model) } } };
+    // a reaction clip belongs to a bot: drop them when the other speaker becomes a person
+    return slot === BUDDY && !isBot(model) ? { ...next, lines: next.lines.map((l) => ({ ...l, action: "" })) } : next;
+  });
   const setHero = (patch: Record<string, unknown>) => update((p) => ({ ...p, characters: { ...p.characters, [HERO]: { ...p.characters[HERO], ...patch } } }));
   const setCamera = (patch: Record<string, unknown>) => update((p) => ({ ...p, camera: { ...p.camera, ...patch } }));
   const setOverride = (shot: number, patch: Record<string, unknown> | null) => update((p) => {
@@ -363,22 +410,22 @@ export function ShotsAvWorkspace() {
                 <div className="row" style={{ gap: 6 }}>
                   <Tooltip label="Switch speaker" kbd="Tab">
                     <button className="av-who" style={{ ["--who" as string]: color(l.speaker) }}
-                      onClick={() => setLine(i, { speaker: isBuddy ? HERO : BUDDY, action: "" })} aria-label={`Speaker: ${isBuddy ? buddyName : "Me"}. Switch`}>
-                      <span className="dot" />{isBuddy ? buddyName : "Me"}
+                      onClick={() => setLine(i, { speaker: isBuddy ? HERO : BUDDY, action: "" })} aria-label={`Speaker: ${isBuddy ? buddyName : meName}. Switch`}>
+                      <span className="dot" />{isBuddy ? buddyName : meName}
                     </button>
                   </Tooltip>
                   <span className={`av-voice ${v}`} title={v === "imported" || v === "ready" ? "Voice ready" : "No voice yet"} />
                   <div className="grow" />
                   <IconButton label="Delete line" size="xs" onClick={() => setLines((ls) => ls.filter((_, k) => k !== i))}><Trash2 size={12} /></IconButton>
                 </div>
-                <input className="input av-text" data-line={i} value={l.text} placeholder={isBuddy ? `What ${buddyName} says` : "What you say"}
+                <input className="input av-text" data-line={i} value={l.text} placeholder={isBuddy ? `What ${buddyName} says` : meModel === AV_HERO ? "What you say" : `What ${meName} says`}
                   aria-label={`Line ${i + 1} text`} onChange={(e) => setLine(i, { text: e.target.value })} onKeyDown={(e) => onLineKey(e, i)} />
                 <div className="row av-line-opts">
                   <Select size="sm" ariaLabel={`Line ${i + 1} emotion`} value={l.emotion}
                     options={EMOTIONS.map((e) => ({ value: e, label: e }))} onChange={(e) => setLine(i, { emotion: e as Emotion })} />
                   <button className="chip" aria-pressed={Boolean(l.beat)} onClick={() => setLine(i, { beat: !l.beat })}
                     title="Force a wide shot on this line">Beat</button>
-                  {isBuddy && (
+                  {isBuddy && buddyIsBot && (
                     <Select size="sm" ariaLabel={`Line ${i + 1} buddy reaction`} value={l.action ?? ""}
                       options={["", ...(cat?.actions ?? [])].map((a) => ({ value: a, label: ACTION_LABEL[a] ?? a }))}
                       onChange={(a) => setLine(i, { action: a })} />
@@ -393,7 +440,7 @@ export function ShotsAvWorkspace() {
           <span className="av-mix" title="Screen time: you / buddy / wides. The reference reel: 37 / 46 / 17">
             {(["hero", "buddy", "wide"] as const).map((g) => (
               <span key={g} className="av-mix-part">
-                <span className="meta">{g === "hero" ? "You" : g === "buddy" ? "Buddy" : "Wide"}</span>
+                <span className="meta">{g === "hero" ? meName : g === "buddy" ? buddyName : "Wide"}</span>
                 <b>{mix ? Math.round(mix[g] * 100) : "–"}%</b>
                 <span className="meta">/{Math.round((cat?.target[g] ?? 0) * 100)}</span>
               </span>
@@ -491,17 +538,24 @@ export function ShotsAvWorkspace() {
           <div className="av-frame">
             {live.job && (live.job.status !== "running") && live.job.status === "done" && (finals.length || animaticDone) ? (
               <video key={live.job.id} controls src={fileUrl(id, live.job.mode === "animatic" ? "out/animatic.mp4" : `out/${finals[0]}`, live.job.endedAt)} />
-            ) : preview && preview.shot === sel ? (
+            ) : preview && preview.shot === sel && !showLook ? (
               <img src={preview.url} alt={`Preview of shot ${sel + 1}`} />
+            ) : look && previewing === null ? (
+              <img src={look} alt={`Look preview: ${meName} at the desk${perf.environment ? "" : ""}`} />
             ) : (
               <div className="av-frame-empty">
                 {previewing !== null ? <><Spinner /><span className="meta">Rendering shot {previewing + 1}…</span></>
-                  : <><Camera size={20} /><span className="meta">{lines.length ? "Pick a shot below and preview it" : "Write a few lines to see the shots"}</span></>}
+                  : lookBusy ? <><Spinner /><span className="meta">Dressing the set…</span></>
+                  : <><Camera size={20} /><span className="meta">{lines.length ? "Change the cast or the outfit to see them here, or pick a shot below" : "Write a few lines to see the shots"}</span></>}
               </div>
             )}
-            {previewing !== null && preview && <div className="av-frame-busy"><Spinner /></div>}
+            {(showLook || !(preview && preview.shot === sel)) && look && previewing === null && (
+              <span className="av-frame-tag">{lookBusy ? <><Spinner />Updating the look…</> : "Look preview"}</span>
+            )}
+            {((previewing !== null && preview) || (lookBusy && look && showLook)) && <div className="av-frame-busy"><Spinner /></div>}
           </div>
           {previewError && <Callout tone="err">The preview failed: <pre className="av-log">{previewError}</pre></Callout>}
+          {lookError && <Callout tone="err">The look preview failed: <pre className="av-log">{lookError.split("\n").slice(-6).join("\n")}</pre></Callout>}
         </div>
 
         <div className="av-strip-head row">
@@ -530,10 +584,45 @@ export function ShotsAvWorkspace() {
       {/* ---------------- Look ---------------- */}
       <section className="av-col av-look" aria-label="Look">
         {!cat ? <div className="skeleton" style={{ height: 320, margin: 12 }} /> : <>
-          <Section title="Hero">
-            <FieldRow label="Outfit"><Select size="sm" value={String(hero.outfit ?? "puffer")}
-              onChange={(v) => setHero({ outfit: v, outfit_color: cat.outfitColors?.[v] ?? PURPLE })}
-              options={(cat.hero.outfit.options ?? []).map((o) => ({ value: o, label: cat.outfits[o] ?? label(o) }))} /></FieldRow>
+          <Section title="Cast">
+            <div className="eyebrow" style={{ margin: "2px 0 6px" }}>At the desk</div>
+            <div className="av-cards four" role="radiogroup" aria-label="Who sits at the desk">
+              {[AV_HERO, ...PEOPLE].map((m) => (
+                <button key={m} className="av-card" role="radio" aria-checked={meModel === m} aria-pressed={meModel === m}
+                  disabled={m !== AV_HERO && (cat.built.people?.[m] !== false ? m === buddyModel : true)}
+                  title={m === AV_HERO ? "Your low-poly hero" : m === buddyModel ? `${personName(m)} is already talking to you` : `${personName(m)}, realistic, seated at the desk`}
+                  onClick={() => pickCast(HERO, m)}>
+                  <AvThumb id={m === AV_HERO ? `outfit_${hero.outfit ?? "puffer"}` : `person_${m}`} alt="" />
+                  <span className="av-card-name"><span className="dot" style={{ background: tintOf(m) }} />{m === AV_HERO ? "You (AV)" : personName(m)}</span>
+                </button>
+              ))}
+            </div>
+            <div className="eyebrow" style={{ margin: "12px 0 6px" }}>Talking to</div>
+            <div className="av-cards four" role="radiogroup" aria-label="Who you talk to">
+              {[...cat.buddies.map((b) => b.model), ...PEOPLE].map((m) => (
+                <button key={m} className="av-card" role="radio" aria-checked={buddyModel === m} aria-pressed={buddyModel === m}
+                  disabled={isPerson(m) && (cat.built.people?.[m] !== false ? m === meModel : true)}
+                  title={isPerson(m) ? (m === meModel ? `${personName(m)} is at the desk` : `${personName(m)}, in the guest chair`) : cat.buddies.find((b) => b.model === m)?.readsAs}
+                  onClick={() => pickCast(BUDDY, m)}>
+                  <AvThumb id={isPerson(m) ? `person_${m}` : m} alt="" />
+                  <span className="av-card-name"><span className="dot" style={{ background: tintOf(m) }} />{isPerson(m) ? personName(m) : cat.buddies.find((b) => b.model === m)?.label}</span>
+                </button>
+              ))}
+            </div>
+            {meModel !== AV_HERO && <div className="meta" style={{ marginTop: 8 }}>{meName} is a realistic model in their own outfit. Pick You (AV) to dress your low-poly hero.</div>}
+          </Section>
+          {meModel === AV_HERO && <Section title="Your look">
+            <div className="eyebrow" style={{ margin: "2px 0 6px" }}>Outfit</div>
+            <div className="av-cards three av-outfits" role="radiogroup" aria-label="Outfit">
+              {(cat.hero.outfit.options ?? []).map((o) => (
+                <button key={o} className="av-card" role="radio" aria-checked={(hero.outfit ?? "puffer") === o}
+                  aria-pressed={(hero.outfit ?? "puffer") === o} title={cat.outfits[o] ?? label(o)}
+                  onClick={() => setHero({ outfit: o, outfit_color: cat.outfitColors?.[o] ?? PURPLE })}>
+                  <AvThumb id={`outfit_${o}`} alt="" />
+                  <span className="av-card-name"><span className="dot" style={{ background: cat.outfitColors?.[o] ?? PURPLE }} />{cat.outfits[o] ?? label(o)}</span>
+                </button>
+              ))}
+            </div>
             <FieldRow label="Jacket">
               <div className="av-swatches">
                 {(cat.hero.outfit_color.swatches ?? []).map((c) => (
@@ -562,22 +651,7 @@ export function ShotsAvWorkspace() {
             <FieldRow label="Beard"><Select size="sm" ariaLabel="Beard" value={hero.beard ?? String(cat.hero.beard?.default ?? "light")}
               options={(cat.hero.beard?.options ?? []).map((o) => ({ value: o, label: label(o) }))} onChange={(v) => setHero({ beard: v })} /></FieldRow>
             <FieldRow label="Stubble"><Slider ariaLabel="Stubble" value={hero.stubble ?? 0.3} onChange={(v) => setHero({ stubble: Math.round(v * 100) / 100 })} /></FieldRow>
-          </Section>
-          <Section title="Buddy">
-            <div className="av-cards two">
-              {cat.buddies.map((b) => (
-                <button key={b.model} className="av-card" aria-pressed={buddyModel === b.model}
-                  onClick={() => update((p) => {
-                    const cur = p.characters[BUDDY];
-                    const keep = cur.voice_id && cur.voice_id !== BUDDY_VOICE[cur.model ?? ""];
-                    return { ...p, characters: { ...p.characters, [BUDDY]: { ...cur, model: b.model, voice_id: keep ? cur.voice_id : BUDDY_VOICE[b.model] } } };
-                  })}>
-                  <AvThumb id={b.model} alt="" />
-                  <span className="av-card-name"><span className="dot" style={{ background: b.shell }} />{b.label}</span>
-                </button>
-              ))}
-            </div>
-          </Section>
+          </Section>}
           <Section title="Room">
             {([["gamer", "Gamer and editor rooms"], ["dark", "Dark"], ["light", "Light"], ["classic", "Classic sets"]] as const).map(([group, name]) => (
               <div key={group}>
@@ -633,10 +707,10 @@ export function ShotsAvWorkspace() {
               onChange={(v) => setCamera({ connect: v })} /></FieldRow>
           </Section>
           <Section title="Voices">
-            <FieldRow label="You"><Select size="sm" ariaLabel="Your voice" value={perf.characters[HERO]?.voice_id || HERO_VOICE}
+            <FieldRow label={meModel === AV_HERO ? "You" : meName}><Select size="sm" ariaLabel={`${meName}'s voice`} value={perf.characters[HERO]?.voice_id || defaultVoice(meModel)}
               options={VOICES.map((v) => ({ value: v.id, label: `${v.name} · ${v.tags.slice(0, 2).join(", ")}` }))}
               onChange={(v) => setHero({ voice_id: v })} /></FieldRow>
-            <FieldRow label={buddyName}><Select size="sm" ariaLabel={`${buddyName}'s voice`} value={perf.characters[BUDDY]?.voice_id || BUDDY_VOICE[buddyModel]}
+            <FieldRow label={buddyName}><Select size="sm" ariaLabel={`${buddyName}'s voice`} value={perf.characters[BUDDY]?.voice_id || defaultVoice(buddyModel)}
               options={VOICES.map((v) => ({ value: v.id, label: `${v.name} · ${v.tags.slice(0, 2).join(", ")}` }))}
               onChange={(v) => update((p) => ({ ...p, characters: { ...p.characters, [BUDDY]: { ...p.characters[BUDDY], voice_id: v } } }))} /></FieldRow>
             <div className="meta">ElevenLabs performs each line's emotion (happy, worried, deadpan…) with audio tags; intense lines get its most expressive setting. Voices sit in the room with a touch of its acoustics.</div>
