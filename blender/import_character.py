@@ -20,6 +20,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
 from reelforge.arkit import ARKIT_NAMES  # noqa: E402
+from finish_character import finish  # noqa: E402
 
 args = sys.argv[sys.argv.index("--") + 1:]
 OUT, CID = Path(args[0]), args[1]
@@ -310,6 +311,7 @@ for im in bpy.data.images:
             im.pack()
         except RuntimeError as e:
             print(f"WARNING {CID}: could not pack {im.name}: {e}")
+print(f"FINISHED {CID}: {finish(CID)}")  # merge duplicate textures, the liveliness shading pass
 # a fresh default scene: the source's render/shadow settings must not leak into previews (Freya's darkened half her face)
 old = bpy.context.window.scene if bpy.context.window else sc
 clean = bpy.data.scenes.new("Scene")

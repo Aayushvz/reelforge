@@ -14,6 +14,9 @@ args = sys.argv[sys.argv.index("--") + 1:]
 out, sets = args[0], dict(a.split("=") for a in args[1:])
 yaw = math.radians(float(sets.pop("yaw", 0)))
 shot = sets.pop("shot", "head")
+if sets.pop("enliven", "0") == "1":  # try the liveliness pass without saving the file
+    from liveliness import enliven
+    print("ENLIVENED", enliven({m for o in bpy.data.objects if o.type == "MESH" for m in o.data.materials if m}))
 sc = bpy.context.scene
 ctrl = bpy.data.objects["FaceCtrl"]
 for k, v in sets.items():
@@ -39,16 +42,24 @@ def light(name, loc, energy, size, color=(1, 1, 1)):
     sc.collection.objects.link(o)
 
 
-light("Key", (0.9, -1.0, 0.6), 70, 0.9, (1.0, 0.93, 0.85))
-light("Fill", (-1.2, -0.9, 0.1), 12, 1.5, (0.85, 0.9, 1.0))
-light("Rim", (-0.6, 1.0, 0.5), 90, 0.6, (0.8, 0.88, 1.0))
-light("Rim2", (0.7, 0.9, 0.3), 50, 0.6, (1.0, 0.9, 0.8))
+# Portrait lighting: a big warm key, a soft cool fill, two rims, and a small light by the lens that puts a catchlight
+# in each eye (eyes with no catchlight read as dead).
+light("Key", (0.9, -1.0, 0.55), 55, 1.2, (1.0, 0.91, 0.82))
+light("Fill", (-1.2, -0.9, 0.1), 9, 1.8, (0.9, 0.94, 1.0))
+light("Rim", (-0.7, 0.9, 0.6), 55, 0.6, (0.85, 0.9, 1.0))
+light("Rim2", (0.8, 0.8, 0.4), 30, 0.6, (1.0, 0.85, 0.7))
+eye_light = bpy.data.objects.new("EyeLight", bpy.data.lights.new("EyeLight", "AREA"))
+eye_light.data.energy, eye_light.data.size, eye_light.data.color = 2.5, 0.25, (1.0, 0.97, 0.94)
+eye_light.location = cam.location + Vector((0.0, 0.0, 0.18))
+look_at(eye_light, face)
+sc.collection.objects.link(eye_light)
 bpy.ops.mesh.primitive_plane_add(size=8, location=face + Vector((0, 2.0, 0)), rotation=(math.pi / 2, 0, 0))
-bpy.context.active_object.data.materials.append(material("Backdrop", (0.035, 0.04, 0.05), rough=0.9))
+bpy.context.active_object.data.materials.append(material("Backdrop", (0.07, 0.062, 0.058), rough=0.9))
 sc.world = bpy.data.worlds.new("W")
-sc.world.color = (0.02, 0.022, 0.026)
+sc.world.color = (0.03, 0.028, 0.026)
 sc.render.engine = EEVEE
-sc.eevee.taa_render_samples = 32
+sc.eevee.use_raytracing = True  # subsurface and the glossy corneas need it
+sc.eevee.taa_render_samples = 64
 sc.render.resolution_x, sc.render.resolution_y = 720, 900
 sc.view_settings.view_transform = "AgX"
 sc.view_settings.look = "AgX - Medium High Contrast"
