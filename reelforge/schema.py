@@ -25,7 +25,31 @@ SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu",
 AV_STYLE = "shots-av"
 AV_HERO = "av_hero"
 AV_BUDDIES = ("buddy_claude", "buddy_chatgpt", "buddy_figma", "buddy_nova")
-AV_OUTFITS = ("puffer", "hoodie", "overshirt")
+AV_OUTFITS = ("puffer", "hoodie", "overshirt", "boxy_black", "hoodie_cargos", "knit_vest", "grey_sweats", "track_jacket", "puffer_vest", "camel_black", "techwear", "varsity", "cardigan", "tee_beanie", "flannel_layers", "cropped_knit", "blazer_mini", "baby_tee", "sporty_zip", "butterfly_top", "puffer_cream", "trench", "cargo_set", "sweater_beret")
+# each ported outfit's own colour (blender/shotsav/hero.py OUTFIT_COLORS); the brand three default to purple
+AV_OUTFIT_COLORS = {
+    "boxy_black": "#1D1D22",
+    "hoodie_cargos": "#56603F",
+    "knit_vest": "#5C3B22",
+    "grey_sweats": "#8D8D94",
+    "track_jacket": "#1B2A57",
+    "puffer_vest": "#141416",
+    "camel_black": "#B08A5E",
+    "techwear": "#2A2E28",
+    "varsity": "#1C2F68",
+    "cardigan": "#6B4426",
+    "tee_beanie": "#1E2A3B",
+    "flannel_layers": "#A6372F",
+    "cropped_knit": "#E7DECF",
+    "blazer_mini": "#4E4844",
+    "baby_tee": "#C27A93",
+    "sporty_zip": "#D96C8F",
+    "butterfly_top": "#8B73C4",
+    "puffer_cream": "#DCD3C0",
+    "trench": "#8C6A44",
+    "cargo_set": "#4A4F2C",
+    "sweater_beret": "#CDBF9E",
+}
 AV_GLASSES = ("bold", "round", "rect", "none")  # bold: the owner's black acetate frames
 AV_HEADPHONES = ("on", "neck", "none")
 # Skin and hair are the viewer's pick in the editor (owner decision, gate P1); the first entry is the default.
@@ -38,7 +62,9 @@ AV_PURPLE = "#7C3AED"  # Aayush Visuals brand purple: the default jacket
 AV_ROOM = "av_studio_night"
 AV_ROOMS = ("av_studio_night", "av_neon_den", "av_late_office", "av_studio_morning", "av_cafe_day", "av_cyc_lilac",
             "av_editor_night", "av_streamer_den", "av_neon_shelf", "av_moon_window", "av_retro_bedroom",
-            "av_studio_apartment")
+            "av_studio_apartment",
+            # the old library's environments, now Shots-AV backdrops
+            "av_old_night_city", "av_old_bedroom", "av_old_rooftop", "av_old_cafe", "av_old_lantern_street", "av_old_subway", "av_old_classroom", "av_old_office", "av_old_night_mart", "av_old_pier", "av_imp_neon_tunnel", "av_imp_gaming_den", "av_imp_cozy_gaming_room")
 AV_ANGLE_MODES = ("varied", "classic")  # camera.angles: the 36-angle library, or the reference reel's five set-ups
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
@@ -53,7 +79,7 @@ class Character:
     voice_id: str
     caption_color: str
     highlight_color: str
-    model: str = "kai"  # cast member the engine renders
+    model: str = "matt"  # cast member the engine renders
     outfit: int = 0  # index into that member's wardrobe
     options: dict = field(default_factory=dict)  # shots-av hero: outfit (name), outfit_color, glasses, headphones
 
@@ -123,7 +149,7 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"character {name}: outfit must be a wardrobe index, got {c.get('outfit')!r}")
             continue
         chars[name] = Character(name, c["voice_id"], c.get("caption_color", "#FFFFFF"),
-                                c.get("highlight_color", "#FFD23F"), c.get("model", "kai"), outfit)
+                                c.get("highlight_color", "#FFD23F"), c.get("model", "matt"), outfit)
     if not chars:
         errors.append("at least one character required")
     if len(chars) > MAX_CHARACTERS:
@@ -255,7 +281,8 @@ def _av_options(name: str, c: dict, errors: list[str]) -> dict:
     """The shots-av hero's named wardrobe and accessories; a buddy has none."""
     if c.get("model") != AV_HERO:
         return {}
-    opts = {"outfit": c.get("outfit", AV_OUTFITS[0]), "outfit_color": c.get("outfit_color", AV_PURPLE),
+    outfit = c.get("outfit", AV_OUTFITS[0])
+    opts = {"outfit": outfit, "outfit_color": c.get("outfit_color", AV_OUTFIT_COLORS.get(outfit, AV_PURPLE)),
             "glasses": c.get("glasses", AV_GLASSES[0]), "headphones": c.get("headphones", "neck"),
             "skin": c.get("skin", AV_SKINS[0]), "hair": c.get("hair", AV_HAIRS[0]), "beard": c.get("beard", AV_BEARDS[0]),
             "stubble": c.get("stubble", 0.3)}

@@ -1,7 +1,7 @@
-"""The Shots-AV rooms: twelve desk two-hander stages (nine dark, three light). Top of the file is pure data;
+"""The Shots-AV rooms: the desk two-hander stages (12 original, plus the old library's 13 environments). Top of the file is pure data;
 build(room_id) runs inside Blender and adds the room to the current scene.
 
-Contract (same as blender/sets.py, so render_plan.py needs no special case): lights Key, Rim, Fill, Glow, each with
+Contract (the reelforge set contract, so render_plan.py needs no special case): lights Key, Rim, Fill, Glow, each with
 custom props base_color/base_energy; material ScreenMat with a "Code" node (moods recolour it); empties Mark_A (the
 hero's chair, at the origin) and Mark_B (on the desk, to the hero's right and toward the viewer). The scene keeps
 scene["mood_tint"] and scene["av_exposure"] (the shotsav look's exposure for this room).
@@ -110,6 +110,99 @@ ROOMS = {
         "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#FFB27A", 90, (-0.9, 0.85, 1.75), 0.6),
         "fill": ((0.45, 0.5, 0.9), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 9, (0.72, -0.22, 1.2), 0.08),
         "look": "curtained window onto the city, a warm floor lamp, speakers and a record player, a big plant, a sofa"},
+    # The old library's environments, kept as Shots-AV backdrops (legacy_sets.py, imported_rooms.py): the default
+    # lighting look of each, behind the Shots-AV desk.
+    "av_old_night_city": {
+        "label": "Night city desk", "tone": "dark", "exposure": -0.85, "haze": 0.0022, "tint": 0.3,
+        "legacy": ("night_city", "blue_night"), "world": (0.004, 0.006, 0.015), "wall": "#1A1A20", "floor": "#16141A",
+        "desk": "#3B2A21", "screen": (0.350, 0.600, 1.000),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "a window wall onto a glowing skyline"},
+    "av_old_bedroom": {
+        "label": "Bedroom", "tone": "dark", "exposure": -0.85, "haze": 0.0022, "tint": 0.3,
+        "legacy": ("bedroom", "warm_lamp"), "world": (0.005, 0.005, 0.010), "wall": "#1A1A20", "floor": "#16141A",
+        "desk": "#3B2A21", "screen": (0.400, 0.650, 1.000),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "a lived-in bedroom with a bed and shelves"},
+    "av_old_rooftop": {
+        "label": "Rooftop", "tone": "light", "exposure": -1.2, "haze": 0.0044, "tint": 0.3,
+        "legacy": ("rooftop", "golden_hour"), "world": (0.500, 0.350, 0.300), "wall": "#1A1A20", "floor": "#B9A58C",
+        "desk": "#D9BE98", "screen": (0.500, 0.650, 1.000),
+        "key": ((1.0, 0.97, 0.93), 240, (-1.4, -0.9, 1.9), 2.2), "rim": ((1.0, 0.86, 0.70), 70, (0.9, 0.9, 1.8), 0.8),
+        "fill": ((0.75, 0.85, 1.0), 55, (1.4, -1.5, 1.3), 2.5), "glow": ((1.0, 0.95, 0.85), 4, (0.72, -0.22, 1.2), 0.08),
+        "look": "an open rooftop over the city"},
+    "av_old_cafe": {
+        "label": "Cafe corner", "tone": "light", "exposure": -1.2, "haze": 0.0055, "tint": 0.3,
+        "legacy": ("cafe", "rainy_day"), "world": (0.150, 0.180, 0.220), "wall": "#1A1A20", "floor": "#B9A58C",
+        "desk": "#D9BE98", "screen": (0.500, 0.650, 1.000),
+        "key": ((1.0, 0.97, 0.93), 240, (-1.4, -0.9, 1.9), 2.2), "rim": ((1.0, 0.86, 0.70), 70, (0.9, 0.9, 1.8), 0.8),
+        "fill": ((0.75, 0.85, 1.0), 55, (1.4, -1.5, 1.3), 2.5), "glow": ((1.0, 0.95, 0.85), 4, (0.72, -0.22, 1.2), 0.08),
+        "look": "a cafe with a counter and warm lamps"},
+    "av_old_lantern_street": {
+        "label": "Lantern street", "tone": "light", "exposure": -1.2, "haze": 0.0066, "tint": 0.3,
+        "legacy": ("lantern_street", "sunset"), "world": (0.400, 0.250, 0.200), "wall": "#1A1A20", "floor": "#B9A58C",
+        "desk": "#D9BE98", "screen": (0.500, 0.650, 1.000),
+        "key": ((1.0, 0.97, 0.93), 240, (-1.4, -0.9, 1.9), 2.2), "rim": ((1.0, 0.86, 0.70), 70, (0.9, 0.9, 1.8), 0.8),
+        "fill": ((0.75, 0.85, 1.0), 55, (1.4, -1.5, 1.3), 2.5), "glow": ((1.0, 0.95, 0.85), 4, (0.72, -0.22, 1.2), 0.08),
+        "look": "a street of hanging lanterns"},
+    "av_old_subway": {
+        "label": "Subway", "tone": "dark", "exposure": -0.85, "haze": 0.0022, "tint": 0.3,
+        "legacy": ("subway", "fluorescent"), "world": (0.020, 0.025, 0.025), "wall": "#1A1A20", "floor": "#16141A",
+        "desk": "#3B2A21", "screen": (0.500, 0.650, 1.000),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "a tiled subway platform"},
+    "av_old_classroom": {
+        "label": "Classroom", "tone": "light", "exposure": -1.2, "haze": 0.0044, "tint": 0.3,
+        "legacy": ("classroom", "daylight"), "world": (0.500, 0.550, 0.650), "wall": "#1A1A20", "floor": "#B9A58C",
+        "desk": "#D9BE98", "screen": (0.500, 0.650, 1.000),
+        "key": ((1.0, 0.97, 0.93), 240, (-1.4, -0.9, 1.9), 2.2), "rim": ((1.0, 0.86, 0.70), 70, (0.9, 0.9, 1.8), 0.8),
+        "fill": ((0.75, 0.85, 1.0), 55, (1.4, -1.5, 1.3), 2.5), "glow": ((1.0, 0.95, 0.85), 4, (0.72, -0.22, 1.2), 0.08),
+        "look": "a classroom with a chalkboard and desks"},
+    "av_old_office": {
+        "label": "Office", "tone": "light", "exposure": -1.2, "haze": 0.0033, "tint": 0.3,
+        "legacy": ("office", "daylight"), "world": (0.500, 0.550, 0.650), "wall": "#1A1A20", "floor": "#B9A58C",
+        "desk": "#D9BE98", "screen": (0.500, 0.700, 1.000),
+        "key": ((1.0, 0.97, 0.93), 240, (-1.4, -0.9, 1.9), 2.2), "rim": ((1.0, 0.86, 0.70), 70, (0.9, 0.9, 1.8), 0.8),
+        "fill": ((0.75, 0.85, 1.0), 55, (1.4, -1.5, 1.3), 2.5), "glow": ((1.0, 0.95, 0.85), 4, (0.72, -0.22, 1.2), 0.08),
+        "look": "an open-plan office"},
+    "av_old_night_mart": {
+        "label": "Night mart", "tone": "dark", "exposure": -0.85, "haze": 0.0022, "tint": 0.3,
+        "legacy": ("night_mart", "fluorescent_night"), "world": (0.010, 0.012, 0.020), "wall": "#1A1A20", "floor": "#16141A",
+        "desk": "#3B2A21", "screen": (0.400, 1.000, 0.600),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "a convenience store at night"},
+    "av_old_pier": {
+        "label": "Pier", "tone": "light", "exposure": -1.2, "haze": 0.0033, "tint": 0.3,
+        "legacy": ("pier", "sunset"), "world": (0.450, 0.300, 0.300), "wall": "#1A1A20", "floor": "#B9A58C",
+        "desk": "#D9BE98", "screen": (0.500, 0.650, 1.000),
+        "key": ((1.0, 0.97, 0.93), 240, (-1.4, -0.9, 1.9), 2.2), "rim": ((1.0, 0.86, 0.70), 70, (0.9, 0.9, 1.8), 0.8),
+        "fill": ((0.75, 0.85, 1.0), 55, (1.4, -1.5, 1.3), 2.5), "glow": ((1.0, 0.95, 0.85), 4, (0.72, -0.22, 1.2), 0.08),
+        "look": "a wooden pier by the water"},
+    "av_imp_neon_tunnel": {
+        "label": "Neon tunnel", "tone": "dark", "exposure": -0.85, "haze": 0.0066, "tint": 0.3,
+        "imported": ("neon_tunnel", "neon"), "world": (0.004, 0.003, 0.008), "wall": "#1A1A20", "floor": "#16141A", "desk": "#2B2730",
+        "screen": (0.55, 0.65, 1.0),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "the neon tunnel model, behind the desk"},
+    "av_imp_gaming_den": {
+        "label": "Gaming den", "tone": "dark", "exposure": -0.85, "haze": 0.0022, "tint": 0.3,
+        "imported": ("gaming_den", "rgb_night"), "world": (0.003, 0.004, 0.008), "wall": "#1A1A20", "floor": "#16141A", "desk": "#2B2730",
+        "screen": (0.55, 0.65, 1.0),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "the gaming den model, behind the desk"},
+    "av_imp_cozy_gaming_room": {
+        "label": "Cozy gaming room", "tone": "dark", "exposure": -0.85, "haze": 0.0022, "tint": 0.3,
+        "imported": ("cozy_gaming_room", "purple_neon"), "world": (0.004, 0.002, 0.010), "wall": "#1A1A20", "floor": "#16141A", "desk": "#2B2730",
+        "screen": (0.55, 0.65, 1.0),
+        "key": (NEUTRAL_WARM, 50, (0.95, -0.95, 1.55), 0.45), "rim": ("#8B5CF6", 110, (-0.9, 0.85, 1.75), 0.6),
+        "fill": ((0.45, 0.55, 1.0), 8, (-1.3, -1.4, 1.2), 2.0), "glow": ((1.0, 0.72, 0.42), 8, (0.72, -0.22, 1.2), 0.08),
+        "look": "the cozy gaming room model, behind the desk"},
 }
 # "Frame to keep": the editor slides the room behind the hero. pan -1..1 moves it sideways (+1 shows more of the
 # right side), height -1..1 moves it down/up; the desk, the hero, the buddy and the light rig stay put.
@@ -179,8 +272,9 @@ def build(room_id: str):
     look_at(bo, Vector((0, -0.9, 0.66)))
 
     # --- floor, desk, chair -----------------------------------------------------------------------------------
-    floor = rbox("Floor", (14, 14, 0.02), coll, mat("Floor", R["floor"], rough=0.6), 0.001, (0, 2.0, -0.01))
-    floor.visible_shadow = False
+    if not R.get("imported"):  # an imported room brings its own floor
+        floor = rbox("Floor", (14, 14, 0.02), coll, mat("Floor", R["floor"], rough=0.6), 0.001, (0, 2.0, -0.01))
+        floor.visible_shadow = False
     dw, dd, dt = DESK["size"]
     dx, dy = DESK["centre"]
     wood = mat("DeskTop", R["desk"], rough=0.42, coat=0.15)
@@ -408,6 +502,12 @@ def build(room_id: str):
     if R.get("gamer"):
         from .gamer_rooms import backdrop
         backdrop(room_id, coll, rng)
+    if R.get("legacy"):  # one of the old library's environments
+        from .legacy_sets import backdrop as old_set
+        old_set(*R["legacy"], coll)
+    if R.get("imported"):  # one of the imported room models
+        from .imported_rooms import backdrop as imported_room
+        imported_room(*R["imported"], coll)
     from .life import add as add_life
     add_life(room_id, coll, Y)  # background motion; its new objects join the pivot below
     pivot = empty("RoomPivot", (0, 0, 0), coll)

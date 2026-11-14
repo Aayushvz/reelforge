@@ -1,7 +1,7 @@
 """Imported asset library (data only): third-party characters and environments wired to the reelforge contract.
 
 Sources are big and live outside the repo: SRC_ROOT (override with REELFORGE_IMPORTS). import_character.py and
-import_set.py turn them into assets/build/<id>.blend. Characters are never decimated, texture-downscaled or
+blender/shotsav/imported_rooms.py loads the rooms as Shots-AV backdrops. Characters are never decimated, texture-downscaled or
 shape-key pruned: facial detail is the target. Optimizing = cleanup (rig widgets, stray lights/cameras, unused
 armatures), contract wiring, packed textures.
 

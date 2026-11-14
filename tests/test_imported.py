@@ -31,8 +31,6 @@ def test_imported_sets_have_the_light_contract_and_marks():
             assert all(k in pr for k in ("key", "rim", "fill", "glow", "world")), (sid, name)
 
 
-def test_engine_lists_imported_assets_next_to_the_procedural_ones():
-    assert {"matt", "freya", "cute_girl"} <= set(blender3d.cast_ids())
-    assert "kai" in blender3d.cast_ids()
-    presets = blender3d.set_presets()
-    assert presets["neon_tunnel"][0] == "neon" and "night_city" in presets
+def test_engine_lists_only_the_imported_cast():
+    assert set(blender3d.cast_ids()) == {"matt", "freya", "cute_girl"}
+    assert blender3d.set_presets() == {}  # the imported rooms are Shots-AV backdrops now

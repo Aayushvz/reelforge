@@ -531,8 +531,9 @@ export function ShotsAvWorkspace() {
       <section className="av-col av-look" aria-label="Look">
         {!cat ? <div className="skeleton" style={{ height: 320, margin: 12 }} /> : <>
           <Section title="Hero">
-            <FieldRow label="Outfit"><Segmented size="sm" full value={String(hero.outfit ?? "puffer")} onChange={(v) => setHero({ outfit: v })}
-              options={(cat.hero.outfit.options ?? []).map((o) => ({ value: o, label: label(o) }))} /></FieldRow>
+            <FieldRow label="Outfit"><Select size="sm" value={String(hero.outfit ?? "puffer")}
+              onChange={(v) => setHero({ outfit: v, outfit_color: cat.outfitColors?.[v] ?? PURPLE })}
+              options={(cat.hero.outfit.options ?? []).map((o) => ({ value: o, label: cat.outfits[o] ?? label(o) }))} /></FieldRow>
             <FieldRow label="Jacket">
               <div className="av-swatches">
                 {(cat.hero.outfit_color.swatches ?? []).map((c) => (
@@ -578,11 +579,11 @@ export function ShotsAvWorkspace() {
             </div>
           </Section>
           <Section title="Room">
-            {([["gamer", "Gamer and editor rooms"], ["dark", "Dark"], ["light", "Light"]] as const).map(([group, name]) => (
+            {([["gamer", "Gamer and editor rooms"], ["dark", "Dark"], ["light", "Light"], ["classic", "Classic sets"]] as const).map(([group, name]) => (
               <div key={group}>
                 <div className="eyebrow" style={{ margin: "4px 0 6px" }}>{name}</div>
                 <div className="av-cards three">
-                  {cat.rooms.filter((r) => (group === "gamer" ? r.gamer : !r.gamer && r.tone === group)).map((r) => (
+                  {cat.rooms.filter((r) => (group === "gamer" ? r.gamer : group === "classic" ? r.classic : !r.gamer && !r.classic && r.tone === group)).map((r) => (
                     <button key={r.id} className="av-card tall" aria-pressed={perf.environment === r.id} title={r.look}
                       onClick={() => update((p) => ({ ...p, environment: r.id, room_view: undefined }))}>
                       <AvThumb id={r.id} alt="" />
@@ -592,7 +593,8 @@ export function ShotsAvWorkspace() {
                 </div>
                 {(() => {  // your spot in the room, right under the room you picked
                   const room = cat.rooms.find((r) => r.id === perf.environment);
-                  if (!room || (group === "gamer" ? !room.gamer : room.gamer || room.tone !== group)) return null;
+                  const inGroup = group === "gamer" ? room?.gamer : group === "classic" ? room?.classic : room && !room.gamer && !room.classic && room.tone === group;
+                  if (!room || !inGroup) return null;
                   return (
                     <div className="av-spot">
                       <div className="eyebrow" style={{ margin: "10px 0 6px" }}>Your spot in {room.label}</div>

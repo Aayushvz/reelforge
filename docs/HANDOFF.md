@@ -195,3 +195,24 @@ full-size render; never reduce character quality (render settings only).
 
 **Next steps (from the P7 score):** ~~a connected camera move~~ done 2026-11-14 (`camera.connect`); ~~moving background life~~ done 2026-11-14 (`blender/shotsav/life.py`) (cars, signs, monitor activity); ~~stronger
 subsurface at phone size~~ done 2026-11-14 (`SKIN_SSS`); ~~draft speed~~ 2026-11-14: draft tier, 7.8 min for the 55 s P7 reel (about 6.9 min for 49 s; a minute over budget).
+
+
+## 10. The old cast, wardrobe and sets moved into Shots-AV (2026-11-14)
+Owner's call: the seven procedural characters (Kai, Rey, Dev, Mo, Aria, Zoe, Noor) are deleted; their 21 outfits and
+the 13 environments live on inside Shots-AV. Matt, Freya and Mina (imported) stay in the Blender 3D style.
+- **Outfits:** `blender/shotsav/hero.py` OUTFITS has 24 (the 3 brand ones + the old wardrobe redrawn in the hero's
+  faceted style: Boxy black, Hoodie & cargos, Knit vest, Grey sweats, Track jacket, Puffer vest, Camel & black,
+  Techwear, Varsity, Cardigan, Tee & beanie, Flannel layers, Cropped knit, Blazer & mini, Baby tee & cargos,
+  Sporty zip, Butterfly top, Cream puffer, Trench, Cargo set, Sweater & beret). Each has its own colour
+  (`OUTFIT_COLORS`, mirrored in `schema.AV_OUTFIT_COLORS`); new pieces: crew/V/turtle/lapel/rib collars, vests (tee
+  sleeves), contrast sleeves, stripes, plaid, chest prints, a beanie (replaces the hair) and a beret. Only the 3 brand
+  outfits are prebuilt; the rest build on demand.
+- **Environments:** 25 Shots-AV rooms. The 10 old sets are `av_old_*` (code moved to `blender/shotsav/set_data.py` and
+  `legacy_sets.py`: built in their default lighting, desk area cleared, pushed back 0.9 m). The 3 imported rooms are
+  `av_imp_*` (`blender/shotsav/imported_rooms.py`, loaded from the owner's source files in `SRC_ROOT`, sightlines
+  cleared by ray casts). The editor lists them as "Classic sets".
+- **Removed:** `blender/cast.py`, `build_character.py`, `build_set.py`, `import_set.py`, two bakeoff scripts, the
+  samples that used the old cast, the old projects, and every built file of the old cast and sets (about 2.5 GB).
+- **Blender 3D style now:** cast = Matt, Freya, Mina; no environments of its own (the editor's Environments page and
+  Set panel point to Shots-AV). `reelforge bench` and `samples/imported-test` need an environment again before they
+  can render.

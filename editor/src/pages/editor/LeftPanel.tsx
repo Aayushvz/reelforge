@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp, Copy, Film, Image as ImageIcon, MoreHorizontal, Mus
 import type { Clip, EditorDoc, Performance, TrackKind } from "@/lib/types";
 import * as T from "@/lib/timeline";
 import { duration } from "@/lib/format";
-import { environment, ENVIRONMENTS, character } from "@/data/catalog";
+import { environment, NO_ENVIRONMENT, character } from "@/data/catalog";
 import { EnvThumb } from "@/components/Thumbs";
 import { useMenu } from "@/components/ui/Overlay";
 import { Empty, Badge } from "@/components/ui/Feedback";
@@ -43,7 +43,7 @@ function ShotList({ editor, performance, stills, resolveSrc, onImport, onRegener
   const fileRef = useRef<HTMLInputElement>(null);
   const shots = useMemo(() => sortedOf(tl, "shots"), [tl]);
   const dialogue = useMemo(() => sortedOf(tl, "dialogue"), [tl]);
-  const env = environment(editor.environment.id) ?? ENVIRONMENTS[0];
+  const env = environment(editor.environment.id) ?? NO_ENVIRONMENT;
   const preset = env.presets.find((p) => p.id === editor.environment.lighting) ?? env.presets[0];
 
   const replace = async (files: FileList) => {

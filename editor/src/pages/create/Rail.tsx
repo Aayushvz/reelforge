@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { lineVoiced, useProject } from "@/stores/project";
 import {
-  STYLES, ENVIRONMENTS, VOICES, character, environment, pipelineCast, pipelineSet, subtitleTemplate, voiceById,
+  STYLES, ENVIRONMENTS, NO_ENVIRONMENT, VOICES, character, environment, pipelineCast, pipelineSet, subtitleTemplate, voiceById,
 } from "@/data/catalog";
 import { RATIOS, FPS_OPTIONS, type Ratio, type SubtitleStyle } from "@/lib/types";
 import { estimateDuration, validate } from "@/lib/script";
@@ -103,7 +103,7 @@ export function SetPanel() {
   const setEditor = useProject((s) => s.setEditor);
   const setPerf = useProject((s) => s.setPerformance);
   const [open, setOpen] = useState(false);
-  const e = environment(env.id) ?? ENVIRONMENTS[0];
+  const e = environment(env.id) ?? NO_ENVIRONMENT;
   const preset = e.presets.find((p) => p.id === env.lighting) ?? e.presets[0];
   const pick = (id: string, lighting: string) => {
     setEditor((ed) => ({ ...ed, environment: { id, lighting } }));
@@ -111,6 +111,11 @@ export function SetPanel() {
     setPerf((p) => ({ ...p, ...pipelineSet(id, lighting) }));
   };
   return (
+    !ENVIRONMENTS.length ? (
+      <Panel id="set" title="Set & lighting">
+        <div className="meta">The environments moved to Shots-AV desk reels (Classic sets). <Link to="/shots-av">Open Shots-AV</Link></div>
+      </Panel>
+    ) :
     <Panel id="set" title="Set & lighting" right={<button className="btn btn-sm btn-ghost" onClick={() => setOpen(true)}>Browse<ChevronRight size={14} /></button>}>
       <button className="set-preview" onClick={() => setOpen(true)} aria-label={`Change set, currently ${e.name}`}>
         <EnvThumb env={e} preset={preset} />

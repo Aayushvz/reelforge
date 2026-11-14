@@ -43,7 +43,7 @@ def test_every_mood_has_preset():
 
 
 def test_render_plan_shape(tmp_path):
-    perf = load_performance(Path(__file__).parents[1] / "samples/look-test/performance.json")
+    perf = load_performance(Path(__file__).parent / "fixtures" / "blender3d_performance.json")
     faces = {"LEAD": {"jawOpen": [0.0] * N, "headNod": [0.0] * N}}
     plan = build_render_plan(perf, N, faces, plan_shots(_placed(), FPS, N),
                              mood_keys(_placed(), FPS), tmp_path / "assets", tmp_path / "out", 16)

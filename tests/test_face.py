@@ -7,7 +7,7 @@ from reelforge.schema import Line, load_performance
 from reelforge.timeline import Placed
 from reelforge.voice import VoicedLine
 
-PERF = load_performance(Path(__file__).parents[1] / "samples/look-test/performance.json")
+PERF = load_performance(Path(__file__).parent / "fixtures" / "blender3d_performance.json")
 
 
 def _placed(emotion="happy", intensity=0.9, text="mama mia", start=0.4):

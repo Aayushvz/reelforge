@@ -12,9 +12,9 @@ export type AvPlan = { shots: AvShot[]; runtime: number; frames: number; split: 
   target: Record<"hero" | "buddy" | "wide", number> };
 export type AvCatalog = {
   hero: Record<string, { default: unknown; options?: string[]; swatches?: string[]; min?: number; max?: number }>;
-  skins: Record<string, string>; outfits: Record<string, string>; brand: Record<string, string>;
+  skins: Record<string, string>; outfits: Record<string, string>; outfitColors?: Record<string, string>; brand: Record<string, string>;
   buddies: { model: string; label: string; readsAs: string; shell: string; glow: string; signature: string }[];
-  rooms: { id: string; label: string; tone: "dark" | "light"; look: string; gamer?: boolean; pano?: AvPano | null;
+  rooms: { id: string; label: string; tone: "dark" | "light"; look: string; gamer?: boolean; classic?: boolean; pano?: AvPano | null;
     spots?: { pan?: number; height?: number; turn?: number }[] }[];
   angles?: { id: string; role: "hero" | "buddy" | "wide"; label: string }[];
   actions: string[];

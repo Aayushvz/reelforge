@@ -10,7 +10,7 @@ from reelforge.engines import DEFAULT, ENGINES, get_engine, shots_av
 from reelforge.schema import PerformanceError, parse_performance
 
 REPO = Path(__file__).parents[1]
-SAMPLE = REPO / "samples" / "look-test" / "performance.json"
+SAMPLE = REPO / "tests" / "fixtures" / "blender3d_performance.json"
 
 
 def _av(**over) -> dict:
@@ -167,8 +167,11 @@ def test_room_table_matches_the_schema_and_the_contract():
     t = shots_av.room_tables()
     assert tuple(t["ROOMS"]) == schema.AV_ROOMS and schema.AV_ROOM in t["ROOMS"]
     tones = [r["tone"] for r in t["ROOMS"].values()]
-    assert tones.count("dark") == 9 and tones.count("light") == 3
-    assert [k for k, r in t["ROOMS"].items() if r.get("gamer")] == list(schema.AV_ROOMS[6:])  # the 3D gamer rooms
+    assert tones.count("dark") == 16 and tones.count("light") == 9
+    assert [k for k, r in t["ROOMS"].items() if r.get("gamer")] == list(schema.AV_ROOMS[6:12])  # the 3D gamer rooms
+    old = [k for k, r in t["ROOMS"].items() if r.get("legacy")]
+    imp = [k for k, r in t["ROOMS"].items() if r.get("imported")]
+    assert len(old) == 10 and len(imp) == 3 and list(schema.AV_ROOMS[12:]) == old + imp  # the old library's rooms
     assert t["VIEW_PAN_M"] > 1.0 and 0 < t["VIEW_HEIGHT_M"] < 0.5
     for rid, r in t["ROOMS"].items():
         for light in ("key", "rim", "fill", "glow"):
@@ -257,3 +260,13 @@ def test_catalog_and_plan_for_the_editor(tmp_path):
     assert plan["shots"][-1]["kind"] == "av_wide_front"  # (a 3-line script folds into the 4.5 s closing wide)
     assert plan["shots"][0]["start"] == 0 and plan["shots"][-1]["end"] == pytest.approx(plan["runtime"])
     assert abs(sum(plan["split"].values()) - 1.0) < 1e-3 and plan["runtime"] > 0
+
+
+def test_ported_wardrobe_matches_the_hero_table():
+    t = shots_av.hero_tables()
+    assert tuple(t["OUTFITS"]) == schema.AV_OUTFITS and len(schema.AV_OUTFITS) == 24
+    for k, c in schema.AV_OUTFIT_COLORS.items():
+        assert t["OUTFIT_COLORS"][k] == c, k
+    p = schema.parse_performance({"style": "shots-av", "characters": {
+        "me": {"model": "av_hero", "outfit": "varsity"}, "b": {"model": "buddy_claude"}}, "lines": [{"speaker": "me", "text": "hi"}]})
+    assert p.characters["me"].options["outfit_color"] == "#1C2F68"  # a ported outfit keeps its own colour

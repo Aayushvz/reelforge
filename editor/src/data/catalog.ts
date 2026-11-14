@@ -14,48 +14,8 @@ export const SLOTS: { id: Slot; label: string }[] = [
 ];
 
 export type WardrobeItem = { id: string; slot: Slot; name: string; color: string };
-export const WARDROBE: WardrobeItem[] = [
-  { id: "boxy-shirt", slot: "top", name: "Boxy shirt", color: "#1d1d1f" },
-  { id: "knit-vest-tee", slot: "top", name: "Knit vest over tee", color: "#6f6553" },
-  { id: "camel-tee", slot: "top", name: "Camel tee", color: "#b08a5a" },
-  { id: "graphic-tee", slot: "top", name: "Graphic tee", color: "#e8e4dc" },
-  { id: "cropped-knit", slot: "top", name: "Cropped knit", color: "#c9b8a3" },
-  { id: "baby-tee", slot: "top", name: "Baby tee", color: "#e6d3d6" },
-  { id: "butterfly-top", slot: "top", name: "Y2K butterfly top", color: "#9fc4d8" },
-  { id: "turtleneck", slot: "top", name: "Turtleneck", color: "#2a2724" },
-  { id: "oversized-sweater", slot: "top", name: "Oversized sweater", color: "#8c7f6c" },
-  { id: "oversized-hoodie", slot: "outer", name: "Oversized hoodie", color: "#3b3d42" },
-  { id: "track-jacket", slot: "outer", name: "Track jacket", color: "#24365a" },
-  { id: "puffer-vest", slot: "outer", name: "Puffer vest", color: "#2f3a2f" },
-  { id: "techwear-jacket", slot: "outer", name: "Techwear jacket", color: "#1f2124" },
-  { id: "varsity-jacket", slot: "outer", name: "Varsity jacket", color: "#6b1f24" },
-  { id: "baggy-cardigan", slot: "outer", name: "Baggy cardigan", color: "#7a6a58" },
-  { id: "flannel", slot: "outer", name: "Flannel shirt", color: "#7b2f2a" },
-  { id: "oversized-blazer", slot: "outer", name: "Oversized blazer", color: "#3a3631" },
-  { id: "sporty-zip", slot: "outer", name: "Sporty zip-up", color: "#d8d4cc" },
-  { id: "puffer-jacket", slot: "outer", name: "Puffer jacket", color: "#e0a65a" },
-  { id: "trench-coat", slot: "outer", name: "Trench coat", color: "#a88e66" },
-  { id: "sweatsuit", slot: "outer", name: "Sweatsuit top", color: "#8a8a8c" },
-  { id: "cargos", slot: "bottom", name: "Cargo pants", color: "#4a4a3c" },
-  { id: "black-jeans", slot: "bottom", name: "Black jeans", color: "#1a1a1c" },
-  { id: "wide-pants", slot: "bottom", name: "Wide pants", color: "#5a544a" },
-  { id: "wide-leg-jeans", slot: "bottom", name: "Wide-leg jeans", color: "#6d84a3" },
-  { id: "mini-skirt", slot: "bottom", name: "Mini skirt", color: "#2a2a2c" },
-  { id: "leggings", slot: "bottom", name: "Leggings", color: "#1e1e22" },
-  { id: "joggers", slot: "bottom", name: "Joggers", color: "#8a8a8c" },
-  { id: "chunky-sneakers", slot: "shoes", name: "Chunky sneakers", color: "#e8e6e1" },
-  { id: "skate-shoes", slot: "shoes", name: "Skate shoes", color: "#232325" },
-  { id: "boots", slot: "shoes", name: "Boots", color: "#3a2a1e" },
-  { id: "loafers", slot: "shoes", name: "Loafers", color: "#2a1f18" },
-  { id: "thin-chain", slot: "accessories", name: "Thin chain", color: "#d4b26a" },
-  { id: "chunky-chain", slot: "accessories", name: "Chunky chain", color: "#d4b26a" },
-  { id: "hoop-earrings", slot: "accessories", name: "Hoop earrings", color: "#d4b26a" },
-  { id: "round-glasses", slot: "accessories", name: "Round glasses", color: "#3a3a3c" },
-  { id: "beanie", slot: "accessories", name: "Beanie", color: "#4a5a4a" },
-  { id: "beret", slot: "accessories", name: "Beret", color: "#2a2a2c" },
-  { id: "watch", slot: "accessories", name: "Watch", color: "#9a9a9c" },
-  { id: "cap", slot: "accessories", name: "Cap", color: "#1f2a3a" },
-];
+// The old cast's wardrobe moved to the Shots-AV hero (blender/shotsav/hero.py OUTFITS).
+export const WARDROBE: WardrobeItem[] = [];
 export const wardrobeItem = (id: string) => WARDROBE.find((w) => w.id === id);
 
 // ---------- cast ----------
@@ -67,76 +27,6 @@ export type Character = {
 };
 
 export const CHARACTERS: Character[] = [
-  {
-    id: "kai", name: "Kai", gender: "male", vibe: "Chill creative, deadpan", tone: "#7c8a9a",
-    signature: "Tight black curls, thin chain, earring", status: "available", suggestedVoice: "Josh",
-    personality: "Says the funniest thing in the room without changing his face. Never in a hurry.",
-    outfits: [
-      { id: "kai-1", name: "Boxy black", items: { top: "boxy-shirt", bottom: "black-jeans", shoes: "skate-shoes", accessories: "thin-chain" } },
-      { id: "kai-2", name: "Hoodie & cargos", items: { top: "graphic-tee", outer: "oversized-hoodie", bottom: "cargos", shoes: "chunky-sneakers" } },
-      { id: "kai-3", name: "Knit vest", items: { top: "knit-vest-tee", bottom: "wide-pants", shoes: "loafers", accessories: "thin-chain" } },
-    ],
-  },
-  {
-    id: "rey", name: "Rey", gender: "male", vibe: "Loud and funny, big laugh", tone: "#a08a6a",
-    signature: "Curly hair, full beard, glasses", status: "available", suggestedVoice: "Adam",
-    personality: "Laughs before the punchline lands. Turns small inconveniences into epics.",
-    outfits: [
-      { id: "rey-1", name: "Grey sweats", items: { outer: "sweatsuit", bottom: "joggers", shoes: "chunky-sneakers", accessories: "chunky-chain" } },
-      { id: "rey-2", name: "Track jacket", items: { top: "graphic-tee", outer: "track-jacket", bottom: "joggers", shoes: "chunky-sneakers" } },
-      { id: "rey-3", name: "Puffer vest", items: { top: "graphic-tee", outer: "puffer-vest", bottom: "cargos", shoes: "boots" } },
-    ],
-  },
-  {
-    id: "dev", name: "Dev", gender: "male", vibe: "Confident coder, smirk", tone: "#b08a5a",
-    signature: "Fade with swoop top, stubble, watch", status: "available", suggestedVoice: "Antoni",
-    personality: "Ships on Friday at 4:59 and is somehow right about it.",
-    outfits: [
-      { id: "dev-1", name: "Camel & black", items: { top: "camel-tee", bottom: "black-jeans", shoes: "chunky-sneakers", accessories: "watch" } },
-      { id: "dev-2", name: "Techwear", items: { top: "turtleneck", outer: "techwear-jacket", bottom: "cargos", shoes: "boots" } },
-      { id: "dev-3", name: "Varsity", items: { top: "graphic-tee", outer: "varsity-jacket", bottom: "black-jeans", shoes: "skate-shoes" } },
-    ],
-  },
-  {
-    id: "mo", name: "Mo", gender: "male", vibe: "Anxious overthinker", tone: "#7a6a58",
-    signature: "Messy hair, round glasses, slight slouch", status: "available", suggestedVoice: "Sam",
-    personality: "Has already imagined eleven ways this goes wrong. Two of them happen.",
-    outfits: [
-      { id: "mo-1", name: "Cardigan", items: { top: "graphic-tee", outer: "baggy-cardigan", bottom: "wide-pants", accessories: "round-glasses" } },
-      { id: "mo-2", name: "Tee & beanie", items: { top: "graphic-tee", bottom: "cargos", shoes: "skate-shoes", accessories: "beanie" } },
-      { id: "mo-3", name: "Flannel layers", items: { outer: "flannel", top: "graphic-tee", bottom: "black-jeans", accessories: "round-glasses" } },
-    ],
-  },
-  {
-    id: "aria", name: "Aria", gender: "female", vibe: "Witty lead, sarcastic", tone: "#8a6a7a",
-    signature: "Long dark hair, hoop earrings", status: "available", suggestedVoice: "Jessica",
-    personality: "Runs the scene. Every reply is a closing argument.",
-    outfits: [
-      { id: "aria-1", name: "Cropped knit", items: { top: "cropped-knit", bottom: "wide-leg-jeans", shoes: "chunky-sneakers", accessories: "hoop-earrings" } },
-      { id: "aria-2", name: "Blazer & mini", items: { top: "baby-tee", outer: "oversized-blazer", bottom: "mini-skirt", shoes: "boots" } },
-      { id: "aria-3", name: "Baby tee & cargos", items: { top: "baby-tee", bottom: "cargos", shoes: "skate-shoes", accessories: "hoop-earrings" } },
-    ],
-  },
-  {
-    id: "zoe", name: "Zoe", gender: "female", vibe: "Bubbly, dramatic reactions", tone: "#c08a6a",
-    signature: "High ponytail, freckles, blush", status: "available", suggestedVoice: "Elli",
-    personality: "Reacts at full volume. Means every word of it.",
-    outfits: [
-      { id: "zoe-1", name: "Sporty zip", items: { outer: "sporty-zip", bottom: "leggings", shoes: "chunky-sneakers" } },
-      { id: "zoe-2", name: "Butterfly top", items: { top: "butterfly-top", bottom: "wide-leg-jeans", shoes: "chunky-sneakers" } },
-      { id: "zoe-3", name: "Puffer", items: { top: "baby-tee", outer: "puffer-jacket", bottom: "leggings", shoes: "boots" } },
-    ],
-  },
-  {
-    id: "noor", name: "Noor", gender: "female", vibe: "Calm, stylish, dry humour", tone: "#9a8a6a",
-    signature: "Sleek bob or braids, gold jewellery", status: "available", suggestedVoice: "Rachel",
-    personality: "Unbothered. Delivers the line everyone repeats later.",
-    outfits: [
-      { id: "noor-1", name: "Trench", items: { top: "turtleneck", outer: "trench-coat", bottom: "wide-pants", shoes: "loafers" } },
-      { id: "noor-2", name: "Cargo set", items: { top: "baby-tee", bottom: "cargos", shoes: "chunky-sneakers", accessories: "hoop-earrings" } },
-      { id: "noor-3", name: "Sweater & beret", items: { top: "oversized-sweater", bottom: "wide-leg-jeans", shoes: "boots", accessories: "beret" } },
-    ],
-  },
   // Imported, full-detail models (blender/imported.py): realistic faces, standing, one authored outfit each.
   {
     id: "matt", name: "Matt", gender: "male", vibe: "Easy-going, sincere", tone: "#c89a70",
@@ -170,48 +60,14 @@ export type Environment = {
 const P = (id: string, name: string, key: string, rim: string, glow: string, sky: string): LightingPreset =>
   ({ id, name, key, rim, glow, sky });
 
-export const ENVIRONMENTS: Environment[] = [
-  { id: "night-city-desk", name: "Night-city desk", category: "Interior", status: "available", pipelineId: "night_city",
-    description: "Desk by a window over a city at night. Glowing screens, holo panel, haze.",
-    presets: [P("blue-night", "Blue night", "#e8a060", "#4070ff", "#ff8c33", "#0a1428"), P("neon-pink", "Neon pink", "#f0a0c0", "#ff3c8c", "#ff5ab4", "#1a0a1e"), P("rainy", "Rainy", "#a0b4c8", "#5a7a9a", "#8ab4d8", "#0c1218")] },
-  { id: "bedroom", pipelineId: "bedroom", name: "Bedroom / gaming room", category: "Interior", status: "available",
-    description: "Lived-in bedroom with a gaming setup, shelves and soft practicals.",
-    presets: [P("warm-lamp", "Warm lamp", "#f0b070", "#c08050", "#ffb060", "#1a120a"), P("rgb-leds", "RGB LEDs", "#c0a0e0", "#40d0ff", "#ff40a0", "#0e0a18"), P("morning-sun", "Morning sun", "#fff0d0", "#ffd8a0", "#ffe0b0", "#3a3020")] },
-  { id: "rooftop", pipelineId: "rooftop", name: "Rooftop skyline", category: "Exterior", status: "available",
-    description: "Rooftop ledge with a skyline behind, string lights and water tanks.",
-    presets: [P("golden-hour", "Golden hour", "#ffc070", "#ff9040", "#ffb050", "#4a2a14"), P("blue-hour", "Blue hour", "#a0b0e0", "#6080d0", "#ffb070", "#141a30"), P("night-lights", "Night lights", "#e0b080", "#5070c0", "#ffd080", "#0a0c16")] },
-  { id: "cafe", pipelineId: "cafe", name: "Café window", category: "Interior", status: "available",
-    description: "Window seat in a small café. Steam, wood, a street outside the glass.",
-    presets: [P("rainy-day", "Rainy day", "#b0c0d0", "#7090b0", "#e0b080", "#141a20"), P("sunny-afternoon", "Sunny afternoon", "#ffe0b0", "#ffc080", "#ffd090", "#3a2c1a"), P("fairy-lights", "Evening fairy lights", "#f0c080", "#a07040", "#ffd070", "#140e08")] },
-  { id: "lantern-street", pipelineId: "lantern_street", name: "Lantern old-town street", category: "Exterior", status: "available",
-    description: "Narrow old-town street strung with paper lanterns. The ink.industries mood.",
-    presets: [P("sunset", "Sunset", "#ffb070", "#ff7040", "#ffa050", "#3a1a10"), P("lantern-night", "Lantern night", "#ffb060", "#c05020", "#ff9040", "#100a08"), P("foggy-dawn", "Foggy dawn", "#c8ccd0", "#a0a8b0", "#e0c8a0", "#2a2c30")] },
-  { id: "subway", pipelineId: "subway", name: "Subway platform", category: "Transit", status: "available",
-    description: "Tiled metro platform, tunnel mouth, signage and a waiting bench.",
-    presets: [P("fluorescent", "Fluorescent", "#d8f0e0", "#a0d0b0", "#e0ffe8", "#141a16"), P("late-night", "Late-night empty", "#90a0b0", "#4060a0", "#c0d0e0", "#080a10"), P("rush-hour", "Rush-hour warm", "#f0c890", "#c09060", "#ffd8a0", "#1a1410")] },
-  { id: "campus", pipelineId: "classroom", name: "Campus / classroom", category: "Work", status: "available",
-    description: "Lecture room with tall windows, desks and a chalkboard.",
-    presets: [P("daylight", "Daylight", "#fff4e0", "#d0e0f0", "#ffffff", "#30363c"), P("overcast", "Overcast", "#c8d0d8", "#909aa4", "#d8dde2", "#22262a"), P("after-hours", "After-hours", "#e0a870", "#405880", "#ffc080", "#0c0e14")] },
-  { id: "office", pipelineId: "office", name: "Startup office", category: "Work", status: "available",
-    description: "Open-plan office with glass walls, monitors and a whiteboard.",
-    presets: [P("daylight", "Daylight", "#f8f4ec", "#c0d4e8", "#ffffff", "#2a3038"), P("late-crunch", "Late-night crunch", "#90b0e0", "#4070d0", "#80c0ff", "#080c14"), P("spotlight", "Presentation spotlight", "#fff0d0", "#806040", "#ffe0a0", "#060606")] },
-  { id: "night-mart", pipelineId: "night_mart", name: "Night convenience store", category: "Interior", status: "available",
-    description: "Late-night convenience store aisle, fridges humming, a sign outside.",
-    presets: [P("fluorescent-night", "Fluorescent night", "#e0f0f0", "#80c0c0", "#f0ffff", "#0a1010"), P("neon-sign", "Neon sign", "#f0a0b0", "#ff4060", "#ff6080", "#100808"), P("rain-outside", "Rain outside", "#a0b8c8", "#5080a0", "#c0e0f0", "#080c10")] },
-  { id: "pier", pipelineId: "pier", name: "Beach pier", category: "Exterior", status: "available",
-    description: "Boardwalk pier over the water, railings and a ferris wheel far off.",
-    presets: [P("sunset", "Sunset", "#ffa868", "#ff6848", "#ffb070", "#3a1a20"), P("pastel-morning", "Pastel morning", "#f8e0e0", "#c0d8f0", "#ffe8d8", "#3a3440"), P("carnival", "Night carnival lights", "#f0b080", "#4060ff", "#ff60a0", "#08080e")] },
-  // Imported, modelled rooms (blender/imported.py); best with the standing imported cast.
-  { id: "neon-tunnel", pipelineId: "neon_tunnel", name: "Neon tunnel", category: "Interior", status: "available",
-    description: "Glossy black corridor with cyan floor strips and pink neon panels.",
-    presets: [P("neon", "Neon", "#f0a0d0", "#40e0ff", "#ff50b0", "#0a080e"), P("blackout", "Blackout", "#f0ece4", "#40e0ff", "#ff50b0", "#020203")] },
-  { id: "gaming-den", pipelineId: "gaming_den", name: "Gaming den", category: "Interior", status: "available",
-    description: "Real-scale gaming room: desk, LED coves, PlayStation-symbol neon wall.",
-    presets: [P("rgb-night", "RGB night", "#f0b890", "#6078ff", "#ff9040", "#080a10"), P("late-session", "Late session", "#90a8ff", "#e040c8", "#60a0ff", "#040408")] },
-  { id: "cozy-gaming-room", pipelineId: "cozy_gaming_room", name: "Cozy gaming room", category: "Interior", status: "available",
-    description: "Stylised room with sofas, a coffee table, a big TV wall and a gaming desk.",
-    presets: [P("purple-neon", "Purple neon", "#f0b8a0", "#b060ff", "#ff60a0", "#0a0614"), P("chill-evening", "Chill evening", "#ffb070", "#5080ff", "#ffb060", "#100c12")] },
-];
+// The ten sets and the three imported rooms moved to Shots-AV, where they are desk-reel backdrops ("Classic sets").
+export const ENVIRONMENTS: Environment[] = [];
+// What screens show when a project has no environment (this style has none of its own now)
+export const NO_ENVIRONMENT: Environment = {
+  id: "none", name: "No environment", category: "Interior", status: "planned",
+  description: "Environments now live in Shots-AV desk reels.",
+  presets: [P("default", "Default", "#e8e4dc", "#8a8a96", "#c0b8a8", "#161618")],
+};
 export const environment = (id: string | null | undefined) => ENVIRONMENTS.find((e) => e.id === id);
 
 // Editor preset ids → blender/sets.py preset names, where they differ beyond "-" vs "_".
@@ -223,7 +79,7 @@ export const presetPid = (env: Environment, presetId: string) => PRESET_PIDS[`${
 
 // What performance.json needs for a set pick: the built set and its lighting preset.
 export function pipelineSet(envId: string, presetId: string) {
-  const e = environment(envId) ?? ENVIRONMENTS[0];
+  const e = environment(envId) ?? NO_ENVIRONMENT;
   const p = e.presets.find((x) => x.id === presetId) ?? e.presets[0];
   return { environment: e.pipelineId ?? "night_city", lighting: presetPid(e, p.id) };
 }
@@ -306,7 +162,7 @@ export const VOICES: Voice[] = [
 export const voiceById = (id: string) => VOICES.find((v) => v.id === id);
 
 // A new speaker gets the next cast member nobody plays yet, in that member's suggested voice.
-const CAST_ORDER = ["aria", "kai", "zoe", "dev", "noor", "rey", "mo"];
+const CAST_ORDER = ["matt", "cute_girl", "freya"];
 export function autoCast(taken: (string | undefined)[], speaker = "") {
   // a speaker named after a cast member ("KAI") gets that member
   const named = character(speaker.toLowerCase());

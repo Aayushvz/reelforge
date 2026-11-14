@@ -32,6 +32,47 @@ OUTFITS = {
     "overshirt": {"label": "Purple overshirt", "open": True, "bands": 0, "puff": 0.0, "shell": 0.005,
                   "tee": "cream", "collar": "shirt", "sleeve_bands": 0, "arm": 0.052},
 }
+_TEE = {"open": False, "bands": 0, "puff": 0.0, "shell": 0.006, "collar": "crew", "sleeve_bands": 0, "arm": 0.052,
+        "tee": "ink"}
+_JACKET = {"open": True, "bands": 0, "puff": 0.0, "shell": 0.009, "collar": "stand", "sleeve_bands": 0, "arm": 0.056,
+           "tee": "ink"}
+_PUFFER = {"open": True, "bands": 4, "puff": 0.011, "shell": 0.012, "collar": "stand", "sleeve_bands": 2, "arm": 0.062,
+           "tee": "ink"}
+# The former cast's wardrobe (blender/cast.py), redrawn in the hero's faceted, soft-edged style.
+OUTFITS.update({
+    "boxy_black": {**_TEE, "label": "Boxy black", "color": "#1D1D22", "shell": 0.010, "arm": 0.056},
+    "hoodie_cargos": {**OUTFITS["hoodie"], "label": "Hoodie & cargos", "color": "#56603F"},
+    "knit_vest": {**_TEE, "label": "Knit vest", "color": "#5C3B22", "shell": 0.010, "sleeves": "tee", "tee": "#E4DDCF",
+                  "collar": "vneck"},
+    "grey_sweats": {**_TEE, "label": "Grey sweats", "color": "#8D8D94", "shell": 0.011, "arm": 0.058, "collar": "hood"},
+    "track_jacket": {**_JACKET, "label": "Track jacket", "color": "#1B2A57", "accent": "#F1F1F1", "stripes": True,
+                     "tee": "cream"},
+    "puffer_vest": {**_PUFFER, "label": "Puffer vest", "color": "#141416", "sleeves": "tee", "tee": "#7E7E86",
+                    "sleeve_bands": 0, "arm": 0.054},
+    "camel_black": {**_JACKET, "label": "Camel & black", "color": "#B08A5E", "collar": "shirt", "shell": 0.006},
+    "techwear": {**_JACKET, "label": "Techwear", "color": "#2A2E28", "accent": "#A7B18C", "stripes": True},
+    "varsity": {**_JACKET, "label": "Varsity", "color": "#1C2F68", "sleeves": "accent", "accent": "#ECE5D2",
+                "collar": "rib", "tee": "cream"},
+    "cardigan": {**_JACKET, "label": "Cardigan", "color": "#6B4426", "collar": "vneck", "accent": "#C9A97A",
+                 "tee": "cream", "shell": 0.008},
+    "tee_beanie": {**_TEE, "label": "Tee & beanie", "color": "#1E2A3B", "print": "#E8902F", "hat": "beanie",
+                   "hat_color": "#E58C9A"},
+    "flannel_layers": {**_JACKET, "label": "Flannel layers", "color": "#A6372F", "collar": "shirt", "pattern": "plaid",
+                       "tee": "#3B3B41", "shell": 0.006},
+    "cropped_knit": {**_TEE, "label": "Cropped knit", "color": "#E7DECF", "shell": 0.010},
+    "blazer_mini": {**_JACKET, "label": "Blazer & mini", "color": "#4E4844", "collar": "lapel", "shell": 0.008},
+    "baby_tee": {**_TEE, "label": "Baby tee & cargos", "color": "#C27A93"},
+    "sporty_zip": {**_TEE, "label": "Sporty zip", "color": "#D96C8F", "collar": "stand", "accent": "#FFFFFF",
+                   "stripes": True, "shell": 0.008},
+    "butterfly_top": {**_TEE, "label": "Butterfly top", "color": "#8B73C4", "print": "#F3D9FF"},
+    "puffer_cream": {**_PUFFER, "label": "Cream puffer", "color": "#DCD3C0", "tee": "cream"},
+    "trench": {**_JACKET, "label": "Trench", "color": "#8C6A44", "collar": "lapel", "tee": "#D9CBB0", "shell": 0.010},
+    "cargo_set": {**_TEE, "label": "Cargo set", "color": "#4A4F2C", "collar": "stand", "accent": "#7A7F55",
+                  "shell": 0.010},
+    "sweater_beret": {**_TEE, "label": "Sweater & beret", "color": "#CDBF9E", "collar": "turtle", "shell": 0.011,
+                      "arm": 0.058, "hat": "beret", "hat_color": "#3B2A2A"},
+})
+OUTFIT_COLORS = {k: v.get("color", BRAND["purple"]) for k, v in OUTFITS.items()}  # each outfit's own colour
 HERO = {
     "outfit": {"default": "puffer", "options": list(OUTFITS)},
     "outfit_color": {"default": BRAND["purple"],
@@ -344,7 +385,9 @@ def build(**dials):
         "jacket_mid": mat("AV_JacketMid", c_mid, rough=0.78),  # seams, cuffs, hem: the roughness break
         "trim": mat("AV_JacketTrim", c_soft, rough=0.45, sheen=0.2),
         "lilac": mat("AV_Lilac", c_lilac, rough=0.4),
-        "tee": mat("AV_Tee", BRAND[OF["tee"]], rough=0.85),
+        "tee": mat("AV_Tee", BRAND.get(OF["tee"], OF["tee"]), rough=0.85),
+        "accent": mat("AV_Accent", OF.get("accent", c_soft), rough=0.6),
+        "hat": mat("AV_Hat", OF.get("hat_color", "#2A2A30"), rough=0.85, sheen=0.3),
         "ink": mat("AV_Ink", BRAND["ink"], rough=0.8),
         "metal": mat("AV_Frame", "#26262C", rough=0.3, metal=0.8),
         "phones": mat("AV_Phones", "#8E9099", rough=0.45),
@@ -714,6 +757,17 @@ def build(**dials):
                            Vector((gx - inner + 0.001, gy - 0.004, gz + 0.008))], 0.0017, coll, M["metal"], k=6,
              parent=hgeo)
 
+    if OF.get("pattern") == "plaid":  # flannel: a woven check of the body colour, its shadow and dark lines
+        nt = M["jacket"].node_tree
+        tc, mp = nt.nodes.new("ShaderNodeTexCoord"), nt.nodes.new("ShaderNodeMapping")
+        mp.inputs["Scale"].default_value = (26, 26, 26)
+        nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+        ck = nt.nodes.new("ShaderNodeTexChecker")
+        ck.inputs["Color1"].default_value = (*lin(c_body), 1)
+        ck.inputs["Color2"].default_value = (*lin(mix_hex(c_body, "#14100E", 0.55)), 1)
+        nt.links.new(mp.outputs["Vector"], ck.inputs["Vector"])
+        nt.links.new(ck.outputs["Color"], nt.nodes["Principled BSDF"].inputs["Base Color"])
+
     # --- torso: tee, jacket shell with panel seams, collar -----------------------------------------------
     PROFILE = [(0.60, 0.150, 0.108), (0.66, 0.164, 0.120), (0.78, 0.176, 0.126), (0.90, 0.174, 0.124),
                (0.955, 0.158, 0.114), (1.000, 0.118, 0.098), (1.030, 0.086, 0.084)]
@@ -793,6 +847,30 @@ def build(**dials):
                                            Vector((sx * 0.036, -0.134, 0.885))], 0.0035, coll, M["trim"], k=6))
             on_spine(rbox(f"AV_CordTip{sx}", (0.010, 0.010, 0.022), coll, M["lilac"], 0.003, (sx * 0.036, -0.134, 0.875)))
         on_spine(rbox("AV_Pocket", (0.21, 0.016, 0.085), coll, M["jacket_mid"], 0.006, (0, -0.118, 0.725)))
+    elif OF["collar"] in ("crew", "vneck", "rib"):  # tees, knits, vests: a ribbed neckline; varsity: a contrast rib
+        rib_m = M["accent"] if OF["collar"] == "rib" else M["jacket_mid"]
+        on_spine(tube("AV_NeckRib", ring(1.036, OF["shell"] + 0.004, 18, False), 0.010, coll, rib_m, k=6, closed=True,
+                      smooth=False))
+        if OF["collar"] == "vneck" and not OF["open"]:  # a V of trim down the front of a vest
+            for sx in (1, -1):
+                on_spine(tube(f"AV_V{sx}", [Vector((sx * 0.050, -0.112, 1.030)), Vector((0, -0.136, 0.930))], 0.006, coll,
+                              M["jacket_mid"], k=5))
+        if OF["collar"] == "rib":  # varsity: the rib also trims the hem
+            on_spine(tube("AV_HemRib", ring(0.612, OF["shell"] + 0.010), 0.013, coll, M["accent"], k=6,
+                          closed=not OF["open"], smooth=False))
+    elif OF["collar"] == "turtle":  # a rolled turtleneck
+        on_spine(loft("AV_Turtle", [ring(zz, OF["shell"] + g, 18, False) for zz, g in
+                                    ((1.020, 0.006), (1.060, 0.012), (1.100, 0.010), (1.118, 0.004))],
+                      coll, M["jacket"], smooth=False))
+    elif OF["collar"] == "lapel":  # blazer and trench: wide notched lapels over the tee
+        for sx in (1, -1):
+            pts = [(sx * 0.052, -0.078, 1.050), (sx * 0.124, -0.044, 1.036), (sx * 0.112, -0.120, 0.930),
+                   (sx * 0.040, -0.122, 0.800), (sx * 0.044, -0.112, 0.960)]
+            lap = on_spine(mesh(f"AV_Lapel{sx}", pts, [(0, 1, 2, 3, 4)], coll, M["jacket"], smooth=False))
+            ls = lap.modifiers.new("Solid", "SOLIDIFY")
+            ls.thickness = 0.009
+            soften(lap, 0.002, 1, 24)
+        on_spine(tube("AV_CollarBand", ring(1.040, 0.012), 0.012, coll, M["jacket"], k=6, smooth=False))
     else:  # overshirt: two collar points, buttons, a chest pocket
         for sx in (1, -1):
             pts = [(sx * 0.050, -0.070, 1.062), (sx * 0.118, -0.020, 1.040), (sx * 0.098, -0.104, 0.985),
@@ -808,6 +886,10 @@ def build(**dials):
             on_spine(ball(f"AV_Button{i}", (0.006, 0.003, 0.006), coll, M["lilac"],
                           sup(a, b, o + 0.045, 0.93 - 0.075 * i) + Vector((0, -0.008, 0)), segs=12))
         on_spine(rbox("AV_ChestPocket", (0.058, 0.006, 0.052), coll, M["jacket_mid"], 0.003, (0.094, -0.124, 0.905)))
+    if OF.get("print"):  # a printed graphic on the chest of a tee
+        a_, b_ = half_axes(0.86, OF["shell"])
+        on_spine(rbox("AV_Print", (0.120, 0.004, 0.080), coll, mat("AV_PrintInk", OF["print"], rough=0.7), 0.010,
+                      (0.0, -(b_ + 0.012) + 0.010, 0.860)))
     if D["chest_mark"]:  # optional slash-and-dot mark in lilac, on the wearer's left chest
         slash = on_spine(rbox("AV_MarkSlash", (0.007, 0.004, 0.030), coll, M["lilac"], 0.002, (0.100, -0.131, 0.905)))
         slash.rotation_euler = (0.05, -0.45, -0.25)
@@ -835,6 +917,27 @@ def build(**dials):
             rbox(f"AV_PhonePad{sx}", (0.012, 0.058, 0.068), coll, M["phones_dark"], 0.006, (sx * (RX + 0.001), 0.012, -0.020),
                  parent=hgeo)
 
+    # --- hats (Tee & beanie, Sweater & beret): faceted, over the hair, in head space ------------------------
+    if OF.get("hat") == "beanie":  # a knit dome down to the brow line, with a folded cuff; the fringe shows below
+        g, tmax = 0.016, math.radians(72)
+        for o in [o for o in coll.objects if o.name.startswith("AV_Hair")]:  # the beanie replaces the hair it covers
+            bpy.data.objects.remove(o, do_unlink=True)
+
+        def dome_ring(t, grow, k=24):
+            return [Vector(((RX + grow) * math.sin(t) * math.cos(2 * math.pi * j / k),
+                            (RY + grow) * math.sin(t) * math.sin(2 * math.pi * j / k) + 0.006,
+                            (RZT + grow + 0.045 * math.cos(t) ** 2) * math.cos(t))) for j in range(k)]  # a taller crown
+        loft("AV_Beanie", [dome_ring(tmax * i / 7 + 0.04, g) for i in range(8)], coll, M["hat"], caps=(True, False),
+             smooth=False, parent=hgeo)
+        loft("AV_BeanieCuff", [dome_ring(tmax - 0.16, g + 0.010), dome_ring(tmax + 0.02, g + 0.010)], coll, M["hat"],
+             caps=(False, False), smooth=False, parent=hgeo)
+    elif OF.get("hat") == "beret":  # a flat felt disc tipped to one side, with a little stalk
+        beret = ball("AV_Beret", (RX + 0.035, RY + 0.030, 0.060), coll, M["hat"], (0.022, 0.012, RZT + 0.002), ico=2,
+                     smooth=False, parent=hgeo)
+        beret.rotation_euler = (0.10, -0.22, 0.0)
+        tube("AV_BeretStalk", [Vector((0.03, 0.01, RZT + 0.056)), Vector((0.032, 0.01, RZT + 0.072))], 0.005, coll,
+             M["hat"], k=6, parent=hgeo)
+
     # --- arms and fingered hands: every pose is solved here and stored as driver tables -----------------
     def sleeve(name, length, r0, r1, bands, cuff):
         k, rings = 10, []
@@ -851,9 +954,15 @@ def build(**dials):
             rings.append(circ(-s * body_len, r0 + (r1 - r0) * s + puff))
         if not cuff:
             rings.append(circ(-length - 0.4 * r1, 0.55 * r1))
-        o = loft(name, rings, coll, M["jacket"], smooth=False)
+        sleeve_m = {"tee": M["tee"], "accent": M["accent"]}.get(OF.get("sleeves", "jacket"), M["jacket"])
+        o = loft(name, rings, coll, sleeve_m, smooth=False)
         soften(o, 0.003, 1, 24)
         extra = []
+        if OF.get("stripes"):  # two stripes down the top of the sleeve (track and sporty jackets)
+            for dx in (-0.007, 0.007):
+                extra.append(tube(f"{name}Stripe{dx > 0:d}", [Vector((dx, 0.0, r0 + 0.002)),
+                                                              Vector((dx, -body_len, r1 + 0.002))],
+                                  0.0035, coll, M["accent"], k=5, smooth=False))
         if bands:
             for i in range(2, steps, 2):
                 s = i / steps

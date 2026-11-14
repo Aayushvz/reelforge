@@ -92,9 +92,9 @@ def room_blend(room_id: str) -> Path:
 
 
 def build_assets() -> None:
-    """Prebuild each outfit with the default skin and hair (any other pick is built on demand by ensure_hero())
-    and the four buddies."""
-    for outfit in hero_tables()["OUTFITS"]:
+    """Prebuild the three brand outfits with the default skin and hair (any other outfit or pick is built on demand
+    by ensure_hero()), the four buddies and the rooms."""
+    for outfit in ("puffer", "hoodie", "overshirt"):
         ensure_hero({"outfit": outfit})
     for bid in buddy_tables()["BUDDIES"]:
         run_blender(BUILD_SCRIPT, [str(buddy_blend(f"buddy_{bid}")), "buddy", bid])
@@ -337,11 +337,12 @@ def catalog() -> dict:
              "buddies": {f"buddy_{k}": buddy_blend(f"buddy_{k}").exists() for k in b["BUDDIES"]},
              "rooms": {k: room_blend(k).exists() for k in r["ROOMS"]}}
     return {
-        "hero": hero, "skins": h["SKINS"], "outfits": {k: v["label"] for k, v in h["OUTFITS"].items()},
+        "hero": hero, "skins": h["SKINS"], "outfits": {k: v["label"] for k, v in h["OUTFITS"].items()}, "outfitColors": h["OUTFIT_COLORS"],
         "brand": h["BRAND"],
         "buddies": [{"model": f"buddy_{k}", "label": v["label"], "readsAs": v["reads_as"], "shell": v["shell"],
                      "glow": v["glow"], "signature": v["signature"]} for k, v in b["BUDDIES"].items()],
         "rooms": [{"id": k, "label": v["label"], "tone": v["tone"], "look": v["look"], "gamer": bool(v.get("gamer")),
+                   "classic": bool(v.get("legacy") or v.get("imported")),
                    "pano": _pano(k), "spots": r.get("VIEW_SPOTS", {}).get(k, [])} for k, v in r["ROOMS"].items()],
         "angles": [{"id": k, "role": a["role"], "label": a["label"]} for k, a in ANGLES.items()],
         "actions": list(acting.CLIPS), "built": built,

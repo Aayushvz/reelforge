@@ -1,7 +1,8 @@
 // Environment studio: browse the ten sets, compare lighting presets, preview full-screen, save setups.
 import { useMemo, useState } from "react";
 import { Search, Maximize2, Save, CheckCheck, X } from "lucide-react";
-import { ENVIRONMENTS, MOOD_COLORS, environment } from "@/data/catalog";
+import { Link } from "react-router-dom";
+import { ENVIRONMENTS, MOOD_COLORS, NO_ENVIRONMENT, environment } from "@/data/catalog";
 import { MOODS } from "@/lib/types";
 import { EnvThumb } from "@/components/Thumbs";
 import { EnvTile, FavButton } from "@/components/pickers";
@@ -17,8 +18,8 @@ import { createPortal } from "react-dom";
 export function EnvironmentsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
-  const [sel, setSel] = useState(ENVIRONMENTS[0].id);
-  const [preset, setPreset] = useState(ENVIRONMENTS[0].presets[0].id);
+  const [sel, setSel] = useState((ENVIRONMENTS[0] ?? NO_ENVIRONMENT).id);
+  const [preset, setPreset] = useState((ENVIRONMENTS[0] ?? NO_ENVIRONMENT).presets[0].id);
   const [full, setFull] = useState(false);
   const favs = useLibrary((s) => s.lib.favorites) ?? NONE;
   const savedLighting = useLibrary((s) => s.lib.lighting) ?? NONE;
@@ -32,6 +33,13 @@ export function EnvironmentsPage() {
   const list = useMemo(() => ENVIRONMENTS.filter((e) =>
     (cat === "All" || e.category === cat || (cat === "Favourites" && favs.includes(`env:${e.id}`))) &&
     (e.name + e.description).toLowerCase().includes(q.toLowerCase())), [q, cat, favs]);
+  if (!ENVIRONMENTS.length) return (
+    <div className="page"><div className="page-inner">
+      <div className="page-head"><div className="grow"><h1 className="h1">Environments</h1>
+        <div className="muted">The ten sets and the three imported rooms moved to Shots-AV, where they are backdrops behind the desk (Classic sets).</div></div></div>
+      <Link className="btn" to="/shots-av">Open Shots-AV</Link>
+    </div></div>
+  );
   const env = environment(sel)!;
   const p = env.presets.find((x) => x.id === preset) ?? env.presets[0];
 

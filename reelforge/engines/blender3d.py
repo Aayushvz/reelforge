@@ -27,13 +27,15 @@ BLENDER_DIR = REPO / "blender"
 
 
 def imported() -> dict:
-    """Third-party characters/sets wired by import_character.py / import_set.py (blender/imported.py)."""
+    """Third-party characters wired by import_character.py (blender/imported.py). Its SETS (the imported rooms) are
+    Shots-AV backdrops now (blender/shotsav/imported_rooms.py)."""
     return runpy.run_path(str(BLENDER_DIR / "imported.py"))
 
 
 def cast_outfits() -> dict[str, int]:
-    cast = {k: len(v.get("outfits", [{}])) for k, v in runpy.run_path(str(BLENDER_DIR / "cast.py"))["CAST"].items()}
-    return cast | {k: len(v.get("outfits", [{}])) for k, v in imported()["CHARACTERS"].items()}
+    """The cast of this style: the imported, full-detail models (Matt, Freya, Mina). The old procedural cast is gone;
+    its wardrobe lives on as Shots-AV hero outfits."""
+    return {k: len(v.get("outfits", [{}])) for k, v in imported()["CHARACTERS"].items()}
 
 
 def cast_ids() -> list[str]:
@@ -41,8 +43,9 @@ def cast_ids() -> list[str]:
 
 
 def set_presets() -> dict[str, list[str]]:
-    sets = {k: list(v["presets"]) for k, v in runpy.run_path(str(BLENDER_DIR / "sets.py"))["SETS"].items()}
-    return sets | {k: list(v["presets"]) for k, v in imported()["SETS"].items()}
+    """This style has no environments of its own: the ten sets and the imported rooms moved to Shots-AV
+    ("Classic sets": blender/shotsav/legacy_sets.py and imported_rooms.py)."""
+    return {}
 
 
 def _out_name(cid: str, o: int) -> str:
@@ -56,18 +59,8 @@ def build_assets() -> None:
         if spec and not (imp["SRC_ROOT"] / spec["src"]).exists():
             print(f"skip {cid}: source not found under {imp['SRC_ROOT']} (set REELFORGE_IMPORTS)")
             continue
-        script = "import_character.py" if spec else "build_character.py"
         for o in range(n):
-            run_blender(BLENDER_DIR / script, [str(ASSETS / _out_name(cid, o)), cid, str(o)])
-    for sid, presets in set_presets().items():
-        spec = imp["SETS"].get(sid)
-        if spec and not (imp["SRC_ROOT"] / spec["src"]).exists():
-            print(f"skip {sid}: source not found under {imp['SRC_ROOT']} (set REELFORGE_IMPORTS)")
-            continue
-        script = "import_set.py" if spec else "build_set.py"
-        for preset in presets:
-            run_blender(BLENDER_DIR / script, [str(ASSETS / f"{sid}__{preset}.blend"), sid, preset])
-        shutil.copyfile(ASSETS / f"{sid}__{presets[0]}.blend", ASSETS / f"{sid}.blend")  # default lighting
+            run_blender(BLENDER_DIR / "import_character.py", [str(ASSETS / _out_name(cid, o)), cid, str(o)])
 
 
 def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path,
@@ -77,6 +70,8 @@ def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path
     missing = [b for b in [plan["environment_blend"]] + [c["blend"] for c in plan["characters"]]
                if not Path(b).exists()]
     if missing:
+        if not set_presets():
+            raise SystemExit(f"this style has no environments now (they moved to Shots-AV desk reels); missing {missing}")
         raise SystemExit(f"missing assets {missing}: run `reelforge build-assets` "
                          f"(cast: {', '.join(cast_ids())}; sets: {set_presets()})")
     plan_path = out / "render_plan.json"
