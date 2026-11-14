@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Tooltip } from "./Overlay";
 
@@ -15,11 +15,16 @@ export function IconButton({ label, kbd, onClick, children, size, on, disabled, 
   );
 }
 
-export function Segmented<T extends string | number>({ value, options, onChange, full, size }: {
+// The text label of the FieldRow a control sits in: controls use it as their accessible name when given none
+const RowLabel = createContext<string | undefined>(undefined);
+
+export function Segmented<T extends string | number>({ value, options, onChange, full, size, ariaLabel }: {
   value: T; options: { value: T; label: ReactNode; title?: string }[]; onChange: (v: T) => void; full?: boolean; size?: "sm";
+  ariaLabel?: string;
 }) {
+  const rowLabel = useContext(RowLabel);
   return (
-    <div className={`seg${full ? " full" : ""}`} role="group" style={size === "sm" ? { padding: 1 } : undefined}>
+    <div className={`seg${full ? " full" : ""}`} role="group" aria-label={ariaLabel ?? rowLabel} style={size === "sm" ? { padding: 1 } : undefined}>
       {options.map((o) => (
         <button key={String(o.value)} type="button" aria-pressed={o.value === value} title={o.title} onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
@@ -30,8 +35,9 @@ export function Segmented<T extends string | number>({ value, options, onChange,
 export function Select<T extends string>({ value, options, onChange, size, ariaLabel, disabled }: {
   value: T; options: { value: T; label: string; disabled?: boolean }[]; onChange: (v: T) => void; size?: "sm"; ariaLabel?: string; disabled?: boolean;
 }) {
+  const rowLabel = useContext(RowLabel);
   return (
-    <select className={`select${size ? ` ${size}` : ""}`} value={value} aria-label={ariaLabel} disabled={disabled} onChange={(e) => onChange(e.target.value as T)}>
+    <select className={`select${size ? ` ${size}` : ""}`} value={value} aria-label={ariaLabel ?? rowLabel} disabled={disabled} onChange={(e) => onChange(e.target.value as T)}>
       {options.map((o) => <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>)}
     </select>
   );
@@ -68,7 +74,11 @@ export function ColorInput({ value, onChange, label }: { value: string; onChange
 }
 
 export function FieldRow({ label, children }: { label: ReactNode; children: ReactNode }) {
-  return <div className="field-row"><span className="label">{label}</span><div style={{ minWidth: 0 }}>{children}</div></div>;
+  return (
+    <div className="field-row"><span className="label">{label}</span>
+      <RowLabel.Provider value={typeof label === "string" ? label : undefined}><div style={{ minWidth: 0 }}>{children}</div></RowLabel.Provider>
+    </div>
+  );
 }
 
 export function Section({ title, children, defaultOpen = true, right }: { title: ReactNode; children: ReactNode; defaultOpen?: boolean; right?: ReactNode }) {

@@ -37,7 +37,7 @@
 .grid-cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .grid-cards-sm { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s-3); }
 .tabs { display: flex; gap: var(--s-5); border-bottom: 1px solid var(--line); margin-bottom: var(--s-4); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.tab { height: 36px; padding: 0; border: 0; background: transparent; color: var(--text-2); font-size: var(--fs-13); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.tab { height: 36px; min-width: 24px; padding: 0; border: 0; background: transparent; color: var(--text-2); font-size: var(--fs-13); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .tab:hover { color: var(--text-1); }
 .tab[aria-selected="true"] { color: var(--text-1); border-bottom-color: var(--accent); }
 .tab .count { color: var(--text-3); font-size: var(--fs-12); font-family: var(--font-mono); }

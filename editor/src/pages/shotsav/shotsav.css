@@ -41,7 +41,7 @@
 .av-line.me { margin-left: var(--s-5); background: var(--bg-2); }
 .av-line.current { border-color: var(--line-focus); }
 .av-line:focus-within { border-color: var(--accent-line); }
-.av-who { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 11px; border: 1px solid var(--line-strong);
+.av-who { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 12px; border: 1px solid var(--line-strong);
   background: transparent; color: var(--text-2); font-size: var(--fs-12); font-weight: 600; cursor: pointer; }
 .av-who:hover { color: var(--text-1); border-color: var(--line-focus); }
 .av-who .dot, .av-card-name .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--who); }
@@ -93,7 +93,7 @@
 
 /* ---------- look ---------- */
 .av-swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.av-swatch { width: 22px; height: 22px; border-radius: var(--r-sm); border: 1px solid var(--line-strong); cursor: pointer; padding: 0; }
+.av-swatch { width: 24px; height: 24px; border-radius: var(--r-sm); border: 1px solid var(--line-strong); cursor: pointer; padding: 0; }
 .av-swatch.round { border-radius: 50%; }
 .av-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent-line); }
 .av-cards { display: grid; gap: 6px; }

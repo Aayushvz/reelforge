@@ -87,7 +87,7 @@ function VoiceKey({ onChange }: { onChange: () => void }) {
       </form>
       <div className="row meta" style={{ gap: 12 }}>
         <span>Model <span className="mono">{s?.elevenlabsModel ?? "eleven_v4"}</span> (falls back to eleven_v3)</span>
-        <a className="row" style={{ gap: 4 }} href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noreferrer"><ExternalLink size={12} />Open ElevenLabs API keys</a>
+        <a className="row" style={{ gap: 4, minHeight: 24 }} href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noreferrer"><ExternalLink size={12} />Open ElevenLabs API keys</a>
       </div>
     </section>
   );

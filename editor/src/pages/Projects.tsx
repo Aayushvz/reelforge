@@ -91,7 +91,7 @@ export function ProjectsPage() {
           {TABS.map((t) => <button key={t.id} role="tab" className="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>{t.label}{list && <span className="count">{counts[t.id]}</span>}</button>)}
         </div>
         <div className="toolbar">
-          <div className="search"><Search size={14} /><input className="input" placeholder="Search projects" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+          <div className="search"><Search size={14} /><input className="input" aria-label="Search projects" placeholder="Search projects" value={q} onChange={(e) => setQ(e.target.value)} /></div>
           <div className="grow" />
           <div style={{ width: 150 }}><Select value={sort} onChange={setSort} ariaLabel="Sort" options={[{ value: "updated", label: "Last edited" }, { value: "name", label: "Name" }]} /></div>
           <Segmented value={view} onChange={setView} options={[{ value: "grid", label: <LayoutGrid size={14} />, title: "Grid" }, { value: "list", label: <List size={14} />, title: "List" }]} />

@@ -70,6 +70,7 @@ export function CreatePage() {
 
   return (
     <div className="create">
+      <h1 className="sr-only">Create a reel</h1>
       <header className="create-bar">
         <input className="title-input" value={editor.name} aria-label="Project name" spellCheck={false}
           onChange={(e) => setEditor((ed) => ({ ...ed, name: e.target.value }))} onBlur={() => void saveNow()} />

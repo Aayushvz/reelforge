@@ -255,7 +255,8 @@ export function Timeline({ fps, resolveSrc, onRebuild, canRebuild, onShotAction 
               <div className={`tl-lane${track.locked ? " locked" : ""}`} style={{ width }}>
                 {tl.clips.filter((c) => c.trackId === track.id).map((c) => (
                   <ClipView key={c.id} clip={c} track={track} pps={pps} selected={selection.includes(c.id)} shotNo={shotIndex.get(c.id)} resolveSrc={resolveSrc}
-                    onPointerDown={startGesture} onContextMenu={clipMenu} onDoubleClick={() => seek(c.start)} />
+                    onPointerDown={startGesture} onContextMenu={clipMenu} onDoubleClick={() => seek(c.start)}
+                    onSelect={() => { select([c.id]); seek(c.start); }} />
                 ))}
               </div>
             </div>
@@ -298,10 +299,10 @@ function TrackHeader({ track, width, onChange, onRemove }: { track: Track; width
   );
 }
 
-function ClipView({ clip, track, pps, selected, shotNo, resolveSrc, onPointerDown, onContextMenu, onDoubleClick }: {
+function ClipView({ clip, track, pps, selected, shotNo, resolveSrc, onPointerDown, onContextMenu, onDoubleClick, onSelect }: {
   clip: Clip; track: Track; pps: number; selected: boolean; shotNo?: number; resolveSrc: (s: string) => string;
   onPointerDown: (e: React.PointerEvent, c: Clip, mode: "move" | "trim-l" | "trim-r") => void;
-  onContextMenu: (e: React.MouseEvent, c: Clip) => void; onDoubleClick: () => void;
+  onContextMenu: (e: React.MouseEvent, c: Clip) => void; onDoubleClick: () => void; onSelect: () => void;
 }) {
   const w = Math.max(2, clip.duration * pps);
   const color = track.kind === "mood" && clip.mood ? MOOD_COLORS[clip.mood] : T.TRACK_COLOR[track.kind];
@@ -310,7 +311,8 @@ function ClipView({ clip, track, pps, selected, shotNo, resolveSrc, onPointerDow
   if (track.kind === "shots" && clip.shotKind) label = `${shotNo ?? ""} · ${SHOT_ABBR[clip.shotKind]} ${clip.lens ?? ""}mm`;
   if (track.kind === "animation") label = `${clip.emotion ?? clip.label} ${clip.intensity !== undefined ? clip.intensity.toFixed(1) : ""}`;
   return (
-    <div className={`clip k-${track.kind}${selected ? " sel" : ""}${clip.status === "estimated" ? " est" : ""}`} role="button" aria-label={label} aria-pressed={selected}
+    <div className={`clip k-${track.kind}${selected ? " sel" : ""}${clip.status === "estimated" ? " est" : ""}`} role="button" tabIndex={0} aria-label={label} aria-pressed={selected}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
       style={{ left: clip.start * pps, width: w, ["--c" as string]: color }}
       onPointerDown={(e) => onPointerDown(e, clip, "move")} onContextMenu={(e) => onContextMenu(e, clip)} onDoubleClick={onDoubleClick}>
       {audio && <Waveform url={resolveSrc(clip.src!)} offset={clip.offset ?? 0} duration={clip.duration} width={w} />}

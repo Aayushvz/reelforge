@@ -189,7 +189,7 @@ function CastDialog({ c, outfit, dirty, onClose }: { c: Character; outfit: Outfi
     <Dialog title={`Cast ${c.name}`} onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!id || !sp} onClick={cast}>Cast as {sp}</button></>}>
       {!id || !speakers.length ? <div className="muted">Open a reel on Create first. Casting is saved per project.</div> : <>
         <div className="field"><span className="label">Project</span><span>{editor.name}</span></div>
-        <div className="field"><span className="label">Speaker</span><Select value={sp} onChange={setSp} options={speakers.map((s) => ({ value: s, label: s + (editor.cast[s]?.characterId ? ` (now ${character(editor.cast[s]?.characterId)?.name})` : "") }))} /></div>
+        <div className="field"><span className="label">Speaker</span><Select ariaLabel="Speaker" value={sp} onChange={setSp} options={speakers.map((s) => ({ value: s, label: s + (editor.cast[s]?.characterId ? ` (now ${character(editor.cast[s]?.characterId)?.name})` : "") }))} /></div>
         <div className="hint">Outfit: {outfit.name}{dirty ? " with your changes, saved as a project variant" : ""}. This only changes this project.</div>
       </>}
     </Dialog>

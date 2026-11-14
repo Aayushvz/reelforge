@@ -147,6 +147,8 @@ function MediaBin({ media, resolveSrc, onImport }: Props) {
             const kind = kindOf(m);
             return (
               <div key={m} className="media-item" draggable title="Drag onto the timeline, or double-click to add at the playhead"
+                role="button" tabIndex={0} aria-label={`${m}: add at the playhead`}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); addAtPlayhead(path); } }}
                 onDragStart={(e) => e.dataTransfer.setData("application/x-reelforge-media", JSON.stringify({ path, kind, duration: durs[path] ?? 5, name: m }))}
                 onDoubleClick={() => addAtPlayhead(path)}>
                 <div className="media-thumb">
