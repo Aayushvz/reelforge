@@ -185,7 +185,7 @@ SETS = {
 CHARACTERS = {
     # CC4 realistic male, 140 facial morphs: the full ARKit set maps 1:1. Jaw opens with bone + morph.
     "matt": {"name": "Matt", "gender": "male", "src": "extracted/Blender/Blender/Matt.Fbx",
-             "rig": "Armature", "body_mesh": "CC_Base_Body", "delete": ["Cube"],
+             "rig": "Armature", "body_mesh": "CC_Base_Body", "delete": ["Cube", "Boxers"],
              "bones": {"chest": "CC_Base_Spine02", "head": "CC_Base_Head", "head_def": "CC_Base_Head",
                        "upperarm_l": ("CC_Base_L_Upperarm", "CC_Base_L_Forearm"),
                        "forearm_l": ("CC_Base_L_Forearm", "CC_Base_L_Hand"),
@@ -193,7 +193,7 @@ CHARACTERS = {
                        "forearm_r": ("CC_Base_R_Forearm", "CC_Base_R_Hand")},
              "eyes": {"mode": "rot", "bones": ("CC_Base_L_Eye", "CC_Base_R_Eye")},
              "keys": CC4, "bone_face": {"jawOpen": [("CC_Base_JawRoot", "rot", X, 22)]},
-             "outfits": [{"hide": ["Boxers"]}]},  # boxers poke through the jeans
+             "outfits": [{}]},  # the boxers are deleted: they poke through the jeans and no outfit shows them
     # Rigify control rig ("rig") drives the Unity export skeleton the meshes are bound to. Bone-based face.
     "freya": {"name": "Freya", "gender": "female", "src": "extracted/Blend/Blend/Freya.blend",
               "rig": "rig", "keep_armatures": ["Unity_Rig"], "delete_armatures": ["metarig"], "body_mesh": "Body",

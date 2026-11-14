@@ -216,3 +216,18 @@ the 13 environments live on inside Shots-AV. Matt, Freya and Mina (imported) sta
 - **Blender 3D style now:** cast = Matt, Freya, Mina; no environments of its own (the editor's Environments page and
   Set panel point to Shots-AV). `reelforge bench` and `samples/imported-test` need an environment again before they
   can render.
+
+## 11. Matt, Freya and Mina made to look alive (2026-11-15)
+- `blender/liveliness.py` is a shading pass that sorts materials by name. Its changes:
+  - Skin gets subsurface at real scale (about 1 cm, red-heavy), softer specular and a little more colour.
+  - Corneas become clear and glossy (transparent shader plus a sharp reflection), so the eyes catch light.
+  - Eyes, teeth and tongue look wetter.
+  - Hair keeps its own colour: no sheen, highlights capped. Sheen and gloss turned the hair grey or blond.
+  - The pass is idempotent: each material carries an `enlivened` flag.
+- `blender/finish_character.py` is a cleanup-only tidy (CLAUDE.md: no decimation, no texture resizing, no shape-key pruning):
+  - deletes the spec's `delete` meshes (Matt's boxers, which no outfit shows);
+  - merges byte-identical packed textures;
+  - runs the shading pass and purges leftover data.
+  - `import_character.py` calls it before saving. To redo a built file: `blender -b assets/build/<id>.blend -P blender/finish_character.py -- <id>`.
+- `blender/preview_character.py` has new portrait lighting (warm key, fill, two rims, a small eye light) and an `enliven=1` flag for comparing before and after.
+- Sizes: Mina went from 315 to 295 MB (5 duplicate mouth maps). Matt stays at 1.6 GB: that is his 900k-vertex body times 149 face shapes, which CLAUDE.md protects. Freya stays at 64 MB; nothing in her file was unused.
