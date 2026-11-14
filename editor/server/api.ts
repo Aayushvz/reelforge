@@ -253,7 +253,9 @@ function saveSettings(body: { elevenlabsKey?: string | null; elevenlabsModel?: s
 function pipelineEnv(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env, ELEVENLABS_MODEL: elevenModel(), PYTHONIOENCODING: "utf-8",
     // piped Python output is block-buffered: without this the Render page sees no live progress
-    PYTHONUNBUFFERED: "1" };
+    PYTHONUNBUFFERED: "1",
+    // run this checkout's pipeline even when the venv's editable install points at another worktree
+    PYTHONPATH: [REPO, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter) };
   const blender = blenderPath();
   if (blender) env.REELFORGE_BLENDER = blender;
   const key = elevenKey();
@@ -351,11 +353,35 @@ function startJob(id: string, stage: "stills" | "full", draft: boolean, mode: "r
       history: [...(Array.isArray(ed.history) ? ed.history : []),
         { at: new Date(job.startedAt).toISOString(), stage, draft, status: job.status, ms: job.endedAt! - job.startedAt }].slice(-50),
     }));
-    broadcast(job, "status", jobView(job));
-    for (const res of job.listeners) res.end();
-    job.listeners.clear();
+    const finish = () => {
+      broadcast(job, "status", jobView(job));
+      for (const res of job.listeners) res.end();
+      job.listeners.clear();
+    };
+    // a finished full render gets a drafted cover (out/cover.json) before the job reports done;
+    // best effort: a failed draft never fails the render
+    if (job.status === "done" && mode === "run" && stage === "full") {
+      draftCover(dir).then(() => job.log.push("Cover drafted: out/cover.json"),
+        (e: Error) => job.log.push(`Cover draft skipped: ${e.message}`)).finally(finish);
+    } else finish();
   });
   return job;
+}
+
+function draftCover(dir: string) {
+  return reelforgeJson<Record<string, unknown>>(["cover", dir]);
+}
+
+async function getCover(id: string) {
+  const dir = projectDir(id);
+  const file = path.join(dir, "out", "cover.json");
+  const draft = readJsonFile<Record<string, unknown>>(file);
+  // redraft when a newer render replaced the video the draft was made for
+  const video = draft && typeof draft.video === "string" ? path.join(dir, draft.video) : null;
+  if (draft && video && fs.existsSync(video) && fs.statSync(video).mtimeMs <= fs.statSync(file).mtimeMs) return draft;
+  const out = path.join(dir, "out");
+  if (!fs.existsSync(out) || !fs.readdirSync(out).some((f) => /^final_.*\.mp4$/.test(f))) throw new HttpError(404, "No final video yet");
+  return draftCover(dir);
 }
 
 // ---------- Shots-AV: catalog, shot plan, preview stills, asset builds, thumbnails ----------
@@ -717,6 +743,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       const body = await readJson<{ shot?: number; final?: boolean }>(req);
       return send(res, 200, await shotsavPreview(id, Number(body.shot), Boolean(body.final)));
     }
+    if (id && action === "cover" && method === "GET") return send(res, 200, await getCover(id));
     if (id && action === "reveal" && method === "POST") return send(res, 200, revealFolder(id));
     if (id && action === "voices") {
       if (method === "GET") return send(res, 200, voiceStatus(id));

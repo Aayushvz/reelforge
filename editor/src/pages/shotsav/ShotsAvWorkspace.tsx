@@ -21,6 +21,7 @@ import { ColorInput, FieldRow, IconButton, Section, Segmented, Select, Slider, S
 import { toast } from "@/stores/ui";
 import { useProject } from "@/stores/project";
 import { CaptionPlacer, RoomFramePicker } from "./Placers";
+import { CoverCard } from "@/components/CoverCard";
 import "./shotsav.css";
 
 type Tab = "script" | "stage" | "look";
@@ -484,6 +485,7 @@ export function ShotsAvWorkspace() {
                 <span className="mono meta grow ellipsis">{data.folder}/out/{live.job.mode === "animatic" ? "animatic.mp4" : finals[0]}</span>
                 <button className="btn btn-sm" onClick={() => void api.reveal(id).catch((e) => toast((e as Error).message, "err"))}><FolderOpen size={12} />Open folder</button></div>
             ) : <div className="row"><Badge>Cancelled</Badge></div>}
+            {live.job.status === "done" && live.job.mode !== "animatic" && live.job.stage === "full" && <CoverCard projectId={id} version={live.job.endedAt} />}
           </div>
         )}
 

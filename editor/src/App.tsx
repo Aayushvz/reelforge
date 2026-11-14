@@ -21,6 +21,7 @@ import { SettingsPage } from "./pages/Settings";
 import { NotFound } from "./pages/NotFound";
 import { ShotsAvListPage } from "./pages/shotsav/ShotsAvList";
 import { ShotsAvWorkspace } from "./pages/shotsav/ShotsAvWorkspace";
+import { ThumbnailGenerator } from "./pages/thumbnails/ThumbnailGenerator";
 
 export function App() {
   const loc = useLocation();
@@ -47,6 +48,7 @@ export function App() {
           <Route path="/" element={<CreatePage />} />
           <Route path="/shots-av" element={<ShotsAvListPage />} />
           <Route path="/shots-av/:id" element={<ShotsAvWorkspace />} />
+          <Route path="/thumbnails" element={<ThumbnailGenerator />} />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:id/render" element={<RenderPage />} />
           <Route path="/projects/:id/export" element={<ExportPage />} />

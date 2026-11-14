@@ -1,4 +1,5 @@
 // Generation workspace: readiness checks, the stills → approve → full render flow, live job status.
+import { CoverCard } from "@/components/CoverCard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -249,6 +250,7 @@ export function RenderPage() {
               <h2 className="h3">Result</h2>
               {final ? <>
                 <video className="result-video" src={fileUrl(id, `out/${final}`, live.job?.endedAt)} controls preload="metadata" />
+                <CoverCard projectId={id} version={live.job?.endedAt ?? final} />
                 <div className="col" style={{ gap: 6 }}>
                   <Link className="btn btn-primary" to={`/editor/${encodeURIComponent(id)}`}><Film size={14} />Edit video</Link>
                   <Link className="btn" to={`/projects/${encodeURIComponent(id)}/export`}><Upload size={14} />Export</Link>

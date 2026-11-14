@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import {
   Clapperboard, FolderOpen, Film, Library, Users, Mountain, Captions, AudioLines, Settings, Plus,
-  PanelLeftClose, PanelLeftOpen, FilePlus2, Scissors, MessagesSquare,
+  PanelLeftClose, PanelLeftOpen, FilePlus2, Scissors, MessagesSquare, ImagePlay,
 } from "lucide-react";
 import { useUI } from "@/stores/ui";
 import { pipelineReady, useSystem } from "@/stores/system";
@@ -24,6 +24,7 @@ const NAV = [
   { to: "/shots-av", label: "Shots-AV Animation", icon: MessagesSquare },
   { to: "/projects", label: "Projects", icon: FolderOpen },
   { to: "/editor", label: "Editor", icon: Film },
+  { to: "/thumbnails", label: "Thumbnail Generator", icon: ImagePlay },
 ];
 const ASSETS = [
   { to: "/library", label: "Asset Library", icon: Library },
