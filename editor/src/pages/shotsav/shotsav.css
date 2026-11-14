@@ -99,6 +99,15 @@
 .av-cards { display: grid; gap: 6px; }
 .av-cards.two { grid-template-columns: 1fr 1fr; }
 .av-cards.three { grid-template-columns: repeat(3, 1fr); }
+.av-cards.four { grid-template-columns: repeat(4, 1fr); }
+.av-cards.four .av-card-name { padding: 5px 6px; font-size: var(--fs-11, 11px); }
+.av-card:disabled { opacity: 0.4; cursor: not-allowed; }
+.av-card:disabled:hover { border-color: var(--line-strong); color: var(--text-2); }
+.av-outfits { max-height: 360px; overflow-y: auto; padding-right: 2px; }
+.av-outfits .av-card-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.av-outfits .av-card-name .dot { display: inline-block; margin-right: 5px; vertical-align: middle; }
+.av-frame-tag { position: absolute; top: 8px; left: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px;
+  border-radius: var(--r-md); background: rgba(0, 0, 0, 0.6); color: #fff; font-size: var(--fs-12); }
 .av-card { display: flex; flex-direction: column; padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--bg-2); color: var(--text-2); overflow: hidden; cursor: pointer; text-align: left; }
 .av-card:hover { border-color: var(--line-focus); color: var(--text-1); }
 .av-card[aria-pressed="true"] { border-color: var(--accent-line); color: var(--text-1); box-shadow: 0 0 0 1px var(--accent-line); }

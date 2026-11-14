@@ -30,6 +30,7 @@ export const api = {
   reveal: (id: string) => req<{ ok: true; path: string }>("POST", `${P(id)}/reveal`),
   avCatalog: () => req<AvCatalog>("GET", "/api/shotsav/catalog"),
   avPlan: (id: string) => req<AvPlan>("POST", `${P(id)}/shotsav/plan`),
+  avLook: (id: string) => req<{ still: string; at: number }>("POST", `${P(id)}/shotsav/look`, {}),
   avPreview: (id: string, shot: number, final = false) => req<{ still: string; at: number }>("POST", `${P(id)}/shotsav/preview`, { shot, final }),
   avBuildAssets: () => req<Job>("POST", "/api/shotsav/build-assets"),
   avAssetJob: () => req<Job | null>("GET", "/api/shotsav/build-assets"),

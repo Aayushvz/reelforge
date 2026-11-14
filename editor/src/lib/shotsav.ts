@@ -18,7 +18,7 @@ export type AvCatalog = {
     spots?: { pan?: number; height?: number; turn?: number }[] }[];
   angles?: { id: string; role: "hero" | "buddy" | "wide"; label: string }[];
   actions: string[];
-  built: { hero: boolean; buddies: Record<string, boolean>; rooms: Record<string, boolean> }; allBuilt: boolean;
+  built: { hero: boolean; buddies: Record<string, boolean>; rooms: Record<string, boolean>; people?: Record<string, boolean> }; allBuilt: boolean;
   timing: { preview_still_s: number; draft_s_per_frame: number; balanced_s_per_frame?: number; final_s_per_frame: number; scene_load_s: number };
   target: Record<"hero" | "buddy" | "wide", number>;
 };
@@ -52,6 +52,14 @@ export const BUDDY_VOICE: Record<string, string> = {
   buddy_figma: "MF3mGyEYCl7XYWbV9V5h", // Elli: young, emotional
   buddy_nova: "AZnzlk1XvdvUeBnXmlld", // Domi: confident
 };
+
+// Who can sit at the desk or talk to you, besides the low-poly hero and the bots: the realistic cast
+// (blender/shotsav/seated.py sits them). Names and voices come from the editor's character catalog.
+export const AV_HERO = "av_hero";
+export const PEOPLE = ["matt", "freya", "cute_girl"] as const;
+export const PERSON_ACCENT: Record<string, string> = { matt: "#6E8FB8", freya: "#C9A27A", cute_girl: "#7FA36B" };
+export const isPerson = (model?: string) => !!model && (PEOPLE as readonly string[]).includes(model);
+export const isBot = (model?: string) => !!model && model.startsWith("buddy_");
 
 export const HERO = "me";
 export const BUDDY = "buddy";

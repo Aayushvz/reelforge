@@ -42,6 +42,10 @@ for char in plan["characters"]:
     others_x = [bpy.data.objects[c["mark"]].location.x for c in plan["characters"] if c is not char]
     if LOOK.BODY_CHEAT and others_x:  # open the body toward the other character (facing is -Y)
         root.rotation_euler.z = math.copysign(LOOK.BODY_CHEAT, others_x[0] - root.location.x)
+    seat = char.get("seat")
+    if seat:  # shots-av: a realistic character sits at the desk (or in the guest chair)
+        from shotsav import seated
+        seated.sit(objs, seat, seat.get("slot", "you"), coll)
     bpy.context.view_layer.update()
     if "FaceAnchor" in objs:  # sculpted cast: anchors + real head size
         face_pos = objs["FaceAnchor"].matrix_world.translation.copy()
@@ -244,6 +248,8 @@ def rig_camera(i, s):
     subj = CH.get(s["subject"]) or next(iter(CH.values()))
     others = [c for c in CH.values() if c is not subj]
     kind = s["kind"] if s["kind"] in rig.FRAMING else "medium"
+    if kind == "av_buddy" and subj["measure"] == "head":  # a person in the buddy's seat: frame them like the hero
+        kind = "av_hero_34"
     if kind == "two" and not others:
         kind = "wide"
     eye = subj["focus"].matrix_world.translation.copy()

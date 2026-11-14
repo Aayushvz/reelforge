@@ -25,6 +25,9 @@ SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu",
 AV_STYLE = "shots-av"
 AV_HERO = "av_hero"
 AV_BUDDIES = ("buddy_claude", "buddy_chatgpt", "buddy_figma", "buddy_nova")
+AV_PEOPLE = ("matt", "freya", "cute_girl")  # the realistic imported cast, seated at the desk in either slot
+AV_YOU = (AV_HERO, *AV_PEOPLE)  # who can take the desk chair
+AV_OTHER = (*AV_BUDDIES, *AV_PEOPLE)  # who can be the other speaker
 AV_OUTFITS = ("puffer", "hoodie", "overshirt", "boxy_black", "hoodie_cargos", "knit_vest", "grey_sweats", "track_jacket", "puffer_vest", "camel_black", "techwear", "varsity", "cardigan", "tee_beanie", "flannel_layers", "cropped_knit", "blazer_mini", "baby_tee", "sporty_zip", "butterfly_top", "puffer_cream", "trench", "cargo_set", "sweater_beret")
 # each ported outfit's own colour (blender/shotsav/hero.py OUTFIT_COLORS); the brand three default to purple
 AV_OUTFIT_COLORS = {
@@ -157,10 +160,12 @@ def parse_performance(data: dict) -> Performance:
     if av and data.get("environment", AV_ROOM) not in AV_ROOMS:
         errors.append(f"shots-av environment must be one of {AV_ROOMS}, got {data.get('environment')!r}")
     if av:
-        models = sorted(c.model for c in chars.values())
-        if len(models) != 2 or models[0] != AV_HERO or models[1] not in AV_BUDDIES:
-            errors.append(f"shots-av needs exactly one hero (model {AV_HERO!r}) and one buddy "
-                          f"(model one of {AV_BUDDIES}), got models {models}")
+        models = [c.model for c in chars.values()]
+        ok = len(models) == 2 and ((models[0] in AV_YOU and models[1] in AV_OTHER)
+                                    or (models[1] in AV_YOU and models[0] in AV_OTHER))
+        if not ok:
+            errors.append(f"shots-av needs two speakers: one at the desk (model one of {AV_YOU}) and one more "
+                          f"(model one of {AV_OTHER}), got models {sorted(models)}")
 
     lines: list[Line] = []
     seen: set[str] = set()
@@ -195,8 +200,8 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"{where}: beat must be true or false")
         if action not in ("", *AV_ACTIONS):
             errors.append(f"{where}: action must be empty or one of {AV_ACTIONS}")
-        elif action and av and raw["speaker"] in chars and chars[raw["speaker"]].model == AV_HERO:
-            errors.append(f"{where}: action is a buddy clip; the hero's line cannot carry one")
+        elif action and av and raw["speaker"] in chars and chars[raw["speaker"]].model not in AV_BUDDIES:
+            errors.append(f"{where}: action is a buddy clip; only a bot buddy's line can carry one")
         lines.append(Line(raw["id"], raw["speaker"], raw["text"], raw["emotion"], intensity,
                           raw["mood"], pause, bool(raw.get("punchline", False)), beat is True, action))
     if not lines:

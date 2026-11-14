@@ -426,6 +426,23 @@ function shotsavPreview(id: string, shot: number, final: boolean) {
   return next;
 }
 
+// The look preview (cast, outfit, room): only the newest request renders. One that arrives while another waits in the
+// queue joins it, since both will see the same saved file.
+const lookWaiting = new Map<string, Promise<{ still: string; at: number }>>();
+function shotsavLook(id: string) {
+  const waiting = lookWaiting.get(id);
+  if (waiting) return waiting;
+  const dir = projectDir(id);
+  const prev = previewQueue.get(id) ?? Promise.resolve();
+  const next = prev.catch(() => undefined).then(() => {
+    lookWaiting.delete(id);
+    return reelforgeJson<{ still: string }>(["shots-av", "look", dir]);
+  }).then((r) => ({ still: path.relative(dir, r.still).split(path.sep).join("/"), at: Date.now() }));
+  lookWaiting.set(id, next);
+  previewQueue.set(id, next.finally(() => { if (previewQueue.get(id) === next) previewQueue.delete(id); }));
+  return next;
+}
+
 // build-assets (hero, buddies, rooms) then the thumbnails, as one job with a live log
 function startAssetJob(): Job {
   const running = [...jobs.values()].find((j) => j.projectId === "__shotsav_assets__" && j.status === "running");
@@ -738,6 +755,9 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     if (id && action === "shotsav" && rest[0] === "plan" && method === "POST") {
       projectDir(id);
       return send(res, 200, await reelforgeJson(["shots-av", "plan", projectDir(id)]));
+    }
+    if (id && action === "shotsav" && rest[0] === "look" && method === "POST") {
+      return send(res, 200, await shotsavLook(id));
     }
     if (id && action === "shotsav" && rest[0] === "preview" && method === "POST") {
       const body = await readJson<{ shot?: number; final?: boolean }>(req);

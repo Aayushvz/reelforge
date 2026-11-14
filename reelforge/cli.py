@@ -52,6 +52,8 @@ def build_parser() -> argparse.ArgumentParser:
     pv.add_argument("project", type=Path)
     pv.add_argument("--shot", type=int, required=True)
     pv.add_argument("--final", action="store_true")
+    lk = sa_sub.add_parser("look", help="a draft still of the cast and outfit in the room (the editor's look preview)")
+    lk.add_argument("project", type=Path)
     th = sub.add_parser("thumbnails", help="render asset thumbnails for the editor")
     th.add_argument("--style", choices=["shots-av"], default="shots-av")
     th.add_argument("--only", action="append", default=[], help="only these ids (buddy_claude, av_cafe_day, ...)")
@@ -176,7 +178,7 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         ass = end_card(ass, perf.end_text, last + 0.4, total, w, h)
         (out / "captions.ass").write_text(ass, encoding="utf-8")
         if perf.ambience:
-            blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps)
+            blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps, perf)
             if not perf.sound.get("foley", True):
                 blips, keys = [], []
             add_av_sound(out / "dialogue.wav", perf.environment, total, blips, keys, find_music(project), seed)
@@ -207,6 +209,8 @@ def main(argv: list[str] | None = None) -> None:
             out = shots_av.catalog()
         elif ns.sa_cmd == "plan":
             out = shots_av.plan_for(ns.project)
+        elif ns.sa_cmd == "look":
+            out = {"still": str(shots_av.look_still(ns.project))}
         else:
             out = {"still": str(shots_av.preview_still(ns.project, ns.shot, draft=not ns.final))}
         print("SHOTSAV_JSON " + json.dumps(out), flush=True)
