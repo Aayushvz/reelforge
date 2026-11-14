@@ -121,6 +121,7 @@ export function EditorPage() {
   const fps = editor.output.fps || 30;
   return (
     <div className="ed">
+      <h1 className="sr-only">{editor.name}: timeline editor</h1>
       <header className="ed-bar">
         <IconButton label="Back" onClick={() => nav(editor.kind === "generated" ? `/?p=${encodeURIComponent(id)}` : "/editor")}><ArrowLeft size={16} /></IconButton>
         <span className="logo" style={{ gap: 8 }}><LogoMark /></span>

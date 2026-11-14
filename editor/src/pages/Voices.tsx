@@ -36,7 +36,7 @@ export function VoicesPage() {
 
         <div className="voices-grid">
           <section className="col" style={{ gap: 12 }}>
-            <div className="row"><h2 className="h2 grow">Library</h2><div className="search"><Search size={14} /><input className="input sm" placeholder="Search voices" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 180 }} /></div></div>
+            <div className="row"><h2 className="h2 grow">Library</h2><div className="search"><Search size={14} /><input className="input sm" aria-label="Search voices" placeholder="Search voices" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 180 }} /></div></div>
             <div className="panel" style={{ overflow: "hidden" }}>
               {list.map((v) => (
                 <div key={v.id} className="voice-row">

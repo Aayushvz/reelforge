@@ -212,7 +212,7 @@ export function OutputPanel() {
       <div className="row" style={{ gap: 8 }}>
         <div className="field grow"><span className="label">Resolution</span><div className="input sm mono" style={{ display: "flex", alignItems: "center", color: "var(--text-2)" }}>{out.resolution[0]} × {out.resolution[1]}</div></div>
         <div className="field" style={{ width: 84 }}><span className="label">Frame rate</span>
-          <Select size="sm" value={String(out.fps)} onChange={(v) => { setEditor((e) => ({ ...e, output: { ...e.output, fps: Number(v) } })); setPerf((p) => ({ ...p, fps: Number(v) })); }}
+          <Select size="sm" ariaLabel="Frame rate" value={String(out.fps)} onChange={(v) => { setEditor((e) => ({ ...e, output: { ...e.output, fps: Number(v) } })); setPerf((p) => ({ ...p, fps: Number(v) })); }}
             options={FPS_OPTIONS.map((f) => ({ value: String(f), label: `${f} fps` }))} /></div>
         <div className="field" style={{ width: 124 }}><span className="label">Quality</span>
           <Segmented full size="sm" value={out.quality} onChange={(q) => setEditor((e) => ({ ...e, output: { ...e.output, quality: q } }))}

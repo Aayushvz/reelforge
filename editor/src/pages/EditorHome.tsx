@@ -116,9 +116,9 @@ function NewProjectDialog({ importAfter, onClose, onCreated }: { importAfter: bo
         <Segmented full value={ratio} onChange={setRatio} options={(Object.keys(RATIOS) as Ratio[]).map((r) => ({ value: r, label: <><span className={`ratio-icon r${r.replace(":", "x")}`} />{r}</> }))} /></div>
       <div className="row" style={{ gap: 12 }}>
         <div className="field grow"><span className="label">Resolution</span>
-          <Select value={scale} onChange={setScale} options={[{ value: "720", label: `${Math.round(bw * 2 / 3)} × ${Math.round(bh * 2 / 3)}` }, { value: "1080", label: `${bw} × ${bh}` }, { value: "2160", label: `${bw * 2} × ${bh * 2}` }]} /></div>
+          <Select ariaLabel="Resolution" value={scale} onChange={setScale} options={[{ value: "720", label: `${Math.round(bw * 2 / 3)} × ${Math.round(bh * 2 / 3)}` }, { value: "1080", label: `${bw} × ${bh}` }, { value: "2160", label: `${bw * 2} × ${bh * 2}` }]} /></div>
         <div className="field" style={{ width: 120 }}><span className="label">Frame rate</span>
-          <Select value={String(fps)} onChange={(v) => setFps(Number(v))} options={FPS_OPTIONS.map((f) => ({ value: String(f), label: `${f} fps` }))} /></div>
+          <Select ariaLabel="Frame rate" value={String(fps)} onChange={(v) => setFps(Number(v))} options={FPS_OPTIONS.map((f) => ({ value: String(f), label: `${f} fps` }))} /></div>
       </div>
       <div className="field"><span className="label">Media{importAfter ? "" : " (optional)"}</span>
         <button className="btn" onClick={() => fileRef.current?.click()}><Upload size={14} />{files?.length ? `${files.length} file${files.length > 1 ? "s" : ""} selected` : "Choose files"}</button>

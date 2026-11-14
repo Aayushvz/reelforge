@@ -72,13 +72,13 @@ const SPEAKER_TONES = ["#c9a26a", "#6e8fd8", "#7fb38f", "#c47f9a", "#9a8fd0", "#
 export const speakerTone = (p: Performance | null, name: string) =>
   SPEAKER_TONES[Math.max(0, Object.keys(p?.characters ?? {}).indexOf(name)) % SPEAKER_TONES.length];
 
-function AutoText({ value, onChange, placeholder, onKeyDown, invalid, inputRef }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; invalid?: boolean;
+function AutoText({ value, onChange, placeholder, onKeyDown, invalid, inputRef, label }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; invalid?: boolean; label?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void; inputRef?: (el: HTMLTextAreaElement | null) => void;
 }) {
   return (
     <textarea ref={(el) => { if (el) { el.style.height = "0"; el.style.height = `${el.scrollHeight}px`; } inputRef?.(el); }}
-      className="line-text" rows={1} value={value} placeholder={placeholder} aria-invalid={invalid}
+      className="line-text" rows={1} value={value} placeholder={placeholder} aria-label={label} aria-invalid={invalid}
       onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} />
   );
 }
@@ -241,7 +241,7 @@ export function ScriptStudio() {
                     {speakers.map((s) => <option key={s} value={s}>{s}</option>)}
                     {!speakers.includes(l.speaker) && <option value={l.speaker}>{l.speaker} (missing)</option>}
                   </select>
-                  <AutoText value={l.text} placeholder={i === 0 ? "Open with the hook. Use [sighs] or [excited] for delivery cues." : "Next line…"}
+                  <AutoText value={l.text} label={`Line ${i + 1}, ${l.speaker}`} placeholder={i === 0 ? "Open with the hook. Use [sighs] or [excited] for delivery cues." : "Next line…"}
                     invalid={errs.some((e) => e.field === "text")}
                     inputRef={(el) => { refs.current[l.id] = el; }}
                     onChange={(v) => patchLine(l.id, { text: v })}

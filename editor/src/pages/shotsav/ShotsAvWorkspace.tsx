@@ -319,6 +319,7 @@ export function ShotsAvWorkspace() {
 
   return (
     <div className="av-ws" data-tab={tab}>
+      <h1 className="sr-only">{data.name}: desk reel</h1>
       <header className="av-head">
         <IconButton label="All desk reels" onClick={() => nav("/shots-av")}><ArrowLeft size={16} /></IconButton>
         <input className="input av-title" aria-label="Project name" defaultValue={data.name}
