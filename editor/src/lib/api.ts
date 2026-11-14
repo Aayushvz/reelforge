@@ -1,5 +1,6 @@
 import type { Job, Library, LocalSettings, ProjectData, ProjectSummary, SystemStatus, VoiceLine } from "./types";
 import type { AvCatalog, AvPlan } from "./shotsav";
+import type { CoverDraft } from "./cover";
 
 async function req<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -25,6 +26,7 @@ export const api = {
   upload: (id: string, path: string, file: Blob) => req<{ path: string }>("POST", `${P(id)}/upload?path=${encodeURIComponent(path)}`, file),
   run: (id: string, stage: "stills" | "full", draft: boolean, animatic = false, quality?: "standard" | "cinema") =>
     req<Job>("POST", `${P(id)}/run`, { stage, draft, animatic, quality }),
+  cover: (id: string) => req<CoverDraft>("GET", `${P(id)}/cover`),
   reveal: (id: string) => req<{ ok: true; path: string }>("POST", `${P(id)}/reveal`),
   avCatalog: () => req<AvCatalog>("GET", "/api/shotsav/catalog"),
   avPlan: (id: string) => req<AvPlan>("POST", `${P(id)}/shotsav/plan`),

@@ -231,3 +231,29 @@ the 13 environments live on inside Shots-AV. Matt, Freya and Mina (imported) sta
   - `import_character.py` calls it before saving. To redo a built file: `blender -b assets/build/<id>.blend -P blender/finish_character.py -- <id>`.
 - `blender/preview_character.py` has new portrait lighting (warm key, fill, two rims, a small eye light) and an `enliven=1` flag for comparing before and after.
 - Sizes: Mina went from 315 to 295 MB (5 duplicate mouth maps). Matt stays at 1.6 GB: that is his 900k-vertex body times 149 face shapes, which CLAUDE.md protects. Freya stays at 64 MB; nothing in her file was unused.
+
+## 12. Thumbnail Generator (2026-11-15)
+Spec: `docs/superpowers/specs/2026-11-15-thumbnail-generator-design.md`.
+- **The page:** `/thumbnails` in the editor's main nav.
+  - Import any video, or pick a rendered project.
+  - Scrub to a frame (`,` and `.` step one frame).
+  - Edit the two-line headline (a colour per line), font, size, letter and line spacing, and the caption pill.
+  - Drag or snap the layers; arrow keys nudge them.
+  - Show the Reels, Shorts or YouTube safe zones.
+  - Export PNG or JPG at the exact preset size: 9:16, 16:9, 4:5, 1:1, 3:4, 4:3, 2:3, X/LinkedIn, or custom.
+- **One renderer:** `editor/src/lib/cover.ts` `drawCover()` draws both the preview and the export.
+- **Auto-cover:**
+  - `reelforge/cover.py` (`reelforge cover <project>`) drafts up to 3 variants.
+  - A headline comes from the script ("FIX THE / NAVBAR.", "LOGO / BIGGER.").
+  - A frame comes from `render_plan.json`: the biggest hero face, speaking, with the eyes in frame. It uses the clean `out/frames` PNG when there is one.
+  - The server drafts after every successful full render (`out/cover.json`, also served on demand at `GET /api/projects/:id/cover`).
+  - The Shots-AV workspace and the Render page show a "Cover ready" card with Download PNG and Edit in Thumbnail Generator.
+- **Not built yet** (the owner picked variants and safe zones for v1):
+  - face-aware crop;
+  - export of all sizes at once;
+  - text outline or shadow;
+  - a gradient or vignette behind the text;
+  - stickers;
+  - saved brand styles;
+  - undo.
+- `pipelineEnv` now puts the repo on `PYTHONPATH`, so a worktree's dev server runs its own `reelforge` code.

@@ -55,6 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
     th = sub.add_parser("thumbnails", help="render asset thumbnails for the editor")
     th.add_argument("--style", choices=["shots-av"], default="shots-av")
     th.add_argument("--only", action="append", default=[], help="only these ids (buddy_claude, av_cafe_day, ...)")
+    cv = sub.add_parser("cover", help="draft a cover (headline + frame) for a rendered project (JSON on stdout)")
+    cv.add_argument("project", type=Path)
     v = sub.add_parser("voices", help="generate missing ElevenLabs takes (one JSON status line each)")
     v.add_argument("project", type=Path)
     v.add_argument("--line", action="append", default=[], help="only these line ids")
@@ -211,6 +213,9 @@ def main(argv: list[str] | None = None) -> None:
     elif ns.cmd == "thumbnails":
         from .engines import shots_av
         print("SHOTSAV_JSON " + json.dumps({"made": shots_av.thumbnails(ns.only)}), flush=True)
+    elif ns.cmd == "cover":
+        from .cover import write_draft
+        print("SHOTSAV_JSON " + json.dumps(write_draft(ns.project)), flush=True)
     elif ns.cmd == "animatic":
         from .engines import shots_av
         shots_av.animatic(ns.project, draft=not ns.final, stage=ns.stage)
