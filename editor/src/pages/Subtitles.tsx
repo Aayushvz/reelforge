@@ -1,7 +1,7 @@
 // Subtitle template studio: browse templates, style one live over a frame, save or apply it.
 import { useEffect, useState } from "react";
 import { Save, CheckCheck, Trash2 } from "lucide-react";
-import { ENVIRONMENTS, SUBTITLE_TEMPLATES } from "@/data/catalog";
+import { ENVIRONMENTS, NO_ENVIRONMENT, SUBTITLE_TEMPLATES } from "@/data/catalog";
 import type { SubtitleStyle } from "@/lib/types";
 import { SubtitleGrid, SubtitleControls } from "@/components/pickers";
 import { EnvThumb, SubtitleText } from "@/components/Thumbs";
@@ -35,7 +35,7 @@ export function SubtitlesPage() {
     return () => clearInterval(t);
   }, []);
 
-  const env = ENVIRONMENTS[0];
+  const env = ENVIRONMENTS[0] ?? NO_ENVIRONMENT;
   const preset = env.presets[0];
   const W = frame === "9:16" ? 1080 : 1920;
   const H = frame === "9:16" ? 1920 : 1080;

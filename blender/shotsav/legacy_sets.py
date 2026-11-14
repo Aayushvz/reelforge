@@ -1,34 +1,28 @@
-"""Build one environment in one lighting preset → <out.blend>.
-Run: blender -b --factory-startup --python-exit-code 1 -P blender/build_set.py -- <out.blend> <set_id> <preset>
+"""The old library's 10 environments (night city, bedroom, rooftop, cafe, lantern street, subway, classroom, office,
+night mart, pier), kept as Shots-AV backdrops. Moved here from blender/build_set.py; the set data is set_data.py.
 
-Contract (render_plan.py relies on it): lights Key, Rim, Fill, Glow (each keeps its preset colour/energy in
-custom props base_color/base_energy so moods tint rather than replace them, by scene["mood_tint"]);
-empties Mark_A, Mark_B; a surface at desk height (z≈0.76) in front of Mark_A for the arms to rest on.
-Optional: materials ScreenMat / HoloMat with a "Code" node recolour with the mood.
-Sets are built from simple procedural pieces; looks come from lighting, emissive practicals and depth."""
+backdrop(set_id, preset, coll) builds the set's geometry and practical lights in the current scene, then clears the
+desk area (Shots-AV brings its own desk, chair, props, light rig and marks) and pushes the room back 0.9 m so its
+walls sit about 2.2 m behind the hero, like the other Shots-AV rooms. Returns the preset (world, haze, exposure).
+"""
 import math
 import random
-import sys
-from pathlib import Path
 
 import bmesh
 import bpy
-from mathutils import Matrix
+from mathutils import Matrix, Vector
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from bl_common import EEVEE, box, code_screen_material, ellipsoid, empty, look_at, material  # noqa: E402
-from sets import SETS  # noqa: E402
+from bl_common import EEVEE, box, code_screen_material, ellipsoid, empty, look_at, material  # noqa: F401
 
-args = sys.argv[sys.argv.index("--") + 1:]
-OUT, SET_ID, PRESET = Path(args[0]), args[1], args[2]
-PR = SETS[SET_ID]["presets"][PRESET]
+from .set_data import SETS
+
+# set by backdrop() before a builder runs; the builders read them as globals, as they did as a script
+PR, COLL, SET_ID, PRESET = {}, None, "", ""
 rng = random.Random(7)
-bpy.ops.wm.read_factory_settings(use_empty=True)
-sc = bpy.context.scene
-COLL = bpy.data.collections.new(f"SET_{SET_ID}")
-sc.collection.children.link(COLL)
 HEAD = (0, 0.15, 1.35)
-MARK_B = SETS[SET_ID].get("mark_b", (-0.9, 0.15, 0))  # second seat: left, away from monitors/registers
+MARK_B = (-0.9, 0.15, 0)
+PUSH_BACK = 0.9  # the old rooms' back wall is 1.15 m behind the seat; Shots-AV rooms put it at about 2.2 m
+DESK_ZONE = ((-1.4, 1.4), (-1.15, 0.75), (-0.1, 1.9))  # old coordinates: everything wholly inside is the desk area
 
 
 def E(group, default=1.0):
@@ -629,64 +623,45 @@ def props():
 
 BUILDERS = {f.__name__: f for f in (night_city, bedroom, rooftop, cafe, lantern_street, subway, classroom, office,
                                     night_mart, pier)}
-BUILDERS[SET_ID]()
-props()
 
-# --- world, haze, grade -------------------------------------------------------------
-sc.render.engine = EEVEE
-sc.eevee.use_raytracing = True
-sc.eevee.volumetric_end = 60.0
-sc.render.use_motion_blur = True
-sc.view_settings.view_transform = "AgX"
-sc.view_settings.look = "AgX - Medium High Contrast"
-BRIGHT = bool(PR.get("sun")) or PR.get("world_s", 0) >= 0.6
-sc.view_settings.exposure = PR.get("exposure", -0.4) - (0.45 if BRIGHT else 0.1)  # keep blacks black
-w = bpy.data.worlds.new("World")
-w.use_nodes = True
-nt = w.node_tree
-nt.nodes["Background"].inputs["Color"].default_value = (*PR["world"], 1)
-nt.nodes["Background"].inputs["Strength"].default_value = PR.get("world_s", 1.0)
-vol = nt.nodes.new("ShaderNodeVolumeScatter")
-vol.inputs["Density"].default_value = PR.get("haze", 0.004) * 0.55
-vol.inputs["Color"].default_value = (*PR.get("haze_color", (0.75, 0.82, 1.0)), 1)
-nt.links.new(vol.outputs["Volume"], nt.nodes["World Output"].inputs["Volume"])
-sc.world = w
-sc["mood_tint"] = PR.get("tint", 0.35)
 
-# --- light rig (names are the mood contract) ---------------------------------------
-RIG = {"Key": ("AREA", (0.75, -0.75, 1.45), 0.6), "Rim": ("AREA", (-0.85, 0.75, 1.75), 1.0),
-       "Fill": ("AREA", (-1.3, -1.5, 1.2), 2.0), "Glow": ("POINT", (0.45, -0.3, 0.9), 0.1)}
-for name, (kind, loc, size) in RIG.items():
-    color, energy = PR[name.lower()]
-    ld = bpy.data.lights.new(name, kind)
-    ld.color, ld.energy = color, energy
-    if kind == "AREA":
-        ld.size = size
-    else:
-        ld.shadow_soft_size = size
-    o = bpy.data.objects.new(name, ld)
-    o.location = PR.get(f"{name.lower()}_pos", loc)
-    o["base_color"], o["base_energy"] = list(color), energy
-    COLL.objects.link(o)
-    look_at(o, HEAD)
-    if name in ("Key", "Rim"):
-        ld.volume_factor = 0.5
-if PR.get("sun"):
-    color, strength, elev, azim = PR["sun"]
-    sd = bpy.data.lights.new("Sun", "SUN")
-    sd.color, sd.energy, sd.angle = color, strength, math.radians(2)
-    so = bpy.data.objects.new("Sun", sd)
-    so.rotation_euler = (math.radians(90 - elev), 0, math.radians(azim))
-    COLL.objects.link(so)
-for name, pos, color, energy in PR.get("extra", ()):  # practical lights: lamps, neon spill, lanterns
-    ld = bpy.data.lights.new(name, "POINT")
-    ld.color, ld.energy, ld.shadow_soft_size = color, energy, 0.2
-    o = bpy.data.objects.new(name, ld)
-    o.location = pos
-    COLL.objects.link(o)
+def _inside_desk_zone(o):
+    corners = [o.matrix_world @ Vector(c) for c in o.bound_box]
+    return all(lo <= min(v[i] for v in corners) and max(v[i] for v in corners) <= hi
+               for i, (lo, hi) in enumerate(DESK_ZONE))
 
-empty("Mark_A", (0, 0.15, 0), COLL)
-empty("Mark_B", MARK_B, COLL)
-OUT.parent.mkdir(parents=True, exist_ok=True)
-bpy.ops.wm.save_as_mainfile(filepath=str(OUT))
-print(f"saved {OUT}")
+
+def backdrop(set_id, preset, coll):
+    """Build set_id in preset as a Shots-AV backdrop in collection coll; returns the preset dict."""
+    global PR, COLL, SET_ID, PRESET, MARK_B
+    SET_ID, PRESET, COLL = set_id, preset, coll
+    PR = SETS[set_id]["presets"][preset]
+    MARK_B = SETS[set_id].get("mark_b", (-0.9, 0.15, 0))
+    rng.seed(7)
+    before = set(bpy.data.objects)
+    BUILDERS[set_id]()
+    if PR.get("sun"):
+        color, strength, elev, azim = PR["sun"]
+        sd = bpy.data.lights.new("Sun", "SUN")
+        sd.color, sd.energy, sd.angle = color, strength, math.radians(2)
+        so = bpy.data.objects.new("Sun", sd)
+        so.rotation_euler = (math.radians(90 - elev), 0, math.radians(azim))
+        coll.objects.link(so)
+    for name, pos, color, energy in PR.get("extra", ()):  # practical lights: lamps, neon spill, lanterns
+        ld = bpy.data.lights.new(name, "POINT")
+        ld.color, ld.energy, ld.shadow_soft_size = color, energy, 0.2
+        o = bpy.data.objects.new(name, ld)
+        o.location = pos
+        coll.objects.link(o)
+    bpy.context.view_layer.update()
+    made = [o for o in bpy.data.objects if o not in before]
+    for o in made:  # the desk area and the old floor: Shots-AV builds its own
+        if o.type == "MESH" and (_inside_desk_zone(o) or o.name.split(".")[0] == "Floor"):
+            bpy.data.objects.remove(o, do_unlink=True)
+    shift = bpy.data.objects.new("OldSetOffset", None)  # one parent pushes the whole room back
+    coll.objects.link(shift)
+    shift.location = (0, PUSH_BACK, 0)
+    for o in bpy.data.objects:
+        if o not in before and o is not shift and o.parent is None and o.name in coll.objects:
+            o.parent = shift
+    return PR

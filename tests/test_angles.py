@@ -90,7 +90,7 @@ def test_schema_takes_room_view_caption_place_and_angle_mode():
     p = parse_performance(_perf(environment="av_moon_window", room_view={"pan": 0.5, "turn": -1},
                                 captions={"position": "custom", "x": 0.5, "y": 0.8, "size": 1.4},
                                 camera={"angles": "classic", "overrides": {"0": {"angle": "hero_dutch"}}}))
-    assert p.room_view == {"pan": 0.5, "turn": -1} and p.captions["size"] == 1.4 and len(AV_ROOMS) == 12
+    assert p.room_view == {"pan": 0.5, "turn": -1} and p.captions["size"] == 1.4 and len(AV_ROOMS) == 25
     for bad in ({"room_view": {"pan": 2}}, {"room_view": {"zoom": 0.1}}, {"captions": {"size": 3}},
                 {"captions": {"y": -0.1}}, {"camera": {"angles": "wild"}},
                 {"camera": {"overrides": {"0": {"angle": "nope"}}}}):

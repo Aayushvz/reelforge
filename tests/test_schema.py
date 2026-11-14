@@ -6,7 +6,7 @@ import pytest
 from reelforge.arkit import ARKIT_NAMES
 from reelforge.schema import PerformanceError, load_performance, parse_performance
 
-SAMPLE = Path(__file__).parents[1] / "samples" / "look-test" / "performance.json"
+SAMPLE = Path(__file__).parent / "fixtures" / "blender3d_performance.json"
 
 
 def _base() -> dict:

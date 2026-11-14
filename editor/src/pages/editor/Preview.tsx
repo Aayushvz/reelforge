@@ -8,7 +8,7 @@ import type { Clip, EditorDoc, Ratio } from "@/lib/types";
 import { RATIOS } from "@/lib/types";
 import * as T from "@/lib/timeline";
 import { timecode } from "@/lib/format";
-import { MOOD_COLORS, character, environment, ENVIRONMENTS } from "@/data/catalog";
+import { MOOD_COLORS, character, environment, NO_ENVIRONMENT } from "@/data/catalog";
 import { CharacterThumb, EnvThumb, SubtitleText } from "@/components/Thumbs";
 import { IconButton, Select } from "@/components/ui/Form";
 import { useEditor, sortedOf } from "./store";
@@ -66,7 +66,7 @@ export function Preview({ editor, stills, resolveSrc, fps, punchlines }: Props) 
   const videos = tl.tracks.filter((t) => t.kind === "video" && !t.hidden).flatMap((t) => tl.clips.filter((c) => c.trackId === t.id && c.start <= playhead && T.clipEnd(c) > playhead));
   const topVideo = videos[0];
 
-  const env = environment(editor.environment.id) ?? ENVIRONMENTS[0];
+  const env = environment(editor.environment.id) ?? NO_ENVIRONMENT;
   const preset = env.presets.find((p) => p.id === editor.environment.lighting) ?? env.presets[0];
   const subject = shot?.subject ?? line?.label.split(" ")[0] ?? Object.keys(editor.cast)[0];
   const ch = character(editor.cast[subject ?? ""]?.characterId);

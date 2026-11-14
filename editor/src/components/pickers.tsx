@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { Check, Search, Star, X } from "lucide-react";
 import {
-  CHARACTERS, ENVIRONMENTS, SUBTITLE_TEMPLATES, CAPTION_FONTS, SLOTS, wardrobeItem,
+  CHARACTERS, ENVIRONMENTS, NO_ENVIRONMENT, SUBTITLE_TEMPLATES, CAPTION_FONTS, SLOTS, wardrobeItem,
   type Character, type Environment,
 } from "@/data/catalog";
 import type { SubtitleStyle } from "@/lib/types";
@@ -98,7 +98,7 @@ export function EnvironmentDrawer({ value, lighting, onPick, onClose }: {
   const list = useMemo(() => ENVIRONMENTS.filter((e) =>
     (cat === "All" || e.category === cat || (cat === "Favourites" && favs.includes(`env:${e.id}`))) &&
     (e.name + e.description).toLowerCase().includes(q.toLowerCase())), [q, cat, favs]);
-  const env = ENVIRONMENTS.find((e) => e.id === sel)!;
+  const env = ENVIRONMENTS.find((e) => e.id === sel) ?? NO_ENVIRONMENT;
   const p = env.presets.find((x) => x.id === preset) ?? env.presets[0];
   return (
     <Drawer onClose={onClose} width={760}>

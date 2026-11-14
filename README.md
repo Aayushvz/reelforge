@@ -6,7 +6,7 @@ The codebase and its Python package are still called `reelforge`.
 
 You write the script and generate the voice lines. reelforge handles timing, facial animation and emotion, camera shots, mood lighting, rendering, captions and the final mix.
 
-> Status: **Milestone 1 (pipeline) is done.** v1 of the 7-character cast (3 outfits each) and the 10 sets × 3 lighting presets are in; they get a quality pass next, then the editor UI. See [Roadmap](#roadmap).
+> Status: **Shots-AV** (you + an AI buddy at a desk) is the main style: 24 outfits, 25 rooms, a 36-angle director, ElevenLabs voices, and the editor. See [docs/HANDOFF.md](docs/HANDOFF.md).
 
 ## How it works
 ```
@@ -17,7 +17,7 @@ It's a multi-style platform. Each animation style is a pluggable "engine":
 
 | Style | Look | Status |
 |---|---|---|
-| `blender3d` | Stylized 3D characters in moody, glowing sets | Works: 7-character cast, 10 sets × 3 lighting presets (v1 look) |
+| `blender3d` | Realistic imported characters (Matt, Freya, Mina) | Cast only: its sets moved to Shots-AV |
 | `shots-av` | Shots-AV Animation: you and an AI buddy robot at a desk, low-poly 3D in brand purple, 12 rooms, 36 camera angles | **Works**: editor page, ElevenLabs voices, benchmark passed (see below) |
 | `cinematic-ai` | Pixar-like cinematic AI video (opt-in, paid providers) | Planned |
 | more | From future references | Planned |
@@ -43,16 +43,11 @@ export REELFORGE_BLENDER="$(cat tools/blender_path.txt)"
 ```
 
 ## Make a reel
-1. Create a project folder with a `performance.json`. Copy `samples/look-test/performance.json` as a template. It lists the lines, speaker, emotion, intensity, mood and punchline.
-   - Cast: give each character `"model"` (kai, rey, dev, mo, aria, zoe, noor) and `"outfit"` (0–2). Dials live in `blender/cast.py`.
-   - Set: `"environment"` (night_city, bedroom, rooftop, cafe, lantern_street, subway, classroom, office, night_mart, pier) and optional `"lighting"` (a preset name from `blender/sets.py`, e.g. `"cafe"` + `"rainy_day"`).
-2. Put one mp3 per line in `<project>/out/audio/<line_id>.mp3`, or set `ELEVENLABS_API_KEY`.
-3. Build and render:
-```bash
-.venv/Scripts/reelforge build-assets   # whole cast (21 outfits) + 30 set files, a few minutes
-.venv/Scripts/reelforge run <project> --stage stills --draft   # quick per-shot preview (draft = 16 samples, half resolution)
-.venv/Scripts/reelforge run <project> --stage full             # final video → <project>/out/final_9x16.mp4
-```
+Shots-AV is the main style: see "Make a Shots-AV reel" below. Its hero has 24 outfits and there are 25 rooms,
+including the old library's ten sets and three imported rooms ("Classic sets").
+
+The Blender 3D style keeps the imported cast (Matt, Freya, Mina: `"model": "matt" | "freya" | "cute_girl"` in
+`performance.json`) but has no environments of its own now; they moved to Shots-AV.
 
 ## Open it like an app (Windows)
 Run `powershell -ExecutionPolicy Bypass -File tools/launcher/Install-Shortcut.ps1` once (add `-StartMenu` for the
@@ -83,7 +78,7 @@ Details: [docs/HANDOFF.md section 9](docs/HANDOFF.md) and [docs/production/shots
 | `editor/` | The web editor (React + Vite), including the Shots-AV page |
 | `tools/a2f_fetch.py` | Audio2Face ONNX experiment (optional) |
 | `tests/` | pytest suite |
-| `samples/` | Example projects: `look-test` (M1), `cafe-test` (one character), `duo-test` (two characters), `talk-<name>` (one per cast member) |
+| `samples/` | Example projects: `shots-av-fixture` (the 20-line reference timing), `shots-av-p5-night`, `shots-av-p5-day`, `imported-test` |
 | `references/` | Style, character and environment reference images |
 | `docs/` | Handoff, specs, plans, notes |
 

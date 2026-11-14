@@ -33,6 +33,20 @@ BEDS.update({
     "av_moon_window": "anoisesrc=color=brown:amplitude=0.22,lowpass=f=420,tremolo=f=0.08:d=0.5",  # a soft night breeze
     "av_retro_bedroom": ROOM_NIGHT + ",equalizer=f=15000:t=q:w=1:g=3",  # a CRT's whine, very faint
     "av_studio_apartment": "anoisesrc=color=brown:amplitude=0.28,lowpass=f=300",  # the fridge and the street
+    # the old library's environments
+    "av_old_night_city": ROOM_NIGHT,
+    "av_old_bedroom": ROOM_NIGHT,
+    "av_old_rooftop": "anoisesrc=color=pink:amplitude=0.25,lowpass=f=600,tremolo=f=0.2:d=0.5",
+    "av_old_cafe": "anoisesrc=color=pink:amplitude=0.3,bandpass=f=900:width_type=h:w=1200,tremolo=f=3:d=0.3",
+    "av_old_lantern_street": "anoisesrc=color=pink:amplitude=0.18,lowpass=f=900",
+    "av_old_subway": "anoisesrc=color=brown:amplitude=0.4,lowpass=f=240,tremolo=f=0.05:d=0.6",
+    "av_old_classroom": ROOM_DAY,
+    "av_old_office": "anoisesrc=color=brown:amplitude=0.3,lowpass=f=300",
+    "av_old_night_mart": ROOM_NIGHT + ",equalizer=f=120:t=q:w=2:g=12",
+    "av_old_pier": "anoisesrc=color=pink:amplitude=0.5,lowpass=f=700,tremolo=f=0.12:d=0.8",
+    "av_imp_neon_tunnel": ROOM_NIGHT,
+    "av_imp_gaming_den": ROOM_NIGHT,
+    "av_imp_cozy_gaming_room": ROOM_NIGHT,
 })
 RAIN = "anoisesrc=color=white:amplitude=0.2,highpass=f=1500,lowpass=f=7000"
 BED_LUFS = -38  # bed sits well under speech (-14 LUFS) after the mix
@@ -134,7 +148,20 @@ ROOM_VERB = {"av_studio_night": ("24|41", "0.12|0.07"), "av_neon_den": ("19|33",
              "av_cafe_day": ("31|55", "0.12|0.08"), "av_cyc_lilac": ("45|80", "0.09|0.06"),
              "av_editor_night": ("23|40", "0.12|0.07"), "av_streamer_den": ("16|28", "0.07|0.04"),  # foam: dry
              "av_neon_shelf": ("20|35", "0.10|0.06"), "av_moon_window": ("22|39", "0.11|0.06"),
-             "av_retro_bedroom": ("18|31", "0.09|0.05"), "av_studio_apartment": ("27|47", "0.12|0.07")}
+             "av_retro_bedroom": ("18|31", "0.09|0.05"), "av_studio_apartment": ("27|47", "0.12|0.07"),
+             "av_old_night_city": ("24|41", "0.11|0.06"),
+             "av_old_bedroom": ("24|41", "0.11|0.06"),
+             "av_old_rooftop": ("12|20", "0.05|0.03"),
+             "av_old_cafe": ("24|41", "0.11|0.06"),
+             "av_old_lantern_street": ("12|20", "0.05|0.03"),
+             "av_old_subway": ("38|67", "0.14|0.09"),
+             "av_old_classroom": ("38|67", "0.14|0.09"),
+             "av_old_office": ("38|67", "0.14|0.09"),
+             "av_old_night_mart": ("38|67", "0.14|0.09"),
+             "av_old_pier": ("12|20", "0.05|0.03"),
+             "av_imp_neon_tunnel": ("38|67", "0.14|0.09"),
+             "av_imp_gaming_den": ("24|41", "0.11|0.06"),
+             "av_imp_cozy_gaming_room": ("24|41", "0.11|0.06")}
 
 
 def voice_chain(environment: str) -> str:

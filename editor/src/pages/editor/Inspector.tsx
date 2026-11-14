@@ -4,7 +4,7 @@ import type { Clip, EditorDoc, Mood, Performance, ShotKind } from "@/lib/types";
 import { EMOTIONS, MOODS } from "@/lib/types";
 import * as T from "@/lib/timeline";
 import { cap, duration } from "@/lib/format";
-import { ENVIRONMENTS, MOOD_COLORS, SUBTITLE_TEMPLATES, character, environment } from "@/data/catalog";
+import { ENVIRONMENTS, NO_ENVIRONMENT, MOOD_COLORS, SUBTITLE_TEMPLATES, character, environment } from "@/data/catalog";
 import { useProject } from "@/stores/project";
 import { FieldRow, Section, Segmented, Select, Slider, ColorInput } from "@/components/ui/Form";
 import { SubtitleControls } from "@/components/pickers";
@@ -157,7 +157,7 @@ function SubtitleStyleEditor() {
 
 function ProjectInspector({ editor }: { editor: EditorDoc }) {
   const setEditor = useProject((s) => s.setEditor);
-  const env = environment(editor.environment.id) ?? ENVIRONMENTS[0];
+  const env = environment(editor.environment.id) ?? NO_ENVIRONMENT;
   const g = editor.grade;
   const setGrade = (k: keyof typeof g, v: number) => setEditor((e) => ({ ...e, grade: { ...e.grade, [k]: v } }));
   return (
@@ -166,8 +166,8 @@ function ProjectInspector({ editor }: { editor: EditorDoc }) {
       <div className="insp-scroll">
         {editor.kind === "generated" && (
           <Section title="Environment">
-            <FieldRow label="Set"><Select size="sm" value={env.id} onChange={(id) => setEditor((e) => ({ ...e, environment: { id, lighting: environment(id)!.presets[0].id } }))}
-              options={ENVIRONMENTS.map((x) => ({ value: x.id, label: x.name + (x.status === "available" ? "" : " (planned)") }))} /></FieldRow>
+            {ENVIRONMENTS.length > 0 && <FieldRow label="Set"><Select size="sm" value={env.id} onChange={(id) => setEditor((e) => ({ ...e, environment: { id, lighting: environment(id)!.presets[0].id } }))}
+              options={ENVIRONMENTS.map((x) => ({ value: x.id, label: x.name + (x.status === "available" ? "" : " (planned)") }))} /></FieldRow>}
             <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
               {env.presets.map((p) => <button key={p.id} className="chip" aria-pressed={editor.environment.lighting === p.id} onClick={() => setEditor((e) => ({ ...e, environment: { ...e.environment, lighting: p.id } }))}><span className="dot" style={{ background: p.glow }} />{p.name}</button>)}
             </div>

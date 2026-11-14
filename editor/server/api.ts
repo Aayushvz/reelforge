@@ -594,7 +594,7 @@ function thumbFor(kind: string, a: string, b: string): Promise<string> {
   if (!fs.existsSync(blend)) throw new HttpError(404, `Not built yet: ${path.basename(blend)}. Run reelforge build-assets.`);
   const args = kind === "character"
     ? ["-b", blend, "-P", path.join(REPO, "blender", "preview_character.py"), "--", png, "yaw=20", "shot=bust"]
-    : ["-b", blend, "-P", path.join(REPO, "blender", "preview_set.py"), "--", png, path.join(ASSETS, "aria.blend"), "wide"];
+    : ["-b", blend, "-P", path.join(REPO, "blender", "preview_set.py"), "--", png, path.join(ASSETS, "matt.blend"), "wide"];
   fs.mkdirSync(THUMBS, { recursive: true });
   const job = thumbSlot(async () => {
     await runProc(blender, args);
