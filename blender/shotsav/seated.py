@@ -16,7 +16,10 @@ HIP_ABOVE_SEAT = 0.085  # the hip joint sits this far above the cushion
 HIP_BACK = 0.11  # the hip joint's y: toward the backrest (the seat spans y -0.16..0.28; facing is -Y)
 KNEE_DROP = 0.02
 ANKLE_Z = 0.09
-FOREARMS = -1.25  # radians on ElbowL/ElbowR (delta): forearms forward, resting toward the desk
+# Hands on the desk, in the character's own frame (x out to its side, -y forward, z up). HAND_IN: the hand's x as a
+# share of the shoulder's (in from the shoulder, toward the keyboard); HAND_Y: how far forward of the hip joints.
+HAND_IN, HAND_Y, HAND_Z = 0.75, -0.36, 0.775  # the desk top is 0.74; the near edge is at y -0.145
+ELBOW_POLE = (0.55, 0.45, -1.0)  # elbows bend down, back and a little out
 GUEST = {"loc": (-1.05, -0.32, 0.0), "rot_z": 0.40}  # a second chair past the desk's end, turned toward the hero
 
 
@@ -103,8 +106,44 @@ def sit(objs: dict, seat: dict, slot: str = "you", coll=None) -> None:
             ankle.z = floor + ANKLE_Z
             pb = arm.pose.bones[ctl]
             _move(arm, pb, ankle - _world(arm, pb.head))
-    # 3. forearms forward toward the desk (render_plan keys rotation_euler on top for the talk beats)
-    for k in ("ElbowL", "ElbowR"):
-        if k in objs:
-            objs[k].delta_rotation_euler.x = FOREARMS
+    # 3. arms: upper arms down by the sides, forearms forward, hands resting on the desk
+    for side, (upper, fore, hand) in (seat.get("arms") or {}).items():
+        _rest_arm(arm, objs, root, side, upper, fore, hand)
+    _update()
+
+
+def _rest_arm(arm, objs, root, side, upper, fore, hand):
+    """Two-bone reach: aim the upper arm at the solved elbow; turn the forearm (steered by ElbowL/ElbowR through Copy
+    Rotation) onto the hand target by rotating that empty, as a delta so render_plan's talk beats ride on top."""
+    pu, pf, ph = arm.pose.bones[upper], arm.pose.bones[fore], arm.pose.bones[hand]
+    s = _world(arm, pu.head)
+    l1 = (_world(arm, pf.head) - s).length
+    l2 = (_world(arm, ph.head) - _world(arm, pf.head)).length
+    rw = root.matrix_world
+    rot = rw.to_3x3().normalized()
+    local_s = rw.inverted() @ s
+    hip_y = HIP_BACK
+    sign = 1.0 if side == "l" else -1.0  # the character's left is +x in its own frame
+    target = rw @ Vector((local_s.x * HAND_IN, hip_y + HAND_Y, HAND_Z))
+    d = target - s
+    dist = min(d.length, (l1 + l2) * 0.995)
+    dn = d.normalized()
+    pole = rot @ Vector((ELBOW_POLE[0] * sign, ELBOW_POLE[1], ELBOW_POLE[2]))
+    pole = (pole - dn * pole.dot(dn)).normalized()
+    a = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist)
+    h = max(0.0, l1 * l1 - a * a) ** 0.5
+    elbow = s + dn * a + pole * h
+    hand_at = s + dn * dist
+    _aim(arm, pu, elbow, pf.head.copy())
+    e = objs.get("ElbowL" if side == "l" else "ElbowR")
+    if e is None:  # no forearm steering: aim the bone itself
+        _aim(arm, pf, hand_at, ph.head.copy())
+        return
+    cur = _world(arm, ph.head) - _world(arm, pf.head)
+    q = cur.normalized().rotation_difference((hand_at - elbow).normalized())
+    pm = e.parent.matrix_world.to_3x3().normalized() if e.parent else Matrix.Identity(3)
+    ql = (pm.inverted() @ q.to_matrix() @ pm).to_quaternion()  # the world turn, in the empty's parent frame
+    cur_local = (e.delta_rotation_euler.to_quaternion() @ e.rotation_euler.to_quaternion())
+    e.delta_rotation_euler = (ql @ cur_local).to_euler()
+    e.rotation_euler = (0.0, 0.0, 0.0)
     _update()

@@ -316,8 +316,17 @@ def person_framing(shots: list, name: str) -> None:
 
 
 def imported_seats() -> dict:
-    """{id: seat table} for the realistic cast (blender/imported.py "seat")."""
-    return {k: v["seat"] for k, v in blender3d.imported()["CHARACTERS"].items() if "seat" in v}
+    """{id: seat table} for the realistic cast (blender/imported.py "seat"), with each arm's (upper arm, forearm, hand)
+    bones from its "bones" table so seated.py can rest the hands on the desk."""
+    out = {}
+    for k, v in blender3d.imported()["CHARACTERS"].items():
+        if "seat" not in v:
+            continue
+        b = v.get("bones", {})
+        arms = {s: (b[f"upperarm_{s}"][0], b[f"forearm_{s}"][0], b[f"forearm_{s}"][1])
+                for s in ("l", "r") if f"upperarm_{s}" in b and f"forearm_{s}" in b}
+        out[k] = {**v["seat"], "arms": arms}
+    return out
 
 
 def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path,
