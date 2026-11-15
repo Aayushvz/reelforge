@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search, LayoutGrid, List, MoreHorizontal, Film, Clapperboard, Copy, Archive, ArchiveRestore, Trash2, Pencil, Plus,
-  FolderOpen, Scissors, FileText, RefreshCw,
+  FolderOpen, Scissors, FileText, RefreshCw, HardDrive,
 } from "lucide-react";
 import { api, fileUrl } from "@/lib/api";
 import type { ProjectSummary } from "@/lib/types";
-import { relativeTime } from "@/lib/format";
+import { formatBytes, relativeTime } from "@/lib/format";
 import { Badge, Callout, Empty } from "@/components/ui/Feedback";
 import { Confirm, Dialog, useMenu } from "@/components/ui/Overlay";
 import { Segmented, Select } from "@/components/ui/Form";
@@ -57,6 +57,12 @@ export function ProjectsPage() {
   const act = {
     rename: async (p: ProjectSummary, name: string) => { await patchEditor(p, { name }); toast("Renamed"); refresh(); },
     duplicate: async (p: ProjectSummary) => { const d = await api.duplicate(p.id); toast(`Duplicated as ${d.name}`); refresh(); },
+    clean: async (p: ProjectSummary) => {
+      toast(`Freeing space in ${p.name}…`);
+      const r = await api.clean(p.id);
+      toast(r.freed > 0 ? `Freed ${formatBytes(r.freed)} (now ${formatBytes(r.after)})` : "Nothing to free");
+      refresh();
+    },
     archive: async (p: ProjectSummary, archived: boolean) => { await patchEditor(p, { archived }); toast(archived ? "Archived" : "Restored"); refresh(); },
     remove: async (p: ProjectSummary) => {
       try { await api.remove(p.id); toast("Moved to projects/.trash"); refresh(); } catch (e) { toast((e as Error).message, "err"); }
@@ -70,6 +76,7 @@ export function ProjectsPage() {
     { separator: true },
     { label: "Rename", icon: <Pencil size={14} />, onSelect: () => setRenaming(p) },
     { label: "Duplicate", icon: <Copy size={14} />, onSelect: () => void act.duplicate(p).catch((e) => toast(e.message, "err")) },
+    ...((p.bytes ?? 0) > 300e6 ? [{ label: `Free space (${formatBytes(p.bytes ?? 0)})`, icon: <HardDrive size={14} />, onSelect: () => void act.clean(p).catch((e) => toast(e.message, "err")) }] : []),
     p.archived
       ? { label: "Restore", icon: <ArchiveRestore size={14} />, onSelect: () => void act.archive(p, false) }
       : { label: "Archive", icon: <Archive size={14} />, onSelect: () => void act.archive(p, true) },
@@ -115,7 +122,7 @@ export function ProjectsPage() {
                 </div>
                 <div className="body" style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", gap: 2 }}>
                   <span className="h3 ellipsis">{p.name}</span>
-                  <span className="meta">{p.kind === "blank" ? "Edit project" : `${p.lineCount} lines · ${p.words} words`} · {p.ratio} · {relativeTime(p.updatedAt)}</span>
+                  <span className="meta">{p.kind === "blank" ? "Edit project" : `${p.lineCount} lines · ${p.words} words`} · {p.ratio}{p.bytes ? ` · ${formatBytes(p.bytes)}` : ""} · {relativeTime(p.updatedAt)}</span>
                 </div>
               </div>
             ))}
@@ -128,7 +135,7 @@ export function ProjectsPage() {
                 <span className="row" style={{ minWidth: 0 }}><span className="list-thumb"><ProjectThumb p={p} /></span><span className="h3 ellipsis">{p.name}</span></span>
                 <span className="muted">{p.kind === "blank" ? "Edit" : "Reel"}</span>
                 <span><Badge tone={STATUS[p.status].tone}>{STATUS[p.status].label}</Badge></span>
-                <span className="mono meta">{p.ratio}</span>
+                <span className="mono meta">{p.ratio}{p.bytes ? ` · ${formatBytes(p.bytes)}` : ""}</span>
                 <span className="meta">{relativeTime(p.updatedAt)}</span>
                 <button className="icon-btn sm" aria-label="Project actions" onClick={(e) => { e.stopPropagation(); openMenu(p, e.currentTarget.getBoundingClientRect()); }}><MoreHorizontal size={14} /></button>
               </div>

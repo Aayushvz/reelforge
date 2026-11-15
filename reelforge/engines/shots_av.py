@@ -20,6 +20,7 @@ from pathlib import Path
 
 from ..angles import ANGLES
 from .. import buddy as acting
+from .. import storage
 from ..blender_run import run_blender
 from ..plan import build_render_plan
 from ..schema import AV_BUDDIES, AV_HERO
@@ -355,11 +356,14 @@ def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path
     key = blender3d.render_key(plan_text, plan)
     key_file = out / f".render_key_{stage}"
     same = key_file.exists() and key_file.read_text() == key
-    if same and target.exists() and len(list(target.glob("*.png"))) >= want:
+    done = target.exists() and len(list(target.glob("*.png"))) >= want
+    if same and (done or stage == "full" and storage.master_ok(out, want)):  # frames, or packed into the master
         print(f"{stage}: up to date, skipping render")
         return
     if not same:
         shutil.rmtree(target, ignore_errors=True)
+        if stage == "full":
+            storage.drop_master(out)
         key_file.write_text(key)
     run_blender(blender3d.BLENDER_DIR / "render_plan.py", [str(plan_path), stage], blend=Path(plan["environment_blend"]))
 
@@ -581,5 +585,6 @@ def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(perf.fps), "-i",
                     str(out / "frames" / "%04d.png"), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18",
                     "-movflags", "+faststart", str(mp4)], check=True)
+    shutil.rmtree(out / "frames", ignore_errors=True)  # the mp4 is the animatic: 2 MB PNGs a frame aren't kept
     print(f"animatic: {mp4}")
     return mp4

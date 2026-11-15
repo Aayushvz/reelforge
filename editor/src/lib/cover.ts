@@ -18,10 +18,9 @@ export type Layer = "headline" | "pill" | "frame";
 export type Box = { x: number; y: number; w: number; h: number };
 export type CoverDraft = {
   video: string; fps: number; width: number; height: number;
-  frames?: string; // clean rendered frames: frame N is `${frames}/${N+1:04}.png`
+  frames?: string; // set when clean frames exist: fetch frame N with frameUrl()
   variants: { headline: string[]; caption: string; frame: number; time: number; shot: number | null; still?: string }[];
 };
-export const cleanFramePath = (dir: string, frame: number) => `${dir}/${String(frame + 1).padStart(4, "0")}.png`;
 
 export const CREAM = "#F7F3EA";
 export const PURPLE = "#B35CFF";

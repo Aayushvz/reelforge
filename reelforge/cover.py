@@ -169,21 +169,22 @@ def draft(project: Path, n: int = 3) -> dict:
 
     frames = pick_frames(plan, n, hero) or [{"shot": None, "frame": round(fps), "score": 0.0}]
     # the rendered frames are clean: no burned-in captions, which would fight the cover's own text
-    clean = project / "out" / "frames"
-    has_clean = (clean / "0001.png").exists()
+    from . import storage
+    out_dir = project / "out"
+    has_clean = (out_dir / "frames" / "0001.png").exists() or (out_dir / storage.MASTER).exists()
     variants = []
     for i in range(min(n, max(len(heads), len(frames)))):
         h, src = heads[i % len(heads)]
         f = frames[i % len(frames)]
         v = {"headline": h, "caption": src, "frame": f["frame"], "time": round(f["frame"] / fps, 3), "shot": f["shot"]}
-        still = clean / f"{f['frame'] + 1:04d}.png"
-        if has_clean and still.exists():
+        still = storage.still(out_dir, f["frame"], fps) if has_clean else None
+        if still is not None:
             v["still"] = still.relative_to(project).as_posix()
         variants.append(v)
     w, hgt = (plan.get("resolution") or [1080, 1920])[:2]
     out = {"video": video.relative_to(project).as_posix(), "fps": fps, "width": w, "height": hgt, "variants": variants}
     if has_clean:
-        out["frames"] = "out/frames"  # frame N is out/frames/{N+1:04d}.png
+        out["frames"] = "out/frames"  # clean frames exist: the editor fetches frame N from /api/projects/<id>/frame/N
     return out
 
 

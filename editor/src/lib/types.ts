@@ -101,6 +101,7 @@ export type ProjectSummary = {
   id: string; folder: string; name: string; kind: ProjectKind; archived: boolean;
   status: "draft" | "stills" | "rendered"; ratio: Ratio; lineCount: number; words: number; style?: string;
   updatedAt: string; thumb: string | null; final: string | null;
+  bytes?: number; // size of out/ on disk
 };
 
 export type ProjectData = ProjectSummary & {

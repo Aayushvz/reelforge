@@ -34,6 +34,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--style", choices=list(ENGINES), help="override the project's style")
     r.add_argument("--look", choices=list(LOOKS), help="override the project's look")
     r.add_argument("--quality", choices=list(QUALITIES), help="cinema look: preview | standard | cinema")
+    r.add_argument("--keep-master", action="store_true",
+                   help="keep a clean master (~150 MB) so captions/grade can change without a re-render")
     bn = sub.add_parser("bench", help="time fixed stills for a look and quality (no voices needed)")
     bn.add_argument("--look", choices=list(LOOKS), default="cinema")
     bn.add_argument("--quality", choices=list(QUALITIES), default="standard")
@@ -63,7 +65,34 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("project", type=Path)
     v.add_argument("--line", action="append", default=[], help="only these line ids")
     v.add_argument("--force", action="store_true", help="drop the cached take and generate a new one")
+    cl = sub.add_parser("clean", help="free disk: keep only the final video, voices and metadata of finished projects")
+    cl.add_argument("projects", type=Path, nargs="*")
+    cl.add_argument("--all", action="store_true", help="every project under projects/")
+    cl.add_argument("--dry-run", action="store_true", help="only report what would be freed")
+    cl.add_argument("--json", action="store_true", help="one SHOTSAV_JSON line for the editor")
     return p
+
+
+def clean(projects: list[Path], everything: bool, dry_run: bool, as_json: bool) -> None:
+    from . import storage
+    if everything:
+        projects = [d for d in sorted((REPO / "projects").iterdir()) if (d / "out").is_dir()]
+    if not projects:
+        raise SystemExit("name a project folder, or pass --all")
+    reports = []
+    for d in projects:
+        r = storage.clean(d, dry_run)
+        reports.append(r)
+        if not as_json:
+            verb = "would free" if dry_run else "freed"
+            print(f"{r['project']}: {r['before'] / 1e9:.2f} GB, {verb} {r['freed'] / 1e9:.2f} GB")
+            for a in r["actions"]:
+                print(f"  - {a}")
+    if as_json:
+        print("SHOTSAV_JSON " + json.dumps(reports), flush=True)
+    else:
+        total = sum(r["freed"] for r in reports)
+        print(f"total: {'would free' if dry_run else 'freed'} {total / 1e9:.2f} GB")
 
 
 def voices(project: Path, only: list[str], force: bool) -> int:
@@ -103,7 +132,7 @@ def voices(project: Path, only: list[str], force: bool) -> int:
 
 
 def run(project: Path, stage: str, draft: bool, style: str | None = None, look: str | None = None,
-        quality: str | None = None) -> Path | None:
+        quality: str | None = None, keep_master: bool = False) -> Path | None:
     project = project.resolve()
     perf = load_performance(project / "performance.json")
     perf = replace(perf, look=look or perf.look, quality="preview" if draft else (quality or perf.quality))
@@ -193,6 +222,13 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         return None
     final = finish(out, perf.fps, f"final_{perf.ratio.replace(':', 'x')}.mp4", perf.environment, perf.look)
     print(f"final: {final}")
+    from . import storage  # the final is made: only it (plus voices and small metadata) is kept
+    if keep_master:
+        storage.pack_frames(out, perf.fps, n_frames)
+        storage.drop_scratch(out)
+    else:
+        freed = storage.finalize(out)
+        print(f"storage: kept {final.name}, deleted frames and build files ({freed / 1e9:.2f} GB)")
     return final
 
 
@@ -223,10 +259,12 @@ def main(argv: list[str] | None = None) -> None:
     elif ns.cmd == "animatic":
         from .engines import shots_av
         shots_av.animatic(ns.project, draft=not ns.final, stage=ns.stage)
+    elif ns.cmd == "clean":
+        clean(ns.projects, ns.all, ns.dry_run, ns.json)
     elif ns.cmd == "voices":
         raise SystemExit(voices(ns.project, ns.line, ns.force))
     else:
-        run(ns.project, ns.stage, ns.draft, ns.style, ns.look, ns.quality)
+        run(ns.project, ns.stage, ns.draft, ns.style, ns.look, ns.quality, ns.keep_master)
 
 
 if __name__ == "__main__":

@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Download, FileVideo, ImageIcon, Sparkles } from "lucide-react";
-import { api, fileUrl } from "@/lib/api";
+import { api, fileUrl, frameUrl } from "@/lib/api";
 import type { ProjectSummary } from "@/lib/types";
 import {
-  applyVariant, cleanFramePath, download, loadImage, saveStyle, savedStyle, drawCover, ensureFonts, fileSafe, FONTS, renderCover, SAFE_ZONES, SIZE_PRESETS,
+  applyVariant, download, loadImage, saveStyle, savedStyle, drawCover, ensureFonts, fileSafe, FONTS, renderCover, SAFE_ZONES, SIZE_PRESETS,
   SNAPS, snapTo, type Box, type CoverDoc, type CoverDraft, type Layer, type SafeZone, type Snap,
 } from "@/lib/cover";
 import { ColorInput, FieldRow, Section, Segmented, Select, Slider, Switch } from "@/components/ui/Form";
@@ -214,12 +214,12 @@ export function ThumbnailGenerator() {
     if (!clean || !cleanDir || !projectId) { setStill(null); return; }
     let live = true;
     const t = setTimeout(() => {
-      loadImage(fileUrl(projectId, cleanFramePath(cleanDir, frameNo)))
+      loadImage(frameUrl(projectId, frameNo, fps))
         .then((im) => { if (live) setStill(im); })
         .catch(() => { if (live) setStill(null); }); // past the rendered frames (the end card): use the video
     }, 60);
     return () => { live = false; clearTimeout(t); };
-  }, [clean, cleanDir, projectId, frameNo]);
+  }, [clean, cleanDir, projectId, frameNo, fps]);
   const totalFrames = Math.max(1, Math.round(duration * fps));
 
   const projectOptions = useMemo(() => [{ value: "", label: "Open a rendered project…" },
