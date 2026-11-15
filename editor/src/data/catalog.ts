@@ -42,7 +42,7 @@ export const CHARACTERS: Character[] = [
   },
   {
     id: "cute_girl", name: "Mina", gender: "female", vibe: "Warm, playful", tone: "#d0a090",
-    signature: "Bangs and a loose ponytail, tied white shirt", status: "available", suggestedVoice: "Elli",
+    signature: "Bangs and a loose ponytail, tied white shirt", status: "available", suggestedVoice: "Matilda",
     personality: "Laughs first, explains later.",
     outfits: [{ id: "cute_girl-1", name: "Tied shirt & denim", items: {} }],
   },
@@ -148,17 +148,40 @@ export const CAPTION_FONTS = ["Geist", "Anton", "Archivo Black", "DM Serif Displ
 // ---------- voices (ElevenLabs premade library; IDs are public) ----------
 
 export type Voice = { name: string; id: string; tags: string[] };
+// Every id here answered a speech request on the owner's account on 2026-11-15. ElevenLabs retired Elli
+// (MF3mGyEYCl7XYWbV9V5h): RETIRED_VOICES maps it to a stand-in, and projects that still use it are moved on open.
 export const VOICES: Voice[] = [
   { name: "Jessica", id: "cgSgspJ2msm6clMCkdW9", tags: ["female", "playful", "bright", "warm"] },
   { name: "Rachel", id: "21m00Tcm4TlvDq8ikWAM", tags: ["female", "calm", "narration"] },
-  { name: "Elli", id: "MF3mGyEYCl7XYWbV9V5h", tags: ["female", "young", "emotional"] },
+  { name: "Matilda", id: "XrExE9yKIg1WjnnlVkGX", tags: ["female", "warm", "friendly"] },
+  { name: "Laura", id: "FGY2WhTYpPnrIDTdsKH5", tags: ["female", "young", "upbeat"] },
+  { name: "Sarah", id: "EXAVITQu4vr4xnSDxMaL", tags: ["female", "young", "soft"] },
+  { name: "Lily", id: "pFZP5JQG7iQjIQuC4Bku", tags: ["female", "british", "warm"] },
+  { name: "Alice", id: "Xb7hH8MSUJpSbSDYk0k2", tags: ["female", "british", "confident"] },
+  { name: "Aria", id: "9BWtsMINqrJLrRacOk9x", tags: ["female", "expressive", "husky"] },
   { name: "Domi", id: "AZnzlk1XvdvUeBnXmlld", tags: ["female", "strong", "confident"] },
+  { name: "River", id: "SAz9YHcvj6GT2YYXdXww", tags: ["neutral", "calm", "relaxed"] },
   { name: "Josh", id: "TxGEqnHWrfWFTfGW9XjX", tags: ["male", "deep", "young"] },
   { name: "Adam", id: "pNInz6obpgDQGcFmaJgB", tags: ["male", "deep", "narration"] },
   { name: "Antoni", id: "ErXwobaYiN019PkySvjV", tags: ["male", "well-rounded"] },
   { name: "Sam", id: "yoZ06aMxZJJ28mfd3POQ", tags: ["male", "raspy", "young"] },
   { name: "Arnold", id: "VR6AewLTigWG4xSOukaG", tags: ["male", "crisp"] },
+  { name: "Liam", id: "TX3LPaxmHKxFdv7VOQHJ", tags: ["male", "young", "articulate"] },
+  { name: "Will", id: "bIHbv24MWmeRgasZH58o", tags: ["male", "young", "friendly"] },
+  { name: "Chris", id: "iP95p4xoKVk53GoZ742B", tags: ["male", "casual", "easy-going"] },
+  { name: "Eric", id: "cjVigY5qzO86Huf0OWal", tags: ["male", "smooth", "trustworthy"] },
+  { name: "Brian", id: "nPczCjzI2devNBz1zQrb", tags: ["male", "deep", "resonant"] },
+  { name: "Roger", id: "CwhRBWXzGAHq8TQ4Fs17", tags: ["male", "confident", "laid-back"] },
+  { name: "Charlie", id: "IKne3meq5aSn9XLyUdCD", tags: ["male", "australian", "natural"] },
+  { name: "George", id: "JBFqnCBsd6RMkjVDRZzb", tags: ["male", "british", "warm"] },
+  { name: "Daniel", id: "onwK4e9ZLuTAKqWW03F9", tags: ["male", "british", "steady"] },
+  { name: "Callum", id: "N2lVS1w4EtoT3dr4eOWO", tags: ["male", "husky", "intense"] },
+  { name: "Bill", id: "pqHfZKP75CvOlQylNhV4", tags: ["male", "older", "wise"] },
 ];
+// Voices ElevenLabs retired -> the stand-in a project moves to.
+export const RETIRED_VOICES: Record<string, string> = {
+  MF3mGyEYCl7XYWbV9V5h: "XrExE9yKIg1WjnnlVkGX", // Elli -> Matilda
+};
 export const voiceById = (id: string) => VOICES.find((v) => v.id === id);
 
 // A new speaker gets the next cast member nobody plays yet, in that member's suggested voice.

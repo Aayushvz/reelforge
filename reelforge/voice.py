@@ -16,6 +16,8 @@ from .schema import Line
 
 DEFAULT_MODEL = "eleven_v4"   # newest expressive model; audio tags like [sighs] work
 FALLBACK_MODEL = "eleven_v3"  # used when the account or endpoint rejects v4
+# Voices ElevenLabs retired -> a stand-in (the editor's RETIRED_VOICES, editor/src/data/catalog.ts, keeps the same map)
+RETIRED = {"MF3mGyEYCl7XYWbV9V5h": "XrExE9yKIg1WjnnlVkGX"}  # Elli -> Matilda
 URL = ("https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps"
        "?output_format=mp3_44100_128")
 RETRY_CODES = {429, 500, 502, 503, 504}
@@ -82,6 +84,7 @@ def _cache_key(text: str, voice_id: str, model: str | None = None, delivery: str
 
 def take_path(line: Line, voice_id: str, out_dir: Path, model: str | None = None, direct: bool = False) -> Path:
     """Where the API take for this exact model + voice + text (+ delivery, when directed) is cached."""
+    voice_id = RETIRED.get(voice_id, voice_id)  # a retired voice's takes live under its stand-in
     key = _cache_key(line.text, voice_id, model, delivery_key(line) if direct else "")
     return Path(out_dir) / f"{line.id}-{key}.mp3"
 
@@ -107,6 +110,9 @@ def synthesize_line(line: Line, voice_id: str, out_dir: Path, api_key: str,
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     model = model_name(model)
+    if voice_id in RETIRED:
+        print(f"{line.id}: ElevenLabs retired voice {voice_id}; using its stand-in {RETIRED[voice_id]}")
+        voice_id = RETIRED[voice_id]
     mp3 = take_path(line, voice_id, out_dir, model, direct)
     meta = mp3.with_suffix(".json")
     if not (mp3.exists() and meta.exists()):
@@ -130,7 +136,11 @@ def synthesize_line(line: Line, voice_id: str, out_dir: Path, api_key: str,
                 if e.code in RETRY_CODES and attempt < retries:
                     sleep(2 ** (attempt - 1))
                     continue
-                raise VoiceError(f"ElevenLabs failed for {line.id}: HTTP {e.code}{_detail(e)}") from e
+                detail = _detail(e)
+                if e.code == 404 and "voice" in detail.lower():
+                    raise VoiceError(f"{line.id}: ElevenLabs no longer has the voice {voice_id} (retired, or removed from "
+                                     f"your library). Pick another voice for {line.speaker} and generate again.") from e
+                raise VoiceError(f"ElevenLabs failed for {line.id}: HTTP {e.code}{detail}") from e
             except urllib.error.URLError as e:
                 attempt += 1
                 if attempt < retries:

@@ -8,7 +8,7 @@ import {
 import { api, avThumbUrl, fileUrl, jobEventsUrl } from "@/lib/api";
 import type { Emotion, Job, Performance, PerfLine, ProjectData, SubtitleStyle, SystemStatus, VoiceLine } from "@/lib/types";
 import { SubtitleCard, SubtitleControls, SubtitleGrid } from "@/components/pickers";
-import { CHARACTERS, SUBTITLE_TEMPLATES, VOICES } from "@/data/catalog";
+import { CHARACTERS, RETIRED_VOICES, SUBTITLE_TEMPLATES, VOICES } from "@/data/catalog";
 import { EMOTIONS } from "@/lib/types";
 import {
   ACTION_LABEL, BUDDY, HERO, MOVES, MOVE_LABEL, PURPLE, SETUP_LABEL, STARTERS, estimateRuntime, fmtDur, fmtSec,
@@ -32,6 +32,7 @@ const mins = (sec: number) => `${Math.max(1, Math.round(sec / 60))}m`;
 const ROLE_SHORT = { hero: "You", buddy: "Buddy", wide: "Wide" } as const;
 const roleOf = (kind: string): "hero" | "buddy" | "wide" => (kind === "av_buddy" ? "buddy" : kind.startsWith("av_wide") ? "wide" : "hero");
 
+const VOICE_NOTICE = new Set<string>();  // projects already told their retired voice moved (dev mode loads twice)
 const personName = (model: string) => CHARACTERS.find((c) => c.id === model)?.name ?? model;
 const personVoice = (model: string) => {
   const c = CHARACTERS.find((x) => x.id === model);
@@ -94,6 +95,21 @@ export function ShotsAvWorkspace() {
     try {
       const p = await api.project(id);
       let perfIn = p.performance;
+      if (perfIn?.style === "shots-av") {  // a voice ElevenLabs retired: move to its stand-in, and say so
+        const moved: string[] = [];
+        const chars = Object.fromEntries(Object.entries(perfIn.characters).map(([k, c]) => {
+          const to = c.voice_id && RETIRED_VOICES[c.voice_id];
+          if (!to) return [k, c];
+          moved.push(`${k === HERO ? "your" : "the buddy's"} voice to ${VOICES.find((v) => v.id === to)?.name ?? "a new voice"}`);
+          return [k, { ...c, voice_id: to }];
+        }));
+        if (moved.length) {
+          perfIn = { ...perfIn, characters: chars };
+          await api.save(id, { performance: perfIn });
+          if (!VOICE_NOTICE.has(id)) toast(`ElevenLabs retired a voice this reel used. Moved ${moved.join(" and ")}; change it under Voices.`);
+          VOICE_NOTICE.add(id);
+        }
+      }
       if (perfIn?.style === "shots-av") {  // older desk reels saved no voices: cast the defaults once
         const me = perfIn.characters[HERO], bud = perfIn.characters[BUDDY];
         if (me && bud && (!me.voice_id || !bud.voice_id)) {
@@ -286,7 +302,7 @@ export function ShotsAvWorkspace() {
     } catch (e) { if (token === lookSeq.current) setLookError((e as Error).message); }
     finally { if (token === lookSeq.current) setLookBusy(false); }
   }, [id, flush]);
-  const lookReady = !!lines.length && !!cat?.allBuilt;
+  const lookReady = perf?.style === "shots-av" && !!lines.length && !!cat?.allBuilt;
   useEffect(() => {
     if (!lookReady || !lookKey) return;
     setShowLook(true);

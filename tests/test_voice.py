@@ -124,3 +124,25 @@ def test_directed_synthesis_sends_tags_and_settings(tmp_path):
             "characters": list("hi"), "character_start_times_seconds": [0.0, 0.1], "character_end_times_seconds": [0.1, 0.2]}}
     synthesize_line(Line("l1", "A", "hi", "surprised", 0.9, "calm"), "v", tmp_path, "k", post=post, model="eleven_v4", direct=True)
     assert sent[0]["text"] == "[shocked] hi" and sent[0]["voice_settings"]["stability"] == 0.0
+
+
+def test_missing_voice_says_which_and_what_to_do(tmp_path):
+    def post(u, h, b):
+        raise urllib.error.HTTPError("https://x", 404, "err", {}, io.BytesIO(
+            b'{"detail": {"status": "voice_not_found", "message": "A voice with voice_id \'X1\' was not found."}}'))
+
+    with pytest.raises(VoiceError, match="no longer has the voice X1.*Pick another voice for LEAD"):
+        synthesize_line(LINE, "X1", tmp_path, "K", post=post, sleep=lambda s: None)
+
+
+def test_retired_voice_uses_its_stand_in(tmp_path):
+    seen = []
+
+    def post(u, h, b):
+        seen.append(u)
+        return _resp()
+
+    synthesize_line(LINE, "MF3mGyEYCl7XYWbV9V5h", tmp_path, "K", post=post, sleep=lambda s: None)
+    assert "XrExE9yKIg1WjnnlVkGX" in seen[0] and "MF3mGyEYCl7XYWbV9V5h" not in seen[0]
+    from reelforge.voice import has_take
+    assert has_take(LINE, "MF3mGyEYCl7XYWbV9V5h", tmp_path)  # the status check finds the stand-in's take

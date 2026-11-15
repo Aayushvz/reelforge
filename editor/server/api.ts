@@ -422,7 +422,9 @@ function shotsavPreview(id: string, shot: number, final: boolean) {
   const next = prev.catch(() => undefined).then(() =>
     reelforgeJson<{ still: string }>(["shots-av", "preview", dir, "--shot", String(shot), ...(final ? ["--final"] : [])]))
     .then((r) => ({ still: path.relative(dir, r.still).split(path.sep).join("/"), at: Date.now() }));
-  previewQueue.set(id, next.finally(() => { if (previewQueue.get(id) === next) previewQueue.delete(id); }));
+  // the queue's copy must not reject: an unhandled rejection would stop the whole server (the caller sees the error)
+  const tail = next.catch(() => undefined).finally(() => { if (previewQueue.get(id) === tail) previewQueue.delete(id); });
+  previewQueue.set(id, tail);
   return next;
 }
 
@@ -439,7 +441,9 @@ function shotsavLook(id: string) {
     return reelforgeJson<{ still: string }>(["shots-av", "look", dir]);
   }).then((r) => ({ still: path.relative(dir, r.still).split(path.sep).join("/"), at: Date.now() }));
   lookWaiting.set(id, next);
-  previewQueue.set(id, next.finally(() => { if (previewQueue.get(id) === next) previewQueue.delete(id); }));
+  // the queue's copy must not reject: an unhandled rejection would stop the whole server (the caller sees the error)
+  const tail = next.catch(() => undefined).finally(() => { if (previewQueue.get(id) === tail) previewQueue.delete(id); });
+  previewQueue.set(id, tail);
   return next;
 }
 
