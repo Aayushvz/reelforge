@@ -49,7 +49,7 @@ export const HERO_VOICE = "TxGEqnHWrfWFTfGW9XjX"; // Josh: young, warm
 export const BUDDY_VOICE: Record<string, string> = {
   buddy_claude: "cgSgspJ2msm6clMCkdW9", // Jessica: playful, warm
   buddy_chatgpt: "21m00Tcm4TlvDq8ikWAM", // Rachel: calm
-  buddy_figma: "MF3mGyEYCl7XYWbV9V5h", // Elli: young, emotional
+  buddy_figma: "FGY2WhTYpPnrIDTdsKH5", // Laura: young, upbeat (Elli was retired by ElevenLabs)
   buddy_nova: "AZnzlk1XvdvUeBnXmlld", // Domi: confident
 };
 
