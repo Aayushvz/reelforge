@@ -144,6 +144,7 @@ export function newPerformance(buddy = "buddy_claude", room = "av_studio_night",
     // a fresh seed per project: the director shoots every reel differently (Reroll angles picks another)
     camera: { grammar: "signature", seed: Math.floor(Math.random() * 1e6), rack: true, drift: 1, angles: "varied" },
     captions: { position: "top", plate: true, tint: true, style: { ...SHOTSAV_TOP_STYLE } }, sound: { foley: true },
+    music: { mode: "auto", volume: 0.5, duck: true }, // picked from the script; the editor can change it
     lines,
   };
 }

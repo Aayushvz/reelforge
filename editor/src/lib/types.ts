@@ -34,7 +34,7 @@ export type Performance = {
   version: 1; fps: number; ratio: Ratio; environment: string; lighting?: string; style?: string; ambience?: boolean;
   look?: Look; quality?: RenderQuality;
   characters: Record<string, PerfCharacter>; lines: PerfLine[];
-  camera?: AvCamera; sound?: { foley?: boolean };
+  camera?: AvCamera; sound?: { foley?: boolean }; music?: MusicConfig;
   captions?: { position?: "top" | "lower" | "custom"; plate?: boolean; tint?: boolean; style?: SubtitleStyle;
     x?: number; y?: number; size?: number };  // custom: the caption block's centre (frame fractions); size 0.5..2
   room_view?: RoomView; end_text?: string;
@@ -129,3 +129,16 @@ export type Library = {
   lighting?: { id: string; environmentId: string; presetId: string; name: string }[];
   subtitleTemplates?: (SubtitleStyle & { id: string; name: string })[];
 };
+
+// ---------- background music ----------
+export type MusicConfig = { mode?: "auto" | "track" | "none"; id?: string; pick?: number; volume?: number; duck?: boolean };
+export type MusicTrack = {
+  id: string; title: string; artist: string; source: "mixkit" | "mine"; file: string; duration: number; start: number;
+  vocals: boolean; viral: boolean; energy: number; moods: Record<string, number>; note: string; available: boolean;
+};
+export type MusicSlot = {
+  id: string; title: string; artist: string; platform: string; genres: Record<string, number>; note: string; date: string;
+  source_url: string; added: boolean;
+};
+export type MusicLibrary = { genres: string[]; tracks: MusicTrack[]; trending: MusicSlot[] };
+export type MusicPick = { own: string | null; chosen: MusicTrack | null; top: { track: MusicTrack; score: number; reason: string }[] };

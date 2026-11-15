@@ -68,6 +68,11 @@ From the command line:
 .venv/Scripts/reelforge run <project> --stage full                     # Balanced, 1080x1920
 .venv/Scripts/reelforge run <project> --stage full --quality cinema    # Final
 ```
+**Background music:** each reel gets a track picked from its script (comedy, suspense, lo-fi and so on). It dips under the voices and lifts on the end card.
+- **Editor:** set Auto, Pick or Off in the Sound section. The **Library → Music** tab has the 40-track built-in pack (no credit needed), your own tracks, and the **Viral now** list, where you attach trending songs.
+- **CLI:** `reelforge music list | pick <project> | import <file> | fetch`. The built-in mp3s are git-ignored; `reelforge music fetch` downloads them.
+- **Details:** [docs/superpowers/plans/2026-11-15-background-music.md](docs/superpowers/plans/2026-11-15-background-music.md).
+
 Details: [docs/HANDOFF.md section 9](docs/HANDOFF.md) and [docs/production/shots-av/PROGRESS.md](docs/production/shots-av/PROGRESS.md).
 
 ## Repository layout

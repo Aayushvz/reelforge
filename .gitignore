@@ -29,3 +29,5 @@ docs/production/shots-av/**/_frames/
 references/style/*
 !references/style/.gitkeep
 docs/production/**/side_by_side*.mp4
+assets/music/tracks/
+assets/music/mine/

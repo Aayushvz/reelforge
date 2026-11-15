@@ -17,6 +17,7 @@ MAX_CHARACTERS = 2  # one per mark (Mark_A, Mark_B)
 LOOKS = ("classic", "cinema", "shotsav")  # classic = the original Eevee look; cinema = Cycles faces + the
 # camera rig; shotsav = the low-poly desk two-hander of the shots-av style
 QUALITIES = ("preview", "standard", "cinema")
+MUSIC_MODES = ("auto", "track", "none")
 CAMERA_MOVES = ("static", "push_in", "pull_out", "pull_truck", "orbit", "truck", "drift", "crane_down", "crane_up",
                 "slow_zoom", "whip_pan")
 SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu",
@@ -119,6 +120,7 @@ class Performance:
     sound: dict = field(default_factory=dict)  # shots-av: {"foley": bool}
     end_text: str = ""  # shots-av: an end card over the closing wide ("Every designer's relationship with AI.")
     room_view: dict = field(default_factory=dict)  # shots-av: {"pan", "height", "turn"} each -1..1; empty = picked
+    music: dict = field(default_factory=dict)  # shots-av: {"mode": auto|track|none, "id", "volume" 0..1, "duck"}; {} = none
 
 
 def load_performance(path: Path) -> Performance:
@@ -247,6 +249,19 @@ def parse_performance(data: dict) -> Performance:
                      ("sound.foley", sound.get("foley", True))):
         if not isinstance(val, bool):
             errors.append(f"{key} must be true or false")
+    music = data.get("music") or {}
+    if not isinstance(music, dict):
+        errors.append("music must be an object")
+        music = {}
+    if music.get("mode", "auto") not in MUSIC_MODES:
+        errors.append(f"music.mode must be one of {MUSIC_MODES}")
+    if music.get("mode") == "track" and not isinstance(music.get("id"), str):
+        errors.append("music.id must name a track when music.mode is track")
+    vol = music.get("volume", 0.5)
+    if isinstance(vol, bool) or not isinstance(vol, (int, float)) or not 0.0 <= vol <= 1.0:
+        errors.append("music.volume must be a number 0..1")
+    if not isinstance(music.get("duck", True), bool):
+        errors.append("music.duck must be true or false")
     end_text = data.get("end_text", "")
     if not isinstance(end_text, str) or len(end_text) > 120:
         errors.append("end_text must be text of at most 120 characters")
@@ -279,7 +294,7 @@ def parse_performance(data: dict) -> Performance:
     return Performance(fps, ratio, data.get("environment", AV_ROOM if av else "night_city"), chars, lines,
                        style, data.get("lighting", ""),
                        bool(data.get("ambience", True)), look, quality, camera, look_params, captions, sound,
-                       end_text.strip(), room_view)
+                       end_text.strip(), room_view, music)
 
 
 def _av_options(name: str, c: dict, errors: list[str]) -> dict:

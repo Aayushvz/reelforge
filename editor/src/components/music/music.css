@@ -1,0 +1,11 @@
+.music-now { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md, 8px); background: var(--bg-2); min-width: 0; }
+.music-alts { gap: 6px; flex-wrap: wrap; }
+.music-alts .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-lg, 10px); overflow: hidden; }
+.music-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-width: 0; }
+.music-row + .music-row { border-top: 1px solid var(--line); }
+.music-row:hover { background: var(--bg-2); }
+.music-edit { gap: 10px; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; }
+.music-slot-dot { width: 26px; height: 26px; border-radius: 50%; border: 1px dashed var(--line); flex: none; }
+.chip.sm { padding: 1px 7px; font-size: 11px; }
+@media (max-width: 720px) { .music-edit { max-width: 100%; } .music-row { flex-wrap: wrap; } }

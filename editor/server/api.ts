@@ -24,7 +24,7 @@ const DEFAULT_MODEL = "eleven_v4";
 const MIME: Record<string, string> = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
   ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm",
-  ".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4", ".ogg": "audio/ogg",
+  ".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4", ".ogg": "audio/ogg", ".flac": "audio/flac",
   ".json": "application/json", ".ass": "text/plain; charset=utf-8", ".txt": "text/plain; charset=utf-8",
 };
 
@@ -436,6 +436,36 @@ async function cleanProject(id: string, dryRun: boolean) {
   return reports[0];
 }
 
+// ---------- Music: the library (assets/music), your own tracks, per-project pick ----------
+const MUSIC_LIB = path.join(REPO, "assets", "music");
+const MUSIC_EXTS = [".mp3", ".wav", ".m4a", ".flac"];
+
+function musicFile(trackId: string): string {
+  const rows = [path.join(MUSIC_LIB, "mine", "catalog.json"), path.join(MUSIC_LIB, "catalog.json")]
+    .flatMap((f) => readJsonFile<{ id: string; file: string }[]>(f) ?? []);
+  const row = rows.find((r) => r.id === trackId);
+  if (!row) throw new HttpError(404, "No such track");
+  const full = path.resolve(MUSIC_LIB, row.file);
+  if (!full.startsWith(MUSIC_LIB + path.sep)) throw new HttpError(400, "Bad track path");
+  return full;
+}
+
+async function musicImport(req: IncomingMessage, url: URL) {
+  const name = path.basename(url.searchParams.get("name") ?? "track.mp3");
+  const ext = path.extname(name).toLowerCase();
+  if (!MUSIC_EXTS.includes(ext)) throw new HttpError(400, "Use an mp3, wav, m4a or flac file");
+  const incoming = path.join(MUSIC_LIB, "mine", ".incoming");
+  fs.mkdirSync(incoming, { recursive: true });
+  const tmp = path.join(incoming, `${Date.now()}_${name.replace(/[^\w.-]+/g, "_")}`);
+  fs.writeFileSync(tmp, await readBody(req));
+  const title = url.searchParams.get("title") || path.basename(name, ext);
+  const viral = url.searchParams.get("viral");
+  const args = ["music", "import", tmp, "--move", "--title", title, ...(viral ? ["--viral", viral] : []),
+    ...(url.searchParams.get("instrumental") === "1" ? ["--instrumental"] : [])];
+  try { return await reelforgeJson<Record<string, unknown>>(args); }
+  finally { fs.rmSync(tmp, { force: true }); }
+}
+
 // ---------- Shots-AV: catalog, shot plan, preview stills, asset builds, thumbnails ----------
 
 // Run a `reelforge` command that prints one "SHOTSAV_JSON {...}" line; resolve with that JSON.
@@ -776,6 +806,13 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     return serveFile(req, res, done);
   }
 
+  if (head === "music") {
+    if (!id && method === "GET") return send(res, 200, await reelforgeJson(["music", "list"]));
+    if (id === "import" && method === "POST") return send(res, 201, await musicImport(req, url));
+    if (id === "file" && action && (method === "GET" || method === "HEAD")) return serveFile(req, res, musicFile(action));
+    if (id && !action && method === "PUT") return send(res, 200, await reelforgeJson(["music", "update", id, JSON.stringify(await readJson(req))]));
+    if (id && !action && method === "DELETE") return send(res, 200, await reelforgeJson(["music", "remove", id]));
+  }
   if (head === "library") {
     if (method === "GET") return send(res, 200, readJsonFile(LIBRARY) ?? {});
     if (method === "PUT") { writeJsonFile(LIBRARY, await readJson(req)); return send(res, 200, { ok: true }); }
@@ -820,6 +857,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       return send(res, 200, await shotsavPreview(id, Number(body.shot), Boolean(body.final)));
     }
     if (id && action === "cover" && method === "GET") return send(res, 200, await getCover(id));
+    if (id && action === "music" && method === "GET") return send(res, 200, await reelforgeJson(["music", "pick", projectDir(id)]));
     if (id && action === "frame" && rest[0] && method === "GET") {
       return serveFile(req, res, await projectFrame(id, Number(rest[0]), Number(url.searchParams.get("fps") ?? 30)));
     }
