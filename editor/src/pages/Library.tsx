@@ -1,5 +1,6 @@
 // Asset library: every reusable asset in one place, with search, favourites and quick links.
 import { useEffect, useMemo, useState } from "react";
+import { MusicLibrary } from "@/components/music/MusicLibrary";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Star, AudioLines, Music, Volume2, Image as ImageIcon, Captions, Shirt, Lightbulb } from "lucide-react";
 import { CHARACTERS, ENVIRONMENTS, SUBTITLE_TEMPLATES, VOICES, WARDROBE, SLOTS, environment } from "@/data/catalog";
@@ -21,7 +22,7 @@ const KINDS: { id: Kind; label: string }[] = [
 type Item = { key: string; kind: Kind; name: string; meta: string; to?: string; media: React.ReactNode; badge?: React.ReactNode };
 
 export function LibraryPage() {
-  const [kind, setKind] = useState<Kind>("all");
+  const [kind, setKind] = useState<Kind>(() => (new URLSearchParams(window.location.search).get("kind") as Kind) || "all");
   const [q, setQ] = useState("");
   const [favOnly, setFavOnly] = useState(false);
   const lib = useLibrary((s) => s.lib);
@@ -52,7 +53,9 @@ export function LibraryPage() {
   }, [lib, shots]);
 
   const shown = items.filter((i) => (kind === "all" || i.kind === kind) && (!favOnly || favs.includes(i.key)) && (i.name + i.meta).toLowerCase().includes(q.toLowerCase()));
-  const count = (k: Kind) => items.filter((i) => k === "all" || i.kind === k).length;
+  const [musicCount, setMusicCount] = useState(0);
+  useEffect(() => { api.music().then((l) => setMusicCount(l.tracks.filter((t) => t.available).length)).catch(() => {}); }, []);
+  const count = (k: Kind) => (k === "music" ? musicCount : 0) + items.filter((i) => k === "all" || i.kind === k).length;
 
   return (
     <div className="page">
@@ -71,10 +74,10 @@ export function LibraryPage() {
               <div className="search grow"><Search size={14} /><input className="input" placeholder="Search assets" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: "100%" }} /></div>
               <button className="chip" aria-pressed={favOnly} onClick={() => setFavOnly(!favOnly)}><Star size={12} fill={favOnly ? "currentColor" : "none"} />Favourites</button>
             </div>
-            {(kind === "music" || kind === "sfx") ? (
-              <Empty icon={kind === "music" ? <Music size={18} /> : <Volume2 size={18} />} title={`No ${kind === "music" ? "music" : "sound effects"} yet`}
+            {kind === "music" ? <MusicLibrary query={q} /> : kind === "sfx" ? (
+              <Empty icon={<Volume2 size={18} />} title="No sound effects yet"
                 action={<Link className="btn" to="/editor">Open the editor</Link>}>
-                Nothing is bundled yet. Import audio into a project's media bin in the editor; a shared audio library is planned with music and foley in M2.
+                Nothing is bundled yet. Import audio into a project's media bin in the editor.
               </Empty>
             ) : shown.length === 0 ? (
               <Empty icon={<Search size={18} />} title="Nothing matches">{favOnly ? "Star assets to collect them here." : kind === "shots" ? "Stills from your renders appear here." : "Try another search."}</Empty>

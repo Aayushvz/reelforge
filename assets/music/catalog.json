@@ -1,0 +1,785 @@
+[
+ {
+  "id": "mixkit_638",
+  "title": "Jazz 2",
+  "artist": "Francisco Alvear",
+  "source": "mixkit",
+  "file": "tracks/mixkit_638.mp3",
+  "duration": 140.0,
+  "start": 1.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.533,
+  "moods": {
+   "comedy": 1.0,
+   "quirky": 0.5
+  },
+  "url": "https://assets.mixkit.co/music/638/638.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "d600344667e19ebb23db6b2e62a6843d6b2e1a2f8533f9055eec5b9fa3bacf3f",
+  "note": "Kitsch Lounge; Mixkit moods: cheesy, humorous, ironic, mischievous, quirky, silly"
+ },
+ {
+  "id": "mixkit_15",
+  "title": "Keep Smiling",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_15.mp3",
+  "duration": 106.19,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.53,
+  "moods": {
+   "comedy": 1.0,
+   "quirky": 0.67
+  },
+  "url": "https://assets.mixkit.co/music/15/15.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "af2be5bb386c26d0bef10c828b97bed75d88388a9ebce0904da16ffe40f916d0",
+  "note": "Children; Mixkit moods: humorous, ironic, mischievous, playful, quirky, silly"
+ },
+ {
+  "id": "mixkit_639",
+  "title": "Jazz 1",
+  "artist": "Francisco Alvear",
+  "source": "mixkit",
+  "file": "tracks/mixkit_639.mp3",
+  "duration": 133.96,
+  "start": 1.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.55,
+  "moods": {
+   "comedy": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/639/639.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "325ba654a9fecbb4d830a6d2eb0762ffa4d945003c555d55543d51372716c470",
+  "note": "Jazz; Mixkit moods: humorous, ironic"
+ },
+ {
+  "id": "mixkit_803",
+  "title": "Hey Billy",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_803.mp3",
+  "duration": 101.05,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.55,
+  "moods": {
+   "comedy": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/803/803.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "94cf75d8a174b4e7cb0bb571e5b6717fbbbcb25a51cd9ebe0b6744c2bb313477",
+  "note": "Country; Mixkit moods: humorous, lively"
+ },
+ {
+  "id": "mixkit_56",
+  "title": "Couture",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_56.mp3",
+  "duration": 102.13,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.5,
+  "moods": {
+   "quirky": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/56/56.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "f2b4af8125bb9b37b7d937378c767d4e8845344bd57105a3f7cd64a2f00473e6",
+  "note": "Electronica; Mixkit moods: disturbing, quirky, weird"
+ },
+ {
+  "id": "mixkit_822",
+  "title": "Banjo Man in Africa",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_822.mp3",
+  "duration": 90.12,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.514,
+  "moods": {
+   "quirky": 1.0,
+   "comedy": 0.4
+  },
+  "url": "https://assets.mixkit.co/music/822/822.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "f8a40026c7188798d45690ab2ef8d3cf7bc8ff6f4c854fec18e632777569bc31",
+  "note": "Children; Mixkit moods: happy, humorous, lighthearted, playful, quirky, whimsical"
+ },
+ {
+  "id": "mixkit_2",
+  "title": "Comical",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_2.mp3",
+  "duration": 114.43,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.519,
+  "moods": {
+   "quirky": 1.0,
+   "comedy": 0.6
+  },
+  "url": "https://assets.mixkit.co/music/2/2.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "2f5ed23f2c51b5aa28b237563ee1249d12094fefce7afdaddee4f5a330e010cb",
+  "note": "Children; Mixkit moods: cheerful, humorous, mischievous, playful, quirky, stealth"
+ },
+ {
+  "id": "mixkit_673",
+  "title": "Cuban Flavor",
+  "artist": "Francisco Alvear",
+  "source": "mixkit",
+  "file": "tracks/mixkit_673.mp3",
+  "duration": 119.33,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.517,
+  "moods": {
+   "quirky": 1.0,
+   "comedy": 0.5
+  },
+  "url": "https://assets.mixkit.co/music/673/673.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "7a433434231e9dd2f873b26d0fd6dde31f6228a9d3bfdfe72d8b633868521477",
+  "note": "World; Mixkit moods: humorous, mischievous, quirky, whimsical"
+ },
+ {
+  "id": "mixkit_678",
+  "title": "Epical Drums 03",
+  "artist": "Grigoriy Nuzhny",
+  "source": "mixkit",
+  "file": "tracks/mixkit_678.mp3",
+  "duration": 183.0,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.5,
+  "moods": {
+   "suspense": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/678/678.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "545697b6617e96a4151cc80e77de962054e5fee54c9c11eae451ac4a2fa30dfc",
+  "note": "Orchestral Hybrid; Mixkit moods: dangerous, disturbing, mysterious, ominous, restless, suspenseful"
+ },
+ {
+  "id": "mixkit_871",
+  "title": "Fright Night",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_871.mp3",
+  "duration": 101.29,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.514,
+  "moods": {
+   "suspense": 1.0,
+   "drama": 0.4
+  },
+  "url": "https://assets.mixkit.co/music/871/871.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "144384cf2bcda8070a0d11c8aa98c3ae547de861a553275788669b7cf6a57bcd",
+  "note": "Film Score; Mixkit moods: dramatic, mysterious, ominous, suspenseful, tension"
+ },
+ {
+  "id": "mixkit_671",
+  "title": "Piano Horror",
+  "artist": "Francisco Alvear",
+  "source": "mixkit",
+  "file": "tracks/mixkit_671.mp3",
+  "duration": 113.0,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.51,
+  "moods": {
+   "suspense": 1.0,
+   "drama": 0.25
+  },
+  "url": "https://assets.mixkit.co/music/671/671.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "f7ce9f4c051feacd95b1fd429a1852f4ac1ed81eb51b43c61b432d6ccdc607fd",
+  "note": "Drone Music; Mixkit moods: disturbing, eerie, nightmarish, ominous, scary, suspenseful"
+ },
+ {
+  "id": "mixkit_597",
+  "title": "Vertigo",
+  "artist": "Eugenio Mininni",
+  "source": "mixkit",
+  "file": "tracks/mixkit_597.mp3",
+  "duration": 190.55,
+  "start": 3.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.51,
+  "moods": {
+   "suspense": 1.0,
+   "drama": 0.25
+  },
+  "url": "https://assets.mixkit.co/music/597/597.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "a153734dd85efa664aa9b839a10e94459059a1c2cd14353e9e60fd0150ffe481",
+  "note": "Film Score; Mixkit moods: cautious, disturbing, stealth, suspenseful, tension"
+ },
+ {
+  "id": "mixkit_532",
+  "title": "A Happy Child",
+  "artist": "Diego Nava",
+  "source": "mixkit",
+  "file": "tracks/mixkit_532.mp3",
+  "duration": 112.48,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.5,
+  "moods": {
+   "wholesome": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/532/532.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "d92c270b0cae8bcdda5545a772435005f97ee73c85237516ded29b8cb66c9127",
+  "note": "Folk Pop; Mixkit moods: cheerful, contented, happy, hopeful, innocent, positive"
+ },
+ {
+  "id": "mixkit_621",
+  "title": "BRIDGE N° 98",
+  "artist": "Eugenio Mininni",
+  "source": "mixkit",
+  "file": "tracks/mixkit_621.mp3",
+  "duration": 145.96,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.5,
+  "moods": {
+   "wholesome": 1.0,
+   "quirky": 0.33
+  },
+  "url": "https://assets.mixkit.co/music/621/621.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "f58650bfcb69b70d1fe1f436ece93a99014ca6f03214e2c4008ad0d3a53e878a",
+  "note": "Children; Mixkit moods: cheerful, friendly, happy, innocent, lighthearted, playful"
+ },
+ {
+  "id": "mixkit_3",
+  "title": "Dance with Me",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_3.mp3",
+  "duration": 142.08,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.5,
+  "moods": {
+   "wholesome": 1.0,
+   "quirky": 0.33
+  },
+  "url": "https://assets.mixkit.co/music/3/3.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "e4e49fe71c83a801808296ce2c01cf359f791c6e3f1cfeda255dd4383ff9e951",
+  "note": "Children; Mixkit moods: cheerful, friendly, happy, innocent, lighthearted, playful"
+ },
+ {
+  "id": "mixkit_823",
+  "title": "Be Happy 2",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_823.mp3",
+  "duration": 84.06,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.5,
+  "moods": {
+   "wholesome": 1.0,
+   "quirky": 0.33
+  },
+  "url": "https://assets.mixkit.co/music/823/823.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "15e9e19cef2654bbe50f277b17f44eb7a01af059b1ee90ef294ba8299c48311e",
+  "note": "Children; Mixkit moods: cheerful, friendly, happy, innocent, lighthearted, playful"
+ },
+ {
+  "id": "mixkit_47",
+  "title": "Punked Up Fun",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_47.mp3",
+  "duration": 99.58,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.9,
+  "moods": {
+   "hype": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/47/47.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "1ce5643ec2bc6951250cf755e8722a7098e8f00dcea3eaf2b14b6e8fa37b3780",
+  "note": "Rock; Mixkit moods: aggressive, driving, energetic, exciting, motivating, propulsive"
+ },
+ {
+  "id": "mixkit_1004",
+  "title": "Lets Paint the Town Red!",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_1004.mp3",
+  "duration": 121.85,
+  "start": 3.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.9,
+  "moods": {
+   "hype": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/1004/1004.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "94265c9d5f49156b2e73f50e9025404333e06a7af7ea8a75b0e88fe4358f7b69",
+  "note": "Rock; Mixkit moods: driving, energetic, lively, propulsive"
+ },
+ {
+  "id": "mixkit_51",
+  "title": "Sports Highlights",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_51.mp3",
+  "duration": 96.36,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.9,
+  "moods": {
+   "hype": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/51/51.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "165df8e17e9d23645f9dcd2ef4a8252b8f3c32e74bd5e7bc8f868be9f3044223",
+  "note": "Rock; Mixkit moods: aggressive, determined, dramatic, driving, energetic, exciting"
+ },
+ {
+  "id": "mixkit_136",
+  "title": "Infected Mushroom Vibes",
+  "artist": "Alejandro Magaña (A. M.)",
+  "source": "mixkit",
+  "file": "tracks/mixkit_136.mp3",
+  "duration": 90.46,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.9,
+  "moods": {
+   "hype": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/136/136.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "bb63977d73d7f4ba277f506831e762afc4032b48a0f9e5e5f3b17d66e41519cf",
+  "note": "EDM; Mixkit moods: dramatic, driving, energetic, exciting, hectic, propulsive"
+ },
+ {
+  "id": "mixkit_250",
+  "title": "Island Beat",
+  "artist": "Arulo",
+  "source": "mixkit",
+  "file": "tracks/mixkit_250.mp3",
+  "duration": 101.55,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.25,
+  "moods": {
+   "lofi": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/250/250.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "96f1ad0c2200a1a512f97f8f51f8144829bc69ebf51ccbc9e7d9959d63d57701",
+  "note": "Contemporary R&B; Mixkit moods: calm, relaxed"
+ },
+ {
+  "id": "mixkit_282",
+  "title": "Sweet September",
+  "artist": "Arulo",
+  "source": "mixkit",
+  "file": "tracks/mixkit_282.mp3",
+  "duration": 98.69,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.25,
+  "moods": {
+   "lofi": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/282/282.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "6ad6db61c4c9018cb9dfc99ed5c3b72f3143d3a5db31920e4f1f6b01d2f1b4a1",
+  "note": "Hip Hop; Mixkit moods: calm, relaxed"
+ },
+ {
+  "id": "mixkit_27",
+  "title": "Serene Moments",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_27.mp3",
+  "duration": 118.5,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.3,
+  "moods": {
+   "lofi": 1.0,
+   "suspense": 0.25
+  },
+  "url": "https://assets.mixkit.co/music/27/27.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "dae7536d5595e148d122cf60eeff12a241c40540f70a39a6c898392b5dedb7d1",
+  "note": "Chillout; Mixkit moods: atmospheric, calm, meditative, mysterious, peaceful, relaxed"
+ },
+ {
+  "id": "mixkit_24",
+  "title": "Smooth Like Jazz",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_24.mp3",
+  "duration": 158.25,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.292,
+  "moods": {
+   "lofi": 1.0,
+   "comedy": 0.25,
+   "sad": 0.25
+  },
+  "url": "https://assets.mixkit.co/music/24/24.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "873c8ed79a35aa8dd883c912e8afea5b0411d5ee5b5cfbc13801ff0110244a67",
+  "note": "Jazz; Mixkit moods: ironic, lazy, melancholic, nostalgic, relaxed"
+ },
+ {
+  "id": "mixkit_18",
+  "title": "Singing Bowl Meditation",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_18.mp3",
+  "duration": 131.63,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.2,
+  "moods": {
+   "sad": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/18/18.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "76fe94868149c01a73379ba579ec74b57b0a40c48140e89bf7a45c6ad2b7a4c0",
+  "note": "Film Score; Mixkit moods: atmospheric, calm, lonely, melancholic, peaceful, reflective"
+ },
+ {
+  "id": "mixkit_649",
+  "title": "Sad Jazz",
+  "artist": "Francisco Alvear",
+  "source": "mixkit",
+  "file": "tracks/mixkit_649.mp3",
+  "duration": 186.04,
+  "start": 1.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.2,
+  "moods": {
+   "sad": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/649/649.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "3e5375f458b3e939c56f03407c896a599e3f3f08dc4eae47b37241f4850b91be",
+  "note": "Film Score; Mixkit moods: dramatic, lonely, melancholic, nostalgic, peaceful, reflective"
+ },
+ {
+  "id": "mixkit_68",
+  "title": "Out of this World",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_68.mp3",
+  "duration": 98.57,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.2,
+  "moods": {
+   "sad": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/68/68.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "e3e79744e7ed5c9b02b0473102de1eb5eebecc83464882d1ed48fd3db0b4e5ff",
+  "note": "Ambient; Mixkit moods: meditative, melancholic, sad"
+ },
+ {
+  "id": "mixkit_573",
+  "title": "First Kiss",
+  "artist": "Eugenio Mininni",
+  "source": "mixkit",
+  "file": "tracks/mixkit_573.mp3",
+  "duration": 202.89,
+  "start": 14.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.2,
+  "moods": {
+   "sad": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/573/573.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "00627fd96c82a1a09b1d2c47aed32268dfffa0a12bd6c22ded1818a8faf9a1a5",
+  "note": "Film Score; Mixkit moods: dark, depressed, sombre"
+ },
+ {
+  "id": "mixkit_659",
+  "title": "Romantic",
+  "artist": "Francisco Alvear",
+  "source": "mixkit",
+  "file": "tracks/mixkit_659.mp3",
+  "duration": 158.59,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.3,
+  "moods": {
+   "romantic": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/659/659.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "88a47f6415f95e3c758116584d88bf53935a03b593949a4ea4c4516c1182779f",
+  "note": "Film Score; Mixkit moods: affectionate, emotional, peaceful, reflective, romantic, sentimental"
+ },
+ {
+  "id": "mixkit_599",
+  "title": "Possible Dreams",
+  "artist": "Eugenio Mininni",
+  "source": "mixkit",
+  "file": "tracks/mixkit_599.mp3",
+  "duration": 159.31,
+  "start": 4.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.371,
+  "moods": {
+   "romantic": 1.0,
+   "drama": 0.4
+  },
+  "url": "https://assets.mixkit.co/music/599/599.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "ee6d055c20cccda716b6b63a154ef0dc825195b7061dc439abb8a623973f4798",
+  "note": "Classical; Mixkit moods: affectionate, dramatic, emotional, reflective, romantic, sentimental"
+ },
+ {
+  "id": "mixkit_544",
+  "title": "Kids on the Beach",
+  "artist": "Eugenio Mininni",
+  "source": "mixkit",
+  "file": "tracks/mixkit_544.mp3",
+  "duration": 124.0,
+  "start": 10.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.35,
+  "moods": {
+   "romantic": 1.0,
+   "drama": 0.25
+  },
+  "url": "https://assets.mixkit.co/music/544/544.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "78ee5e89cf1834e8bae3781d2999e6f005e83adca4ed830d392225341ef7324b",
+  "note": "Film Score; Mixkit moods: affectionate, emotional, hopeful, sentimental, tender"
+ },
+ {
+  "id": "mixkit_1081",
+  "title": "We'll Be Okay",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_1081.mp3",
+  "duration": 104.02,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.325,
+  "moods": {
+   "romantic": 1.0,
+   "sad": 0.25,
+   "drama": 0.25
+  },
+  "url": "https://assets.mixkit.co/music/1081/1081.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "a07e945508eb65714fc0673a18af43f09b602fa726493dfafc6a726e63d6055d",
+  "note": "Film Score; Mixkit moods: affectionate, emotional, peaceful, reflective, romantic, tender"
+ },
+ {
+  "id": "mixkit_691",
+  "title": "Holidays 2",
+  "artist": "Grigoriy Nuzhny",
+  "source": "mixkit",
+  "file": "tracks/mixkit_691.mp3",
+  "duration": 107.55,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.7,
+  "moods": {
+   "reveal": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/691/691.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "f2bf52ef43ad94982fceec7298dca7f94497849548d0a40f2e5294d10bb56331",
+  "note": "Film Score; Mixkit moods: magical, uplifting"
+ },
+ {
+  "id": "mixkit_31",
+  "title": "Dreaming Big",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_31.mp3",
+  "duration": 110.38,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.7,
+  "moods": {
+   "reveal": 1.0,
+   "wholesome": 0.33,
+   "hype": 0.33
+  },
+  "url": "https://assets.mixkit.co/music/31/31.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "8c89819547b42a80750fb25f37a960a1f45f6fd66bc8d784ac817b98b002897c",
+  "note": "Film Score; Mixkit moods: confident, hopeful, positive, proud, triumphant, uplifting"
+ },
+ {
+  "id": "mixkit_684",
+  "title": "Classical vibes 4",
+  "artist": "Grigoriy Nuzhny",
+  "source": "mixkit",
+  "file": "tracks/mixkit_684.mp3",
+  "duration": 137.14,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.633,
+  "moods": {
+   "reveal": 1.0,
+   "wholesome": 0.5
+  },
+  "url": "https://assets.mixkit.co/music/684/684.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "45f5275e91f05dfa5bd8b7451955596566ef02419570b8888dda2ef20a401515",
+  "note": "Film Score; Mixkit moods: beautiful, hopeful, positive, uplifting"
+ },
+ {
+  "id": "mixkit_32",
+  "title": "Driving Ambition",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_32.mp3",
+  "duration": 102.15,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.7,
+  "moods": {
+   "reveal": 1.0,
+   "wholesome": 0.5,
+   "hype": 0.5
+  },
+  "url": "https://assets.mixkit.co/music/32/32.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "e3c88488e65b8c87a6f06120983ce2cb12ea3aeba99f8cadb7ee5d6d284ef2c6",
+  "note": "Film Score; Mixkit moods: confident, hopeful, positive, uplifting"
+ },
+ {
+  "id": "mixkit_53",
+  "title": "Training",
+  "artist": "Ahjay Stelino",
+  "source": "mixkit",
+  "file": "tracks/mixkit_53.mp3",
+  "duration": 101.13,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.55,
+  "moods": {
+   "drama": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/53/53.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "1290ad7da3f501e98ae35ffa5204119e5af74f7413adf0988565daa41f694e38",
+  "note": "Film Score; Mixkit moods: dramatic, serious"
+ },
+ {
+  "id": "mixkit_956",
+  "title": "I Wanna Know",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_956.mp3",
+  "duration": 163.38,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.55,
+  "moods": {
+   "drama": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/956/956.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "5f9624ba860f857d3c3d409c182beaa154442746ece0e08a9b903a2d6ec98e87",
+  "note": "Film Score; Mixkit moods: dramatic, emotional"
+ },
+ {
+  "id": "mixkit_957",
+  "title": "I'll Take You to My Heart",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_957.mp3",
+  "duration": 163.38,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.55,
+  "moods": {
+   "drama": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/957/957.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "5f9624ba860f857d3c3d409c182beaa154442746ece0e08a9b903a2d6ec98e87",
+  "note": "Film Score; Mixkit moods: dramatic, emotional"
+ },
+ {
+  "id": "mixkit_1038",
+  "title": "Old Old Love",
+  "artist": "Michael Ramir C.",
+  "source": "mixkit",
+  "file": "tracks/mixkit_1038.mp3",
+  "duration": 106.99,
+  "start": 0.0,
+  "vocals": false,
+  "viral": false,
+  "energy": 0.55,
+  "moods": {
+   "drama": 1.0
+  },
+  "url": "https://assets.mixkit.co/music/1038/1038.mp3",
+  "licence": "Mixkit Stock Music Free License",
+  "sha256": "0bf32bcd2e6d3a6a985354abc477c171d5cc5746d44e1003aef614c5c70e486a",
+  "note": "Underscore; Mixkit moods: emotional, peaceful"
+ }
+]

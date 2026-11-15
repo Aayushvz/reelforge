@@ -1,4 +1,4 @@
-import type { Job, Library, LocalSettings, ProjectData, ProjectSummary, SystemStatus, VoiceLine } from "./types";
+import type { Job, Library, LocalSettings, MusicLibrary, MusicPick, MusicTrack, ProjectData, ProjectSummary, SystemStatus, VoiceLine } from "./types";
 import type { AvCatalog, AvPlan } from "./shotsav";
 import type { CoverDraft } from "./cover";
 
@@ -23,6 +23,16 @@ export const api = {
   save: (id: string, body: { performance?: unknown; editor?: unknown }) => req<{ savedAt: string }>("PUT", P(id), body),
   duplicate: (id: string) => req<ProjectData>("POST", `${P(id)}/duplicate`),
   remove: (id: string) => req<{ ok: true }>("DELETE", P(id)),
+  music: () => req<MusicLibrary>("GET", "/api/music"),
+  musicPick: (id: string) => req<MusicPick>("GET", `${P(id)}/music`),
+  musicImport: (file: File, opts: { title?: string; viral?: string; instrumental?: boolean } = {}) => {
+    const q = new URLSearchParams({ name: file.name, ...(opts.title ? { title: opts.title } : {}), ...(opts.viral ? { viral: opts.viral } : {}), ...(opts.instrumental ? { instrumental: "1" } : {}) });
+    return req<MusicTrack>("POST", `/api/music/import?${q}`, file);
+  },
+  musicUpdate: (trackId: string, patch: Partial<Pick<MusicTrack, "title" | "artist" | "start" | "vocals" | "moods" | "viral">>) =>
+    req<MusicTrack>("PUT", `/api/music/${encodeURIComponent(trackId)}`, patch),
+  musicRemove: (trackId: string) => req<{ removed: string }>("DELETE", `/api/music/${encodeURIComponent(trackId)}`),
+  clean: (id: string) => req<{ freed: number; before: number; after: number; actions: string[] }>("POST", `${P(id)}/clean`),
   upload: (id: string, path: string, file: Blob) => req<{ path: string }>("POST", `${P(id)}/upload?path=${encodeURIComponent(path)}`, file),
   run: (id: string, stage: "stills" | "full", draft: boolean, animatic = false, quality?: "standard" | "cinema") =>
     req<Job>("POST", `${P(id)}/run`, { stage, draft, animatic, quality }),
@@ -47,6 +57,12 @@ export const api = {
 // URL for a file inside a project folder (rendered stills, audio, final video, imported media).
 export const fileUrl = (id: string, rel: string, bust?: string | number) =>
   `${P(id)}/file/${rel.split("/").map(encodeURIComponent).join("/")}${bust ? `?v=${bust}` : ""}`;
+
+// A clean (no captions) still of frame N of a rendered project: the PNG, or cut from the clean master.
+export const frameUrl = (id: string, frame: number, fps: number, bust?: string | number) =>
+  `${P(id)}/frame/${frame}?fps=${fps}${bust ? `&v=${bust}` : ""}`;
+
+export const musicFileUrl = (trackId: string) => `/api/music/file/${encodeURIComponent(trackId)}`;
 
 export const jobEventsUrl = (jobId: string) => `/api/jobs/${jobId}/events`;
 export const avThumbUrl = (id: string) => `/api/shotsav/thumbs/${id}.jpg`;

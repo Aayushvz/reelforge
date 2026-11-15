@@ -20,6 +20,7 @@ from pathlib import Path
 
 from ..angles import ANGLES
 from .. import buddy as acting
+from .. import storage
 from ..blender_run import run_blender
 from ..plan import build_render_plan
 from ..schema import AV_BUDDIES, AV_HERO
@@ -355,13 +356,40 @@ def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path
     key = blender3d.render_key(plan_text, plan)
     key_file = out / f".render_key_{stage}"
     same = key_file.exists() and key_file.read_text() == key
-    if same and target.exists() and len(list(target.glob("*.png"))) >= want:
+    done = target.exists() and len(list(target.glob("*.png"))) >= want
+    if same and (done or stage == "full" and storage.master_ok(out, want)):  # frames, or packed into the master
         print(f"{stage}: up to date, skipping render")
         return
     if not same:
         shutil.rmtree(target, ignore_errors=True)
+        if stage == "full":
+            storage.drop_master(out)
         key_file.write_text(key)
     run_blender(blender3d.BLENDER_DIR / "render_plan.py", [str(plan_path), stage], blend=Path(plan["environment_blend"]))
+
+
+def _animatic_music(project: Path, perf, placed, seconds: float, mp4: Path) -> None:
+    """Lay the reel's music (ducked where the lines will be) under the silent animatic, so the pick can be heard
+    before the long render."""
+    from .. import music
+    from ..ambience import find_music
+    own = find_music(project)
+    if own is not None:
+        bed = music.Bed(own, vocals=True, volume=float(perf.music.get("volume", 0.5)))
+    else:
+        track, _ = music.choose(project, perf.music, perf.lines, seconds)
+        if track is None:
+            return
+        bed = music.bed_for(track, perf.music)
+    wav = mp4.with_name("animatic_music.wav")
+    music.build_bed(bed, seconds, [(p.start, p.start + p.duration) for p in placed],
+                    placed[-1].start + placed[-1].duration + 0.4, wav)
+    tmp = mp4.with_name("animatic_mux.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(mp4), "-i", str(wav), "-map", "0:v", "-map", "1:a",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", str(tmp)],
+                   check=True)
+    tmp.replace(mp4)
+    wav.unlink(missing_ok=True)
 
 
 def estimate_timing(lines, rate_wps: float = 2.9, gap: float = 0.35, lead: float = 0.3) -> list[tuple[float, float]]:
@@ -581,5 +609,7 @@ def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(perf.fps), "-i",
                     str(out / "frames" / "%04d.png"), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18",
                     "-movflags", "+faststart", str(mp4)], check=True)
+    shutil.rmtree(out / "frames", ignore_errors=True)  # the mp4 is the animatic: 2 MB PNGs a frame aren't kept
+    _animatic_music(project, perf, placed, n_frames / perf.fps, mp4)
     print(f"animatic: {mp4}")
     return mp4

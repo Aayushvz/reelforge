@@ -6,7 +6,10 @@
   "ambience": true,
   "characters": {
     "me": {
-      "model": "av_hero"
+      "model": "av_hero",
+      "stubble": 0.17,
+      "outfit_color": "#A78BFA",
+      "outfit": "puffer"
     },
     "buddy": {
       "model": "buddy_claude"
@@ -53,5 +56,8 @@
       "mood": "awkward",
       "pause_after": 0.2
     }
-  ]
+  ],
+  "captions": {
+    "position": "top"
+  }
 }

@@ -7,6 +7,7 @@ import runpy
 import shutil
 from pathlib import Path
 
+from .. import storage
 from ..blender_run import run_blender
 from ..plan import build_render_plan
 
@@ -82,11 +83,14 @@ def render(perf, n_frames: int, faces: dict, shots: list, moods: list, out: Path
     key = render_key(plan_text, plan)
     key_file = out / f".render_key_{stage}"
     same = key_file.exists() and key_file.read_text() == key
-    if same and target.exists() and len(list(target.glob("*.png"))) >= want:
+    done = target.exists() and len(list(target.glob("*.png"))) >= want
+    if same and (done or stage == "full" and storage.master_ok(out, want)):  # frames, or packed into the master
         print(f"{stage}: up to date, skipping render")
         return
     if not same:  # inputs changed: start clean. Same inputs + partial output = a crash: resume.
         shutil.rmtree(target, ignore_errors=True)
+        if stage == "full":
+            storage.drop_master(out)
         key_file.write_text(key)
     run_blender(BLENDER_DIR / "render_plan.py", [str(plan_path), stage],
                 blend=Path(plan["environment_blend"]))

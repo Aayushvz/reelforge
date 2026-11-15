@@ -86,11 +86,14 @@ FILTER_SHOTSAV = (
 AV_VIDEO = ["-b:v", "11M", "-maxrate", "12M", "-bufsize", "24M", "-profile:v", "high", "-level", "4.2"]
 
 
-def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "", look: str = "classic") -> list[str]:
+def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "", look: str = "classic",
+                     src: list[str] | None = None) -> list[str]:
+    """src: ffmpeg input args for the clean picture (default: the PNG sequence in frames/)."""
+    src = src or ["-framerate", str(fps), "-start_number", "1", "-i", "frames/%04d.png"]
     if look == "shotsav":
         grade = AV_GRADES[AV_ROOM_GRADE.get(environment, "shotsav_dark")]
         return ["ffmpeg", "-y", "-loglevel", "error",
-                "-framerate", str(fps), "-start_number", "1", "-i", "frames/%04d.png",
+                *src,
                 "-i", "dialogue.wav",
                 "-filter_complex", FILTER_SHOTSAV.replace("GRADE", grade), "-map", "[v]", "-map", "[a]",
                 "-c:v", "libx264", "-preset", "slow", *AV_VIDEO, *BT709,
@@ -99,7 +102,7 @@ def build_ffmpeg_cmd(fps: int, out_name: str, environment: str = "", look: str =
     cinema = look == "cinema"
     graph = (FILTER_CINEMA if cinema else FILTER).replace("GRADE", f"{grade}," if grade else "")
     return ["ffmpeg", "-y", "-loglevel", "error",
-            "-framerate", str(fps), "-start_number", "1", "-i", "frames/%04d.png",
+            *src,
             "-i", "dialogue.wav",
             "-filter_complex", graph, "-map", "[v]", "-map", "[a]",
             "-c:v", "libx264", "-preset", "slow", "-crf", "14" if cinema else "16",
@@ -125,7 +128,9 @@ def finish(workdir: Path, fps: int, out_name: str, environment: str = "", look: 
         (Path(workdir) / "fonts").mkdir(exist_ok=True)
         for font in (Path(__file__).resolve().parents[1] / "tools" / "fonts").glob("*.ttf"):
             shutil.copyfile(font, Path(workdir) / "fonts" / font.name)
-    subprocess.run(build_ffmpeg_cmd(fps, out_name, environment, look), cwd=workdir, check=True)
+    from .storage import video_input  # the PNGs, or the clean master once they're packed
+    subprocess.run(build_ffmpeg_cmd(fps, out_name, environment, look, video_input(workdir, fps)), cwd=workdir,
+                   check=True)
     out = Path(workdir) / out_name
     # One-pass loudnorm undershoots on short clips: correct the residual gain. The peak limiter eats part
     # of each boost, so repeat a few times.

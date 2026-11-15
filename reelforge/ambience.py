@@ -174,30 +174,34 @@ def voice_chain(environment: str) -> str:
 
 
 def add_av_sound(dialogue: Path, environment: str, seconds: float, blips: list[float],
-                 keys: list[tuple[float, float]], music: Path | None = None, seed: int = 7) -> bool:
-    """Mix the room bed, the foley and (if given) the owner's music under dialogue.wav, in place; the dry copy is
-    kept as dialogue_dry.wav."""
+                 keys: list[tuple[float, float]], music=None, seed: int = 7,
+                 speech: list[tuple[float, float]] | None = None, end_at: float | None = None,
+                 room: bool = True) -> bool:
+    """Mix the room bed, the foley and (if given) the music under dialogue.wav, in place; the dry copy is kept as
+    dialogue_dry.wav. `music` is a music.Bed (hook start, ducking under `speech`, end-card lift) or a plain file
+    (the owner's media/music.*, ducked the same way)."""
+    from .music import Bed, build_bed
     out = Path(dialogue)
     layers = []
     bed = out.with_name("ambience.wav")
-    cmd = ambience_cmd(environment, "", seconds, bed)
+    cmd = ambience_cmd(environment, "", seconds, bed) if room else None
     if cmd is not None:
         subprocess.run(cmd, check=True)
         layers.append(bed)
-    foley = write_wav(out.with_name("foley.wav"), foley_samples(seconds, blips, keys, seed))
-    layers.append(foley)
+    if blips or keys:
+        layers.append(write_wav(out.with_name("foley.wav"), foley_samples(seconds, blips, keys, seed)))
     if music is not None:
-        mus = out.with_name("music_bed.wav")
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-stream_loop", "-1", "-i", str(music), "-t",
-                        f"{seconds:.3f}", "-af", f"loudnorm=I={MUSIC_LUFS}:TP=-6,aresample=48000,afade=t=in:d=0.8,"
-                        f"afade=t=out:st={max(0.0, seconds - 1.2):.3f}:d=1.2", "-ac", "1", str(mus)], check=True)
-        layers.append(mus)
+        if not isinstance(music, Bed):
+            music = Bed(Path(music), vocals=True)  # an unknown upload: treat it as a song (deeper duck)
+        layers.append(build_bed(music, seconds, speech or [], end_at, out.with_name("music_bed.wav")))
+    if not layers:
+        return False
     dry = out.with_name("dialogue_dry.wav")
     shutil.copyfile(out, dry)
     ins = ["-i", str(dry)] + [a for p in layers for a in ("-i", str(p))]
     mix = "[v]" + "".join(f"[{i}:a]" for i in range(1, len(layers) + 1))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *ins, "-filter_complex",
-                    f"[0:a]{voice_chain(environment)}[v];"
+                    f"[0:a]{voice_chain(environment) if room else 'anull'}[v];"
                     f"{mix}amix=inputs={len(layers) + 1}:duration=first:normalize=0[a]", "-map", "[a]", str(out)],
                    check=True)
     return True

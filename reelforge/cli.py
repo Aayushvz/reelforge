@@ -34,6 +34,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--style", choices=list(ENGINES), help="override the project's style")
     r.add_argument("--look", choices=list(LOOKS), help="override the project's look")
     r.add_argument("--quality", choices=list(QUALITIES), help="cinema look: preview | standard | cinema")
+    r.add_argument("--keep-master", action="store_true",
+                   help="keep a clean master (~150 MB) so captions/grade can change without a re-render")
     bn = sub.add_parser("bench", help="time fixed stills for a look and quality (no voices needed)")
     bn.add_argument("--look", choices=list(LOOKS), default="cinema")
     bn.add_argument("--quality", choices=list(QUALITIES), default="standard")
@@ -63,7 +65,91 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("project", type=Path)
     v.add_argument("--line", action="append", default=[], help="only these line ids")
     v.add_argument("--force", action="store_true", help="drop the cached take and generate a new one")
+    mu = sub.add_parser("music", help="background music: library, auto-pick, your own tracks (JSON on stdout)")
+    mu_sub = mu.add_subparsers(dest="mu_cmd", required=True)
+    mu_sub.add_parser("list", help="the library and the Viral now slots")
+    mp = mu_sub.add_parser("pick", help="the top 3 tracks for a project's script, and the one it would use")
+    mp.add_argument("project", type=Path)
+    mi = mu_sub.add_parser("import", help="add your own audio file to the library")
+    mi.add_argument("file", type=Path)
+    mi.add_argument("--title")
+    mi.add_argument("--viral", help="attach it to a Viral now slot id")
+    mi.add_argument("--instrumental", action="store_true", help="no vocals (a lighter duck under speech)")
+    mi.add_argument("--mood", action="append", default=[], help="a genre tag (repeatable)")
+    mi.add_argument("--move", action="store_true", help="delete the source file after copying (editor uploads)")
+    mx = mu_sub.add_parser("update", help="edit one of your tracks: a JSON patch of title/start/vocals/moods/viral")
+    mx.add_argument("id")
+    mx.add_argument("patch")
+    mr = mu_sub.add_parser("remove", help="delete one of your tracks")
+    mr.add_argument("id")
+    mu_sub.add_parser("fetch", help="download any missing built-in track (checksummed)")
+    cl = sub.add_parser("clean", help="free disk: keep only the final video, voices and metadata of finished projects")
+    cl.add_argument("projects", type=Path, nargs="*")
+    cl.add_argument("--all", action="store_true", help="every project under projects/")
+    cl.add_argument("--dry-run", action="store_true", help="only report what would be freed")
+    cl.add_argument("--json", action="store_true", help="one SHOTSAV_JSON line for the editor")
     return p
+
+
+def music_cmd(ns) -> dict | list:
+    from . import music
+    from .schema import load_performance
+    if ns.mu_cmd == "list":
+        return {"genres": list(music.GENRES), "tracks": [music.view(t) for t in music.library(include_missing=True)],
+                "trending": music.trending()}
+    if ns.mu_cmd == "pick":
+        project = ns.project.resolve()
+        perf = load_performance(project / "performance.json")
+        from .engines.shots_av import estimate_timing
+        est = estimate_timing(perf.lines)
+        seconds = est[-1][0] + est[-1][1] + 1.0 if est else 30.0
+        timing = project / "timing.json"
+        try:
+            t = json.loads(timing.read_text(encoding="utf-8"))
+            seconds = max(s0 + d0 for s0, d0 in t.values()) + 1.0
+        except (OSError, ValueError, TypeError):
+            pass
+        music_cfg = perf.music or {"mode": "auto"}
+        chosen, top = music.choose(project, {**music_cfg, "mode": music_cfg.get("mode", "auto")}, perf.lines,
+                                   seconds)
+        own = find_music(project)
+        return {"own": own.name if own else None, "chosen": music.view(chosen) if chosen else None,
+                "top": [{"track": music.view(r["track"]), "score": r["score"], "reason": r["reason"]} for r in top],
+                "profile": music.profile(perf.lines)}
+    if ns.mu_cmd == "import":
+        moods = {m: 1.0 for m in ns.mood if m in music.GENRES} or None
+        entry = music.import_track(ns.file, ns.title, moods, vocals=not ns.instrumental, viral_id=ns.viral)
+        if ns.move:
+            ns.file.unlink(missing_ok=True)
+        return entry
+    if ns.mu_cmd == "update":
+        return music.update_track(ns.id, json.loads(ns.patch))
+    if ns.mu_cmd == "remove":
+        music.remove_track(ns.id)
+        return {"removed": ns.id}
+    return {"fetched": music.fetch_builtin()}
+
+
+def clean(projects: list[Path], everything: bool, dry_run: bool, as_json: bool) -> None:
+    from . import storage
+    if everything:
+        projects = [d for d in sorted((REPO / "projects").iterdir()) if (d / "out").is_dir()]
+    if not projects:
+        raise SystemExit("name a project folder, or pass --all")
+    reports = []
+    for d in projects:
+        r = storage.clean(d, dry_run)
+        reports.append(r)
+        if not as_json:
+            verb = "would free" if dry_run else "freed"
+            print(f"{r['project']}: {r['before'] / 1e9:.2f} GB, {verb} {r['freed'] / 1e9:.2f} GB")
+            for a in r["actions"]:
+                print(f"  - {a}")
+    if as_json:
+        print("SHOTSAV_JSON " + json.dumps(reports), flush=True)
+    else:
+        total = sum(r["freed"] for r in reports)
+        print(f"total: {'would free' if dry_run else 'freed'} {total / 1e9:.2f} GB")
 
 
 def voices(project: Path, only: list[str], force: bool) -> int:
@@ -102,8 +188,26 @@ def voices(project: Path, only: list[str], force: bool) -> int:
     return 1 if failed else 0
 
 
+def _music_bed(project: Path, perf, placed, total: float):
+    """The reel's music: the owner's media/music.* always wins; else the library pick (perf.music)."""
+    from . import music
+    own = find_music(project)
+    if own is not None:
+        print(f"music: your file {own.name}")
+        return music.Bed(own, vocals=True, volume=float(perf.music.get("volume", 0.5)),
+                         duck=bool(perf.music.get("duck", True)))
+    track, top = music.choose(project, perf.music, perf.lines, total)
+    if track is None:
+        return None
+    why = next((r["reason"] for r in top if r["track"].id == track.id), "chosen in the editor")
+    print(f"music: {track.title} ({track.id}) - {why}")
+    if perf.music.get("mode", "auto") == "auto":
+        music.remember(project, track.id)
+    return music.bed_for(track, perf.music)
+
+
 def run(project: Path, stage: str, draft: bool, style: str | None = None, look: str | None = None,
-        quality: str | None = None) -> Path | None:
+        quality: str | None = None, keep_master: bool = False) -> Path | None:
     project = project.resolve()
     perf = load_performance(project / "performance.json")
     perf = replace(perf, look=look or perf.look, quality="preview" if draft else (quality or perf.quality))
@@ -177,11 +281,15 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         last = placed[-1].start + placed[-1].duration
         ass = end_card(ass, perf.end_text, last + 0.4, total, w, h)
         (out / "captions.ass").write_text(ass, encoding="utf-8")
-        if perf.ambience:
-            blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps, perf)
+        bed = _music_bed(project, perf, placed, total)
+        if perf.ambience or bed is not None:
+            blips, keys = engine.sound_plan(placed, shots, hero, buddy, n_frames, perf.fps, perf) if perf.ambience \
+                else ([], [])
             if not perf.sound.get("foley", True):
                 blips, keys = [], []
-            add_av_sound(out / "dialogue.wav", perf.environment, total, blips, keys, find_music(project), seed)
+            add_av_sound(out / "dialogue.wav", perf.environment, total, blips, keys, bed, seed,
+                         speech=[(p.start, p.start + p.duration) for p in placed], end_at=last + 0.4,
+                         room=perf.ambience)
     else:
         (out / "captions.ass").write_text(build_ass(placed, perf, w, h), encoding="utf-8")
     if getattr(engine, "WANTS_PLACED", False):
@@ -193,6 +301,13 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         return None
     final = finish(out, perf.fps, f"final_{perf.ratio.replace(':', 'x')}.mp4", perf.environment, perf.look)
     print(f"final: {final}")
+    from . import storage  # the final is made: only it (plus voices and small metadata) is kept
+    if keep_master:
+        storage.pack_frames(out, perf.fps, n_frames)
+        storage.drop_scratch(out)
+    else:
+        freed = storage.finalize(out)
+        print(f"storage: kept {final.name}, deleted frames and build files ({freed / 1e9:.2f} GB)")
     return final
 
 
@@ -223,10 +338,14 @@ def main(argv: list[str] | None = None) -> None:
     elif ns.cmd == "animatic":
         from .engines import shots_av
         shots_av.animatic(ns.project, draft=not ns.final, stage=ns.stage)
+    elif ns.cmd == "music":
+        print("SHOTSAV_JSON " + json.dumps(music_cmd(ns)), flush=True)
+    elif ns.cmd == "clean":
+        clean(ns.projects, ns.all, ns.dry_run, ns.json)
     elif ns.cmd == "voices":
         raise SystemExit(voices(ns.project, ns.line, ns.force))
     else:
-        run(ns.project, ns.stage, ns.draft, ns.style, ns.look, ns.quality)
+        run(ns.project, ns.stage, ns.draft, ns.style, ns.look, ns.quality, ns.keep_master)
 
 
 if __name__ == "__main__":

@@ -24,3 +24,10 @@ docs/production/**/turn_*.png
 # shots-av sheet tiles: regenerate with blender/shotsav/sheets.py; only the composite sheets are kept
 docs/production/shots-av/**/_tiles/
 docs/production/shots-av/**/_frames/
+
+# third-party reference material: for local measurement only, never publish (repo is public)
+references/style/*
+!references/style/.gitkeep
+docs/production/**/side_by_side*.mp4
+assets/music/tracks/
+assets/music/mine/

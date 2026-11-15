@@ -28,3 +28,9 @@ export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // Stable empty array for store selectors (a fresh [] would re-render forever).
 export const NONE: never[] = [];
+
+export function formatBytes(n: number) {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} GB`;
+  if (n >= 1e6) return `${Math.round(n / 1e6)} MB`;
+  return `${Math.max(1, Math.round(n / 1e3))} KB`;
+}

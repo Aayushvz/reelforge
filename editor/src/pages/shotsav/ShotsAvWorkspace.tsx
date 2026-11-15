@@ -1,5 +1,6 @@
 // Shots-AV workspace: Script (left) · Stage with the shot strip (centre) · Look (right).
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as RKeyboardEvent } from "react";
+import { MusicPanel } from "@/components/music/MusicPanel";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Camera, ClipboardPaste, Eye, Film, FolderOpen, MoreHorizontal, Plus, RefreshCw, Trash2,
@@ -743,9 +744,12 @@ export function ShotsAvWorkspace() {
           <Section title="Sound">
             <FieldRow label="Room tone"><Switch label="Room tone" checked={perf.ambience !== false} onChange={(v) => update((p) => ({ ...p, ambience: v }))} /></FieldRow>
             <FieldRow label="Foley"><Switch label="Keyboard taps and buddy chime" checked={perf.sound?.foley !== false} onChange={(v) => update((p) => ({ ...p, sound: { ...p.sound, foley: v } }))} /></FieldRow>
-            <FieldRow label="Music">
+            <MusicPanel projectId={id} config={perf.music} ownFile={music ?? null}
+              scriptKey={perf.lines.map((l) => `${l.emotion}/${l.mood}/${l.intensity}/${l.punchline ? 1 : 0}/${l.text}`).join("|")}
+              onChange={(patch) => update((p) => ({ ...p, music: { mode: "auto", volume: 0.5, duck: true, ...(p.music ?? {}), ...patch } }))} />
+            <FieldRow label="This reel only">
               <label className="btn btn-sm av-file">
-                {music ? <><Music size={12} /><span className="ellipsis">{music}</span></> : <><AudioLines size={12} />Add your music</>}
+                {music ? <><Music size={12} /><span className="ellipsis">{music}</span></> : <><AudioLines size={12} />Use my own file</>}
                 <input type="file" accept=".mp3,.wav,.m4a,.flac,audio/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadMusic(f); e.target.value = ""; }} />
               </label>
             </FieldRow>
