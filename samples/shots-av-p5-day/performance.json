@@ -2,14 +2,16 @@
   "style": "shots-av",
   "fps": 30,
   "ratio": "9:16",
-  "environment": "av_studio_morning",
+  "environment": "av_late_office",
   "ambience": true,
   "characters": {
     "me": {
-      "model": "av_hero"
+      "model": "av_hero",
+      "voice_id": "TxGEqnHWrfWFTfGW9XjX"
     },
     "buddy": {
-      "model": "buddy_chatgpt"
+      "model": "buddy_chatgpt",
+      "voice_id": "21m00Tcm4TlvDq8ikWAM"
     }
   },
   "camera": {
@@ -53,5 +55,10 @@
       "mood": "awkward",
       "pause_after": 0.2
     }
-  ]
+  ],
+  "room_view": {
+    "pan": -0.34,
+    "height": 0.04,
+    "turn": 0
+  }
 }
