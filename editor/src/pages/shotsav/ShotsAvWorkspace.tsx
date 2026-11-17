@@ -4,7 +4,7 @@ import { MusicPanel } from "@/components/music/MusicPanel";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Camera, ClipboardPaste, Eye, Film, FolderOpen, MoreHorizontal, Plus, RefreshCw, Trash2,
-  Wand2, X, Music, AudioLines, Hammer, Sparkles, Settings as SettingsIcon, Captions as CaptionsIcon, Dices,
+  Wand2, X, Music, AudioLines, Drama, Hammer, Sparkles, Settings as SettingsIcon, Captions as CaptionsIcon, Dices,
 } from "lucide-react";
 import { api, avThumbUrl, fileUrl, jobEventsUrl } from "@/lib/api";
 import type { Emotion, Job, Performance, PerfLine, ProjectData, SubtitleStyle, SystemStatus, VoiceLine } from "@/lib/types";
@@ -314,6 +314,29 @@ export function ShotsAvWorkspace() {
   // ---------- script edits ----------
   const setLines = (fn: (ls: PerfLine[]) => PerfLine[]) => update((p) => ({ ...p, lines: renumber(fn(p.lines)) }));
   const setLine = (i: number, patch: Partial<PerfLine>) => setLines((ls) => ls.map((l, k) => (k === i ? { ...l, ...patch } : l)));
+  // expressions: the note is the owner's words; the server maps it to the face's emotion, intensity and mood
+  const [directing, setDirecting] = useState(false);
+  const bots = () => (buddyIsBot ? [BUDDY] : []);
+  const setDelivery = async (i: number, note: string) => {
+    const l = perf?.lines[i];
+    if (!l || ((l.delivery ?? "") === note.trim() && !l.delivery_auto)) return;
+    if (l.delivery_auto && (l.delivery ?? "") === note.trim()) return;
+    try {
+      const r = await api.avDirect({ lines: [{ ...l, delivery: note.trim(), delivery_auto: false }], bots: bots() });
+      const d = r.lines[0];
+      setLine(i, { delivery: d.delivery, delivery_auto: d.delivery_auto, emotion: d.emotion, intensity: d.intensity, mood: d.mood });
+    } catch (e) { toast((e as Error).message, "err"); }
+  };
+  const directAll = async () => {
+    if (!perf) return;
+    setDirecting(true);
+    try {
+      const r = await api.avDirect({ lines: perf.lines, bots: bots() });
+      update((p) => ({ ...p, lines: renumber(r.lines) }));
+      toast(`${r.lines.filter((l) => l.delivery_auto).length} lines directed automatically; your notes are kept`);
+    } catch (e) { toast((e as Error).message, "err"); }
+    finally { setDirecting(false); }
+  };
   const addLine = (after: number) => {
     setLines((ls) => {
       const who = ls[after]?.speaker === HERO ? BUDDY : HERO;
@@ -402,6 +425,9 @@ export function ShotsAvWorkspace() {
       <section className="av-col av-script" aria-label="Script">
         <div className="av-col-head">
           <span className="h3 grow">Script</span>
+          <Tooltip label="Give every line without a note an expression (yours are kept)">
+            <button className="btn btn-sm" disabled={!lines.length || directing} onClick={() => void directAll()}><Drama size={13} />{directing ? "Directing…" : "Direct all"}</button>
+          </Tooltip>
           <button className="btn btn-sm" onClick={() => setPaste(true)}><ClipboardPaste size={13} />Paste script</button>
           <IconButton label="Add a line" size="sm" onClick={() => addLine(lines.length - 1)}><Plus size={14} /></IconButton>
         </div>
@@ -439,6 +465,10 @@ export function ShotsAvWorkspace() {
                 <input className="input av-text" data-line={i} value={l.text} placeholder={isBuddy ? `What ${buddyName} says` : meModel === AV_HERO ? "What you say" : `What ${meName} says`}
                   aria-label={`Line ${i + 1} text`} onChange={(e) => setLine(i, { text: e.target.value })} onKeyDown={(e) => onLineKey(e, i)} />
                 <div className="row av-line-opts">
+                  <input key={`${l.id}:${l.delivery ?? ""}`} className={`input sm av-note${l.delivery_auto ? " auto" : ""}`} defaultValue={l.delivery ?? ""}
+                    placeholder="how it's said: frustrated, cheerful…" aria-label={`Line ${i + 1} expression`}
+                    title={l.delivery_auto ? "Picked automatically. Type your own to change it." : "Your note: performed by the voice and the face"}
+                    onBlur={(e) => void setDelivery(i, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />
                   <Select size="sm" ariaLabel={`Line ${i + 1} emotion`} value={l.emotion}
                     options={EMOTIONS.map((e) => ({ value: e, label: e }))} onChange={(e) => setLine(i, { emotion: e as Emotion })} />
                   <button className="chip" aria-pressed={Boolean(l.beat)} onClick={() => setLine(i, { beat: !l.beat })}
@@ -671,6 +701,16 @@ export function ShotsAvWorkspace() {
               options={(cat.hero.beard?.options ?? []).map((o) => ({ value: o, label: label(o) }))} onChange={(v) => setHero({ beard: v })} /></FieldRow>
             <FieldRow label="Stubble"><Slider ariaLabel="Stubble" value={hero.stubble ?? 0.3} onChange={(v) => setHero({ stubble: Math.round(v * 100) / 100 })} /></FieldRow>
           </Section>}
+          <Section title="Where he sits">
+            <FieldRow label="Place"><Segmented size="sm" full value={perf.place ?? "desk"} onChange={(v) => update((p) => ({ ...p, place: v }))}
+              options={[{ value: "auto", label: "Auto", title: "A place the last reels didn't use" }, { value: "desk", label: "Desk" },
+                { value: "sofa", label: "Sofa", title: "On a sofa, laptop on a table over his lap" },
+                { value: "bed", label: "Bed", title: "On the edge of the bed, laptop on a rolling cart" },
+                { value: "window", label: "Window", title: "On a window bench at a ledge desk" }]} /></FieldRow>
+            {cat.rooms.find((r) => r.id === perf.environment)?.imported && (perf.place ?? "desk") !== "desk" && (
+              <div className="hint">This imported room has its own desk set-up, so the reel stays at the desk.</div>
+            )}
+          </Section>
           <Section title="Room">
             {([["gamer", "Gamer and editor rooms"], ["dark", "Dark"], ["light", "Light"], ["classic", "Classic sets"]] as const).map(([group, name]) => (
               <div key={group}>
@@ -701,8 +741,17 @@ export function ShotsAvWorkspace() {
           </Section>
           <Section title="Camera">
             <FieldRow label="Angles"><Segmented size="sm" full value={perf.camera?.angles ?? "varied"} onChange={(v) => setCamera({ angles: v })}
-              options={[{ value: "varied", label: `Director · ${cat.angles?.length ?? 36} angles`, title: "The director picks from 36 angles by each line's mood: low, high, profile, dutch, over the shoulder, inserts" },
+              options={[{ value: "varied", label: `Director · ${cat.angles?.length ?? 56} angles`, title: `The director picks from ${cat.angles?.length ?? 56} angles by each line's mood: low, high, profile, dutch, crash zooms, orbits, over the shoulder` },
                 { value: "classic", label: "Classic 5", title: "The reference reel's five set-ups" }]} /></FieldRow>
+            {(perf.camera?.angles ?? "varied") === "varied" && <>
+              <FieldRow label="Opening"><Segmented size="sm" value={perf.camera?.opening ?? "montage"} onChange={(v) => setCamera({ opening: v })}
+                options={[{ value: "montage", label: "Montage", title: "The first seconds cut through quick face angles, each a different one" },
+                  { value: "classic", label: "One shot", title: "Open on a single held shot" }]} /></FieldRow>
+              {(perf.camera?.opening ?? "montage") === "montage" && (
+                <FieldRow label="Cuts"><Slider ariaLabel="Opening cuts" min={5} max={10} step={1} value={perf.camera?.opening_cuts ?? 7}
+                  onChange={(v) => setCamera({ opening_cuts: Math.round(v) })} format={(v) => `${Math.round(v)} angles`} /></FieldRow>
+              )}
+            </>}
             {(perf.camera?.angles ?? "varied") === "varied" && (
               <FieldRow label="Take"><span className="row" style={{ gap: 8 }}>
                 <button className="btn btn-sm" onClick={() => {
@@ -771,27 +820,39 @@ export function ShotsAvWorkspace() {
           </div>
         </Dialog>
       )}
-      {paste && <PasteDialog buddyName={buddyName} hasLines={lines.length > 0} onClose={() => setPaste(false)}
+      {paste && <PasteDialog buddyName={buddyName} hasLines={lines.length > 0} buddyIsBot={buddyIsBot} onClose={() => setPaste(false)}
         onUse={(ls) => { update((p) => ({ ...p, lines: ls })); setPaste(false); toast(`${ls.length} lines added`); }} />}
       {menu.node}
     </div>
   );
 }
 
-function PasteDialog({ buddyName, hasLines, onClose, onUse }: { buddyName: string; hasLines: boolean; onClose: () => void; onUse: (ls: PerfLine[]) => void }) {
+function PasteDialog({ buddyName, hasLines, buddyIsBot, onClose, onUse }: { buddyName: string; hasLines: boolean; buddyIsBot: boolean; onClose: () => void; onUse: (ls: PerfLine[]) => void }) {
   const [text, setText] = useState("");
-  const parsed = useMemo(() => parseScript(text), [text]);
+  const quick = useMemo(() => parseScript(text), [text]);
+  const [directed, setDirected] = useState<{ text: string; lines: PerfLine[] } | null>(null);
+  // the server reads each line's [note] and directs the rest; the quick local parse shows the count meanwhile
+  useEffect(() => {
+    if (!text.trim()) { setDirected(null); return; }
+    let live = true;
+    const t = setTimeout(() => api.avDirect({ script: text, hero: HERO, buddy: BUDDY, buddy_is_bot: buddyIsBot })
+      .then((r) => { if (live) setDirected({ text, lines: r.lines }); }).catch(() => {}), 350);
+    return () => { live = false; clearTimeout(t); };
+  }, [text, buddyIsBot]);
+  const ready = Boolean(directed && directed.text === text);
+  const parsed = ready && directed ? directed.lines : quick;
   return (
     <Dialog title="Paste a script" onClose={onClose} icon={<ClipboardPaste size={16} />}
       footer={<><span className="meta grow">{parsed.length} lines{hasLines ? " · replaces the current script" : ""}</span>
         <button className="btn" onClick={onClose}>Cancel</button>
-        <button className="btn btn-primary" disabled={!parsed.length} onClick={() => onUse(parsed)}>Use script</button></>}>
+        <button className="btn btn-primary" disabled={!parsed.length || !ready} onClick={() => onUse(parsed)}>{ready || !parsed.length ? "Use script" : "Reading…"}</button></>}>
       <textarea className="textarea" rows={10} autoFocus value={text} onChange={(e) => setText(e.target.value)}
-        placeholder={`Me: The client signed off.\n${buddyName}: That's great!\nMe: Six rounds of feedback, though.`} />
-      <div className="hint">One line per row. <span className="mono">Me:</span> or <span className="mono">You:</span> is you; any other name is {buddyName}. Rows without a name take turns.</div>
+        placeholder={`Me: [relieved] The client signed off.\n${buddyName}: [excited] That's great!\nMe: [deadpan] Six rounds of feedback, though. [sighs]`} />
+      <div className="hint">One line per row. <span className="mono">Me:</span> or <span className="mono">You:</span> is you; any other name is {buddyName}. Rows without a name take turns.
+        Put how it's said in brackets after the name, like <span className="mono">[frustrated]</span> or <span className="mono">[very excited]</span>. A <span className="mono">[laughs]</span> or <span className="mono">[sighs]</span> inside a line is performed right there. Lines without a note get one automatically; end a line with <span className="mono">*</span> for a punchline.</div>
       {parsed.length > 0 && (
         <div className="av-paste-preview">
-          {parsed.slice(0, 6).map((l) => <span key={l.id} className={`av-bubble ${l.speaker === HERO ? "me" : "buddy"}`}>{l.text}</span>)}
+          {parsed.slice(0, 6).map((l) => <span key={l.id} className={`av-bubble ${l.speaker === HERO ? "me" : "buddy"}`}>{l.delivery && <em className={`av-note-tag${l.delivery_auto ? " auto" : ""}`}>{l.delivery}</em>}{l.text}</span>)}
           {parsed.length > 6 && <span className="meta">and {parsed.length - 6} more</span>}
         </div>
       )}

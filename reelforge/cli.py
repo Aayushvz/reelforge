@@ -54,6 +54,9 @@ def build_parser() -> argparse.ArgumentParser:
     pv.add_argument("project", type=Path)
     pv.add_argument("--shot", type=int, required=True)
     pv.add_argument("--final", action="store_true")
+    dr = sa_sub.add_parser("direct", help="expressions: parse a script or re-direct lines (JSON file in, JSON out)")
+    dr.add_argument("--in", dest="infile", type=Path, required=True,
+                    help='{"script": "...", "hero_names": [...], "buddy_is_bot": true} or {"lines": [...], "bots": [...]}')
     lk = sa_sub.add_parser("look", help="a draft still of the cast and outfit in the room (the editor's look preview)")
     lk.add_argument("project", type=Path)
     th = sub.add_parser("thumbnails", help="render asset thumbnails for the editor")
@@ -256,8 +259,9 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
     if engine.ID == "shots-av":
         hero, buddy = engine.cast(perf)
         seed = engine.reel_seed(perf, project)
+        from . import angles as _angles  # other reels' recent angles score lower: consecutive reels look different
         shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, seed, perf.camera.get("grammar", "signature"),
-                              perf.camera)
+                              {**perf.camera, "avoid": _angles.recent_angles(project)})
     elif perf.look == "classic":
         shots = plan_shots(placed, perf.fps, n_frames)
     else:  # seeded by the project so the editor preview and the render agree
@@ -301,6 +305,9 @@ def run(project: Path, stage: str, draft: bool, style: str | None = None, look: 
         return None
     final = finish(out, perf.fps, f"final_{perf.ratio.replace(':', 'x')}.mp4", perf.environment, perf.look)
     print(f"final: {final}")
+    if engine.ID == "shots-av":
+        from . import angles as _angles
+        _angles.remember_angles(project, shots, engine.resolve_place(perf, project, seed))
     from . import storage  # the final is made: only it (plus voices and small metadata) is kept
     if keep_master:
         storage.pack_frames(out, perf.fps, n_frames)
@@ -326,6 +333,15 @@ def main(argv: list[str] | None = None) -> None:
             out = shots_av.plan_for(ns.project)
         elif ns.sa_cmd == "look":
             out = {"still": str(shots_av.look_still(ns.project))}
+        elif ns.sa_cmd == "direct":
+            from . import direction
+            req = json.loads(ns.infile.read_text(encoding="utf-8"))
+            if "script" in req:
+                out = {"lines": direction.parse_script(req["script"], req.get("hero", "me"), req.get("buddy", "buddy"),
+                                                       req.get("hero_names"), bool(req.get("buddy_is_bot", True)))}
+            else:
+                out = {"lines": direction.direct_lines(req.get("lines") or [], set(req.get("bots") or []),
+                                                       bool(req.get("force", False)))}
         else:
             out = {"still": str(shots_av.preview_still(ns.project, ns.shot, draft=not ns.final))}
         print("SHOTSAV_JSON " + json.dumps(out), flush=True)

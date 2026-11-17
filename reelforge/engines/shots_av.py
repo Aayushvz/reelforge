@@ -18,7 +18,7 @@ import subprocess
 from dataclasses import asdict
 from pathlib import Path
 
-from ..angles import ANGLES
+from ..angles import ANGLES, recent_angles
 from .. import buddy as acting
 from .. import storage
 from ..blender_run import run_blender
@@ -257,6 +257,41 @@ def room_view(perf, seed: int) -> dict:
     return dict(spots[seed % len(spots)])
 
 
+PLACE_ORDER = ("sofa", "window", "bed", "desk")
+
+
+def resolve_place(perf, project=None, seed: int = 0) -> str:
+    """The reel's place. "auto" picks one the last two reels did not use (imported rooms keep their own desk)."""
+    place = getattr(perf, "place", "desk") or "desk"
+    room = room_tables().get("ROOMS", {}).get(perf.environment, {})
+    if room.get("imported"):
+        return "desk"
+    if place != "auto":
+        return place
+    from ..angles import recent_places
+    recent = recent_places(project, keep=2) if project is not None else []
+    options = [p for p in PLACE_ORDER if p not in recent] or list(PLACE_ORDER)
+    return options[seed % len(options)]
+
+
+def caption_band(perf) -> list[float] | None:
+    """Where the captions sit, as (top, bottom) fractions of the frame height, so the camera keeps faces out of it.
+    The Shots-AV top block runs about 0.08-0.17; templates sit upper (0.09), middle (0.5) or lower (0.79)."""
+    from ..captions import AV_LOWER, AV_TOP, AV_TOP_ID
+    cap = getattr(perf, "captions", None) or {}
+    if cap.get("enabled") is False:
+        return None
+    if cap.get("position") == "custom" and isinstance(cap.get("y"), (int, float)):
+        y = float(cap["y"])
+        return [round(max(0.0, y - 0.05), 3), round(min(1.0, y + 0.05), 3)]
+    style = cap.get("style") or {}
+    if style.get("templateId", AV_TOP_ID) == AV_TOP_ID:
+        y0 = AV_LOWER if cap.get("position") == "lower" else AV_TOP
+        return [y0, round(y0 + 0.09, 3)]
+    y = {"upper": 0.09, "middle": 0.5}.get(style.get("position", "lower"), 0.79)
+    return [round(y - (0 if y < 0.2 else 0.08), 3), round(y + (0.09 if y < 0.2 else 0.02), 3)]
+
+
 def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope=None, seed=0) -> dict:
     plan = build_render_plan(perf, n_frames, faces, shots, moods, ASSETS, out, 16 if draft else 64)
     plan["look"] = LOOK
@@ -266,8 +301,13 @@ def build_plan(perf, n_frames, faces, shots, moods, out, draft, placed, envelope
     elif perf.quality != "cinema":  # Balanced: full size, about 3x faster than Final (see TIERS)
         plan["tier"] = dict(TIERS["balanced"])
     hero, buddy = cast(perf)
+    plan["clear_view"] = True  # blender/clear_view.py: no shot may cover the speaker's face
+    plan["caption_band"] = caption_band(perf)
     plan["environment_blend"] = str(room_blend(perf.environment))
     plan["room_view"] = room_view(perf, seed)
+    plan["room"] = perf.environment
+    project = next((d for d in (Path(out), *Path(out).parents) if (d / "performance.json").exists()), None)
+    plan["place"] = resolve_place(perf, project, seed)
     seats = None
     for c in plan["characters"]:
         name = c["name"]
@@ -430,7 +470,8 @@ def _estimated(project: Path):
     n_frames = math.ceil((last.start + last.duration + (3.0 if perf.end_text else 0.9)) * perf.fps)
     hero, buddy = cast(perf)
     shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, reel_seed(perf, project),
-                          perf.camera.get("grammar", "signature"), perf.camera)
+                          perf.camera.get("grammar", "signature"),
+                          {**perf.camera, "avoid": recent_angles(project)})
     return perf, placed, n_frames, shots
 
 
@@ -463,7 +504,7 @@ def catalog() -> dict:
                      "glow": v["glow"], "signature": v["signature"]} for k, v in b["BUDDIES"].items()],
         "rooms": [{"id": k, "label": v["label"], "tone": v["tone"], "look": v["look"], "gamer": bool(v.get("gamer")),
                    "classic": bool(v.get("legacy") or v.get("imported")),
-                   "pano": _pano(k), "spots": r.get("VIEW_SPOTS", {}).get(k, [])} for k, v in r["ROOMS"].items()],
+                   "pano": _pano(k), "spots": r.get("VIEW_SPOTS", {}).get(k, []), "imported": bool(v.get("imported"))} for k, v in r["ROOMS"].items()],
         "angles": [{"id": k, "role": a["role"], "label": a["label"]} for k, a in ANGLES.items()],
         "actions": list(acting.CLIPS), "built": built,
         "allBuilt": built["hero"] and all(built["buddies"].values()) and all(built["rooms"].values()),
@@ -598,7 +639,7 @@ def animatic(project: Path, draft: bool = True, stage: str = "full") -> Path:
     hero, buddy = cast(perf)
     seed = reel_seed(perf, project)
     shots = plan_shots_av(placed, perf.fps, n_frames, hero, buddy, seed, perf.camera.get("grammar", "signature"),
-                          perf.camera)
+                          {**perf.camera, "avoid": recent_angles(project)})
     out = project / "out" / "animatic"
     out.mkdir(parents=True, exist_ok=True)
     (out / "shots.json").write_text(json.dumps([asdict(s) for s in shots], indent=1), encoding="utf-8")

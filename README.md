@@ -68,6 +68,14 @@ From the command line:
 .venv/Scripts/reelforge run <project> --stage full                     # Balanced, 1080x1920
 .venv/Scripts/reelforge run <project> --stage full --quality cinema    # Final
 ```
+**Expressions:** write how each line is said in brackets after the name: `Me: [frustrated] Two hours on this bug.`
+`[laughs]` or `[sighs]` inside a line are performed right there, a trailing `*` marks a punchline, and lines without a
+note are directed automatically (**Direct all** in the editor). Each note drives the ElevenLabs delivery, the face, the
+camera mood and the music. **Camera:** the reel opens on a montage of 5-10 quick face angles (56 angles in all), no angle
+repeats within a reel or across recent reels, and every shot is checked in Blender so nothing covers the speaker's face
+or sits under the captions. **Places:** the hero can sit at the desk, on a sofa, on the edge of a bed or on a window bench
+(Auto rotates them).
+
 **Background music:** each reel gets a track picked from its script (comedy, suspense, lo-fi and so on). It dips under the voices and lifts on the end card.
 - **Editor:** set Auto, Pick or Off in the Sound section. The **Library → Music** tab has the 40-track built-in pack (no credit needed), your own tracks, and the **Viral now** list, where you attach trending songs.
 - **CLI:** `reelforge music list | pick <project> | import <file> | fetch`. The built-in mp3s are git-ignored; `reelforge music fetch` downloads them.

@@ -611,7 +611,11 @@ const voiceRun = (id: string) => {
 // shots-av takes are directed (emotion -> ElevenLabs audio tags), so the delivery is part of the key.
 // Mirrors reelforge/voice.py delivery_key(): "<emotion>:<intensity to 2 places>".
 function deliveryOf(perf: PerfJson | null, l: PerfLineJson) {
-  return perf?.style === "shots-av" ? `${l.emotion ?? "neutral"}:${(l.intensity ?? 0.5).toFixed(2)}` : "";
+  // mirrors reelforge/voice.py delivery_key: a note joins the key, so editing it makes a new take
+  if (perf?.style !== "shots-av") return "";
+  const base = `${l.emotion ?? "neutral"}:${(l.intensity ?? 0.5).toFixed(2)}`;
+  const note = ((l as { delivery?: string }).delivery ?? "").trim();
+  return note ? `${base}:${note}` : base;
 }
 
 function takeName(lineId: string, voiceId: string, text: string, delivery = "") {
@@ -775,6 +779,13 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   if (head === "shotsav") {
     if (id === "catalog" && method === "GET") return send(res, 200, await shotsavCatalog());
     if (id === "build-assets" && method === "POST") return send(res, 202, jobView(startAssetJob()));
+    if (id === "direct" && method === "POST") {  // expressions: a pasted script or lines -> directed lines
+      const tmp = path.join(REPO, "projects", ".tmp", `direct_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.json`);
+      fs.mkdirSync(path.dirname(tmp), { recursive: true });
+      fs.writeFileSync(tmp, JSON.stringify(await readJson(req)));
+      try { return send(res, 200, await reelforgeJson(["shots-av", "direct", "--in", tmp])); }
+      finally { fs.rmSync(tmp, { force: true }); }
+    }
     if (id === "build-assets" && method === "GET") {
       const j = [...jobs.values()].filter((x) => x.projectId === "__shotsav_assets__").pop();
       return send(res, 200, j ? jobView(j) : null);

@@ -146,3 +146,9 @@
 .av-strip.more { mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); }
 .av-spot { margin-top: 2px; }
+
+.av-note { width: 190px; min-width: 120px; flex: 1 1 160px; font-size: 12px; }
+.av-note.auto { color: var(--muted, #8a8a93); font-style: italic; }
+.av-note-tag { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 999px; font-style: normal; font-size: 11px;
+  background: color-mix(in srgb, var(--accent, #7c5cff) 22%, transparent); }
+.av-note-tag.auto { background: transparent; border: 1px dashed var(--line); opacity: 0.8; }

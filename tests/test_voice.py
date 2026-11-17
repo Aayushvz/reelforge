@@ -105,7 +105,8 @@ def test_directed_delivery_tags_settings_and_cache_keys(tmp_path):
     assert directed_text(Line("l1", "A", "We shipped it!", "happy", 0.9, "calm")) == "[excited] We shipped it!"
     assert directed_text(Line("l1", "A", "Okay.", "neutral", 0.2, "calm")) == "[quietly] Okay."
     assert directed_text(Line("l1", "A", "[whispers] hi", "happy", 0.9, "calm")) == "[whispers] hi"  # writer's tag wins
-    assert voice_settings(happy)["stability"] == 0.5 and voice_settings(Line("l", "A", "x", "sad", 0.8, "calm"))["stability"] == 0.0
+    assert voice_settings(happy)["stability"] == 0.3 and voice_settings(Line("l", "A", "x", "sad", 0.8, "calm"))["stability"] == 0.0
+    assert voice_settings(Line("l", "A", "x", "neutral", 0.5, "calm"))["stability"] == 0.5  # undirected: Natural
     plain, directed = take_path(happy, "v", tmp_path, "eleven_v4"), take_path(happy, "v", tmp_path, "eleven_v4", direct=True)
     assert plain != directed and delivery_key(happy) == "happy:0.50"
     sad = Line("l1", "A", "We shipped it!", "sad", 0.5, "calm")

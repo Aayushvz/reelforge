@@ -294,15 +294,21 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
     rack_done = not sig or camera.get("rack", True) is False
     drift = float(camera.get("drift", 1.0))  # the editor's drift dial scales every move
     varied = sig and camera.get("angles", "varied") == "varied"  # the reference grammar keeps its five set-ups
-    director = _angles.Director(seed)
+    director = _angles.Director(seed, camera.get("avoid") or ())
+    montage = set()
+    if varied and camera.get("opening", "montage") == "montage":
+        merged, montage = _montage(merged, placed, fps, int(camera.get("opening_cuts", AV_MONTAGE_CUTS)))
     join = _connect_point(merged, fps, n_frames) if sig and camera.get("connect", True) is not False else None
+    if join is not None and (join in montage or join + 1 in montage):
+        join = None
     shots: list[Shot] = []
     for i, (a, b, kind, subject, line, reaction) in enumerate(merged):
         if join is not None and i == join + 1:
             continue  # folded into the connected shot before it
         last = i == len(merged) - 1
-        if varied and not last:  # the director picks one of 36 angles for the shot's role and the line's mood
-            angle = director.pick(i, _angles.ROLE_OF[kind], _angles.mood_of(line.emotion, line.intensity), reaction)
+        if varied and not last:  # the director picks an angle for the shot's role and the line's mood
+            angle = director.pick(i, _angles.ROLE_OF[kind], _angles.mood_of(line.emotion, line.intensity), reaction,
+                                  montage=i in montage)
             move, params = ("static", {}) if reaction else _angles.move_for(angle, (b - a) / fps, seed, i)
         else:
             angle = _angles.CLASSIC[kind]
@@ -350,6 +356,59 @@ def plan_shots_av(placed: list[Placed], fps: int, n_frames: int, hero: str, budd
                                fstop=float(o.get("fstop", s.fstop)), rack=rack, angle=angle, framing=fr,
                                subject=subject)
     return shots
+
+
+AV_MONTAGE_CUTS = 7  # the opening: this many quick face angles (the editor allows 5-10)
+AV_MONTAGE_S = (0.5, 0.75, 1.05)  # min, target, max length of one montage cut (s)
+AV_MONTAGE_WINDOW = 7.0  # the montage stays inside the first seconds of the reel
+
+
+def _word_gaps(p: Placed, fps: int) -> list[int]:
+    """Frames between spoken words of a placed line (mid-gap), from its character timings: a cut there never
+    chops a word."""
+    cuts, prev_end, in_word = [], None, False
+    for c in p.voiced.chars:
+        if c.ch.isspace():
+            if in_word:
+                prev_end, in_word = c.start, False
+            continue
+        if not in_word and prev_end is not None:
+            cuts.append(int(round((p.start + (prev_end + c.start) / 2) * fps)))
+        in_word = True
+    return cuts
+
+
+def _montage(merged: list, placed: list, fps: int, cuts: int) -> tuple[list, set]:
+    """Split the opening single shots into quick cuts at word gaps (each becomes its own angle). Returns the new
+    shot list and the indices of the montage cuts."""
+    cuts = max(0, min(10, cuts))
+    if cuts < 2:
+        return merged, set()
+    lo, target, hi = (int(round(v * fps)) for v in AV_MONTAGE_S)
+    window = int(AV_MONTAGE_WINDOW * fps)
+    by_line = {id(p.line): p for p in placed}
+    out, marks, made = [], set(), 0
+    for r in merged:
+        a, b, kind, subject, line, reaction = r
+        if made >= cuts or a >= window or reaction or kind in AV_WIDES or kind not in AV_LENSES:
+            out.append(r)
+            continue
+        p = by_line.get(id(line))
+        gaps = [g for g in (_word_gaps(p, fps) if p else []) if a + lo <= g <= b - lo]
+        pieces, start = [], a
+        while made + len(pieces) < cuts - 1 and gaps:
+            best = min((g for g in gaps if g - start >= lo), key=lambda g: abs(g - start - target), default=None)
+            if best is None or best - start > hi * 2 or b - best < lo:
+                break
+            pieces.append((start, best))
+            start = best
+            gaps = [g for g in gaps if g > start]
+        pieces.append((start, b))
+        for x, y in pieces:
+            marks.add(len(out))
+            out.append([x, y, kind, subject, line, False])
+        made += len(pieces)
+    return out, marks
 
 
 def _connect_point(merged: list, fps: int, n_frames: int) -> int | None:

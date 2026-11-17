@@ -21,9 +21,11 @@ export type PerfLine = {
   id: string; speaker: string; text: string; emotion: Emotion; intensity: number; mood: Mood;
   pause_after?: number; punchline?: boolean;
   beat?: boolean; action?: string;  // shots-av: force a wide; a buddy reaction clip
+  delivery?: string; delivery_auto?: boolean;  // how it's said (ElevenLabs audio tags); auto = picked, not written
 };
 export type AvCamera = { grammar?: "signature" | "reference"; seed?: number; rack?: boolean; drift?: number;
   angles?: "varied" | "classic";
+  opening?: "montage" | "classic"; opening_cuts?: number;  // the first seconds: 5-10 quick face angles, or one hold
   connect?: boolean;  // one hero-to-buddy connected move (signature grammar)  // the 36-angle library (reelforge/angles.py), or the reference's five set-ups
   overrides?: Record<string, { kind?: string; move?: string; fstop?: number; angle?: string; rack?: boolean }> };
 // Where the desk sits in the room: each -1..1 (pan sideways, height, turn); empty = one of the room's good spots
@@ -38,6 +40,7 @@ export type Performance = {
   captions?: { position?: "top" | "lower" | "custom"; plate?: boolean; tint?: boolean; style?: SubtitleStyle;
     x?: number; y?: number; size?: number };  // custom: the caption block's centre (frame fractions); size 0.5..2
   room_view?: RoomView; end_text?: string;
+  place?: "auto" | "desk" | "sofa" | "bed" | "window";  // where the hero sits (auto: one the last reels didn't use)
 };
 
 // ---------- editor.json ----------

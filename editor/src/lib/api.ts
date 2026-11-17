@@ -1,4 +1,4 @@
-import type { Job, Library, LocalSettings, MusicLibrary, MusicPick, MusicTrack, ProjectData, ProjectSummary, SystemStatus, VoiceLine } from "./types";
+import type { Job, Library, LocalSettings, MusicLibrary, MusicPick, MusicTrack, PerfLine, ProjectData, ProjectSummary, SystemStatus, VoiceLine } from "./types";
 import type { AvCatalog, AvPlan } from "./shotsav";
 import type { CoverDraft } from "./cover";
 
@@ -40,6 +40,9 @@ export const api = {
   reveal: (id: string) => req<{ ok: true; path: string }>("POST", `${P(id)}/reveal`),
   avCatalog: () => req<AvCatalog>("GET", "/api/shotsav/catalog"),
   avPlan: (id: string) => req<AvPlan>("POST", `${P(id)}/shotsav/plan`),
+  // expressions: parse a pasted script ([note] per line), or re-direct lines (notes -> face emotion, voice tags)
+  avDirect: (body: { script: string; hero?: string; buddy?: string; buddy_is_bot?: boolean } | { lines: PerfLine[]; bots: string[]; force?: boolean }) =>
+    req<{ lines: PerfLine[] }>("POST", "/api/shotsav/direct", body),
   avLook: (id: string) => req<{ still: string; at: number }>("POST", `${P(id)}/shotsav/look`, {}),
   avPreview: (id: string, shot: number, final = false) => req<{ still: string; at: number }>("POST", `${P(id)}/shotsav/preview`, { shot, final }),
   avBuildAssets: () => req<Job>("POST", "/api/shotsav/build-assets"),

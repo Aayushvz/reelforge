@@ -23,6 +23,10 @@ LOOK = looks.get(plan.get("look"))
 if plan.get("room_view") and bpy.data.objects.get("RoomPivot"):  # shots-av: the part of the room behind the desk
     from shotsav import rooms as _rooms
     _rooms.apply_view(plan.get("room_view"))
+if plan.get("place", "desk") != "desk":  # shots-av: the sofa, the bed or the window bench instead of the desk
+    from shotsav import places as _places, rooms as _rooms2
+    if _places.apply(plan.get("place"), _rooms2.ROOMS.get(plan.get("room", ""), {})):
+        print(f"place: {plan.get('place')}")
 
 # shot kind -> (distance m, f-stop, azimuth rad, elevation rad)
 SHOT = {"wide": (2.6, 0.5, math.radians(-15), math.radians(6)),  # f/0.5 cheat: wide shots get bokeh too
@@ -322,11 +326,57 @@ def rig_camera(i, s):
     return cam, a, b
 
 
+CLEAR = []  # shots-av: per shot, how much of the speaker's face the camera sees, and what was done about it
+
+
+def clear_camera(i, s, make):
+    """Build shot i's camera and make sure nothing covers the subject's face (blender/clear_view.py)."""
+    import clear_view as cv
+    cam, a, b = make(i, s)
+    subj = CH.get(s["subject"]) or next(iter(CH.values()))
+    band = plan.get("caption_band")
+    best = cv.score_shot(sc, cam, a, b, subj, band)
+    fixed = "clear"
+    if not cv.passes(best):
+        first = dict(best)
+        for label, s2 in cv.variants(s):
+            cam2, _, _ = make(i, s2)
+            r = cv.score_shot(sc, cam2, a, b, subj, band)
+            if cv.passes(r) or (r["score"], -r["caption"]) > (best["score"], -best["caption"]):
+                cv.remove_camera(cam)
+                cam, best, fixed = cam2, r, label
+                plan["shots"][i].update({k: v for k, v in s2.items() if k in ("framing", "az_pick")})
+                if cv.passes(r):
+                    break
+            else:
+                cv.remove_camera(cam2)
+        if best["score"] < cv.MIN_CLEAR:  # still blocked: hide the small props in the way, for this shot only
+            props = cv.hideable(best["blockers"], list(CH.values()))
+            if props:
+                r = cv.score_shot(sc, cam, a, b, subj, band, ignore=frozenset(o.name for o in props))
+                if r["score"] > best["score"]:
+                    cv.hide_for_shot(props, a, b)
+                    best, fixed = r, f"{fixed}; hid {', '.join(o.name for o in props)}"
+        best["before"] = first["score"]
+    CLEAR.append({"shot": i, "kind": s["kind"], "angle": s.get("angle", ""), "fixed": fixed, **best})
+    print(f"CLEAR {i} {s['kind']} face {best['score']:.2f} caption {best['caption']:.2f} ({fixed})")
+    return cam, a, b
+
+
+_make = rig_camera if LOOK.USE_RIG else classic_camera
+_check = plan.get("clear_view") and mode in ("stills", "full")
 for i, s in enumerate(plan["shots"]):
-    cam, a, b = (rig_camera if LOOK.USE_RIG else classic_camera)(i, s)
+    if _check and (plan.get("only_shots") is None or i in plan.get("only_shots")):
+        cam, a, b = clear_camera(i, s, _make)
+    else:
+        cam, a, b = _make(i, s)
     marker = sc.timeline_markers.new(f"S{i}", frame=a)
     marker.camera = cam
     cams.append((cam, a, b))
+if CLEAR:
+    (Path(plan["out_frames"]).parent / "clear_view.json").write_text(json.dumps(CLEAR, indent=1), encoding="utf-8")
+    bad = [c["shot"] for c in CLEAR if c["score"] < 0.9]
+    print(f"clear view: {len(CLEAR) - len(bad)}/{len(CLEAR)} shots clear" + (f", still blocked: {bad}" if bad else ""))
 
 MEASURE = []
 

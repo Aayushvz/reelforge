@@ -18,6 +18,7 @@ LOOKS = ("classic", "cinema", "shotsav")  # classic = the original Eevee look; c
 # camera rig; shotsav = the low-poly desk two-hander of the shots-av style
 QUALITIES = ("preview", "standard", "cinema")
 MUSIC_MODES = ("auto", "track", "none")
+PLACES = ("auto", "desk", "sofa", "bed", "window")  # shots-av: where the hero sits
 CAMERA_MOVES = ("static", "push_in", "pull_out", "pull_truck", "orbit", "truck", "drift", "crane_down", "crane_up",
                 "slow_zoom", "whip_pan")
 SHOT_KINDS = ("wide", "two", "medium", "closeup", "ecu",
@@ -100,6 +101,7 @@ class Line:
     punchline: bool = False
     beat: bool = False  # shots-av: force a wide on this line
     action: str = ""  # shots-av: a buddy reaction clip (AV_ACTIONS); empty = picked from the line
+    delivery: str = ""  # how it's said, in the owner's words ("frustrated", "cheerful, proud"): ElevenLabs audio tags
 
 
 @dataclass(frozen=True)
@@ -121,6 +123,7 @@ class Performance:
     end_text: str = ""  # shots-av: an end card over the closing wide ("Every designer's relationship with AI.")
     room_view: dict = field(default_factory=dict)  # shots-av: {"pan", "height", "turn"} each -1..1; empty = picked
     music: dict = field(default_factory=dict)  # shots-av: {"mode": auto|track|none, "id", "volume" 0..1, "duck"}; {} = none
+    place: str = "desk"  # shots-av: desk | sofa | bed | window | auto (a place the last reels did not use)
 
 
 def load_performance(path: Path) -> Performance:
@@ -197,7 +200,10 @@ def parse_performance(data: dict) -> Performance:
             errors.append(f"{where}: intensity must be 0..1")
         if pause < 0:
             errors.append(f"{where}: pause_after must be >= 0")
-        beat, action = raw.get("beat", False), raw.get("action", "")
+        beat, action, delivery = raw.get("beat", False), raw.get("action", ""), raw.get("delivery", "")
+        if not isinstance(delivery, str) or len(delivery) > 80:
+            errors.append(f"{where}: delivery must be text of at most 80 characters")
+            delivery = ""
         if not isinstance(beat, bool):
             errors.append(f"{where}: beat must be true or false")
         if action not in ("", *AV_ACTIONS):
@@ -205,7 +211,8 @@ def parse_performance(data: dict) -> Performance:
         elif action and av and raw["speaker"] in chars and chars[raw["speaker"]].model not in AV_BUDDIES:
             errors.append(f"{where}: action is a buddy clip; only a bot buddy's line can carry one")
         lines.append(Line(raw["id"], raw["speaker"], raw["text"], raw["emotion"], intensity,
-                          raw["mood"], pause, bool(raw.get("punchline", False)), beat is True, action))
+                          raw["mood"], pause, bool(raw.get("punchline", False)), beat is True, action,
+                          delivery.strip()))
     if not lines:
         errors.append("at least one line required")
     look, quality = data.get("look", "shotsav" if av else "classic"), data.get("quality", "standard")
@@ -236,6 +243,11 @@ def parse_performance(data: dict) -> Performance:
         v = captions.get(key)
         if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float)) or not lo <= v <= hi):
             errors.append(f"captions.{key} must be a number {lo}..{hi}")
+    if camera.get("opening", "montage") not in ("montage", "classic"):
+        errors.append("camera.opening must be montage or classic")
+    cuts = camera.get("opening_cuts", 7)
+    if isinstance(cuts, bool) or not isinstance(cuts, int) or not 5 <= cuts <= 10:
+        errors.append("camera.opening_cuts must be a whole number 5..10")
     if camera.get("angles", "varied") not in AV_ANGLE_MODES:
         errors.append(f"camera.angles must be one of {AV_ANGLE_MODES}")
     room_view = data.get("room_view") or {}
@@ -249,6 +261,10 @@ def parse_performance(data: dict) -> Performance:
                      ("sound.foley", sound.get("foley", True))):
         if not isinstance(val, bool):
             errors.append(f"{key} must be true or false")
+    place = data.get("place", "desk")
+    if place not in PLACES:
+        errors.append(f"place must be one of {PLACES}")
+        place = "desk"
     music = data.get("music") or {}
     if not isinstance(music, dict):
         errors.append("music must be an object")
@@ -294,7 +310,7 @@ def parse_performance(data: dict) -> Performance:
     return Performance(fps, ratio, data.get("environment", AV_ROOM if av else "night_city"), chars, lines,
                        style, data.get("lighting", ""),
                        bool(data.get("ambience", True)), look, quality, camera, look_params, captions, sound,
-                       end_text.strip(), room_view, music)
+                       end_text.strip(), room_view, music, place)
 
 
 def _av_options(name: str, c: dict, errors: list[str]) -> dict:

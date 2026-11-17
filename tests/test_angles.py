@@ -27,10 +27,10 @@ def placed():
     return out, int((t + 4.0) * FPS)
 
 
-def test_library_has_36_angles_in_three_roles():
-    assert len(angles.ANGLES) == 36
+def test_library_has_56_angles_in_three_roles():
+    assert len(angles.ANGLES) == 56
     roles = [a["role"] for a in angles.ANGLES.values()]
-    assert roles.count("hero") == 16 and roles.count("buddy") == 9 and roles.count("wide") == 11
+    assert roles.count("hero") == 28 and roles.count("buddy") == 14 and roles.count("wide") == 14
     for aid, a in angles.ANGLES.items():
         assert 20 <= a["lens"] <= 150 and 0.1 < a["head"] < 1 and a["az"][0] <= a["az"][1], aid
         assert -15 <= a["el"] <= 40 and abs(a["roll"]) <= 10 and a["label"], aid

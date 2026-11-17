@@ -14,7 +14,7 @@ export type AvCatalog = {
   hero: Record<string, { default: unknown; options?: string[]; swatches?: string[]; min?: number; max?: number }>;
   skins: Record<string, string>; outfits: Record<string, string>; outfitColors?: Record<string, string>; brand: Record<string, string>;
   buddies: { model: string; label: string; readsAs: string; shell: string; glow: string; signature: string }[];
-  rooms: { id: string; label: string; tone: "dark" | "light"; look: string; gamer?: boolean; classic?: boolean; pano?: AvPano | null;
+  rooms: { id: string; label: string; tone: "dark" | "light"; look: string; gamer?: boolean; classic?: boolean; imported?: boolean; pano?: AvPano | null;
     spots?: { pan?: number; height?: number; turn?: number }[] }[];
   angles?: { id: string; role: "hero" | "buddy" | "wide"; label: string }[];
   actions: string[];
@@ -145,6 +145,7 @@ export function newPerformance(buddy = "buddy_claude", room = "av_studio_night",
     camera: { grammar: "signature", seed: Math.floor(Math.random() * 1e6), rack: true, drift: 1, angles: "varied" },
     captions: { position: "top", plate: true, tint: true, style: { ...SHOTSAV_TOP_STYLE } }, sound: { foley: true },
     music: { mode: "auto", volume: 0.5, duck: true }, // picked from the script; the editor can change it
+    place: "auto", // desk, sofa, bed or window bench: a different one from the last reels
     lines,
   };
 }
